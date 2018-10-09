@@ -7,6 +7,12 @@
 body {
     width: 100%;
 }
+.disable-select() {
+    -webkit-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+    user-select:none;
+}
 .box-sizing(@value) {
     box-sizing: @value;
     -moz-box-sizing: @value;
@@ -34,6 +40,67 @@ body {
         .div();
         position: relative;
         border: 1px dotted #eee;
+
+        .mine-div {
+            .div();
+            .disable-select();
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            border: 1px solid #888;
+            background-color: #aaa;
+
+            &:hover {
+                background-color: #999;
+            }
+
+            &:active {
+                background-color: #888;
+            }
+        }
+
+        .mine-danger, .mine-danger:hover {
+            background-color: red;
+        }
     }
 }
 /************ end-背景的样式 ***************/
+
+/************ 结束画面的样式 ***************/
+.game-over, .game-start {
+    display: flex;
+    justify-content: center; /*水平居中*/
+    align-items: center; /*垂直居中*/
+    flex-direction: column; /*垂直排列*/
+    position: absolute;
+    border: 2px solid rgba(53, 53, 53, 1);
+    background-color: rgba(66, 66, 66, 1);
+    box-shadow: 3px 3px 3px rgba(170, 170, 170, .9);
+
+    h1 {
+        margin-bottom: 15px;
+        font-size: 45px;
+        color: rgb(223, 223, 223);
+    }
+
+    p {
+        font-size: 20px;
+        color: rgb(223, 223, 223);
+    }
+
+    a {
+        margin-top: 15px;
+        padding: 10px 15px;
+        border-radius: 10px;
+        background-color: rgba(120, 120, 120, 0.8);
+        text-decoration: none;
+        font-size: 25px;
+        color: rgb(223, 223, 223);
+
+        &:hover {
+            background-color: rgba(158, 158, 158, 0.35);
+            color: rgb(255, 255, 255);
+        }
+    }
+}
+/************ end-结束画面的样式 ***************/
