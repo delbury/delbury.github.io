@@ -1,0 +1,29 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+body {
+  width: 100%;
+}
+.clear {
+  clear: both;
+}
+/************ 背景的样式 ***************/
+.game-box {
+  position: relative;
+  display: inline-block;
+  margin: 15px auto;
+  border: 5px solid #555;
+}
+.game-box .game-box-div {
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  display: block;
+  float: left;
+  width: 25px;
+  height: 25px;
+  position: relative;
+  border: 1px dotted #eee;
+}
+/************ end-背景的样式 ***************/

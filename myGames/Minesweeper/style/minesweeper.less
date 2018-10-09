@@ -1,0 +1,39 @@
+@onepx: 25px;
+
+* {
+    margin: 0;
+    padding: 0;
+}
+body {
+    width: 100%;
+}
+.box-sizing(@value) {
+    box-sizing: @value;
+    -moz-box-sizing: @value;
+    -webkit-box-sizing: @value;
+}
+.div() {
+    .box-sizing(border-box);
+    display: block;
+    float: left;
+    width: @onepx;
+    height: @onepx;
+}
+.clear {
+    clear: both;
+}
+
+/************ 背景的样式 ***************/
+.game-box {
+    position: relative;
+    display: inline-block;
+    margin: 15px auto;
+    border: 5px solid #555;
+
+    .game-box-div {
+        .div();
+        position: relative;
+        border: 1px dotted #eee;
+    }
+}
+/************ end-背景的样式 ***************/
