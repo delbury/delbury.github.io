@@ -38,8 +38,10 @@ body {
 
     .game-box-div {
         .div();
+        .disable-select();
         position: relative;
-        border: 1px dotted #eee;
+        border: 1px dotted rgb(194, 193, 193);
+        background-color: rgb(226, 226, 226);
 
         .mine-div {
             .div();
@@ -61,6 +63,10 @@ body {
 
         .mine-danger, .mine-danger:hover {
             background-color: red;
+        }
+
+        .mine-safe, .mine-safe:hover {
+            background-color: green;
         }
     }
 }

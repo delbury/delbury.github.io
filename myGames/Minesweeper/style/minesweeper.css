@@ -23,8 +23,13 @@ body {
   float: left;
   width: 25px;
   height: 25px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
   position: relative;
-  border: 1px dotted #eee;
+  border: 1px dotted #c2c1c1;
+  background-color: #e2e2e2;
 }
 .game-box .game-box-div .mine-div {
   box-sizing: border-box;
@@ -53,6 +58,10 @@ body {
 .game-box .game-box-div .mine-danger,
 .game-box .game-box-div .mine-danger:hover {
   background-color: red;
+}
+.game-box .game-box-div .mine-safe,
+.game-box .game-box-div .mine-safe:hover {
+  background-color: green;
 }
 /************ end-背景的样式 ***************/
 /************ 结束画面的样式 ***************/
