@@ -8,12 +8,69 @@ body {
 .clear {
   clear: both;
 }
+/************ 分数栏的样式 ***************/
+.game-score {
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  margin: 15px auto 0px;
+  padding: 0 20px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+}
+.game-score .time {
+  float: left;
+  width: 80px;
+  text-align: left;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.game-score .time span {
+  float: right;
+}
+.game-score .mine {
+  float: right;
+  width: 80px;
+  text-align: left;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.game-score .mine span {
+  float: right;
+}
+.game-score button {
+  width: 60px;
+  height: 30px;
+  border-style: none;
+  border-radius: 5px;
+  box-shadow: 3px 3px 2px #5a5a5a;
+  outline: none;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.game-score button:hover {
+  box-shadow: 2px 2px 2px #5a5a5a;
+}
+.game-score button:active {
+  box-shadow: 1px 1px 1px #5a5a5a;
+}
+/************ end-分数栏的样式 ***************/
 /************ 背景的样式 ***************/
 .game-box {
   position: relative;
   display: inline-block;
-  margin: 15px auto;
+  margin: 10px auto;
   border: 5px solid #555;
+  /************ end-背景的样式 ***************/
+  /************ 地雷的样式 ***************/
 }
 .game-box .game-box-div {
   box-sizing: border-box;
@@ -31,7 +88,7 @@ body {
   border: 1px dotted #c2c1c1;
   background-color: #e2e2e2;
 }
-.game-box .game-box-div .mine-div {
+.game-box .mine-div {
   box-sizing: border-box;
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
@@ -46,24 +103,24 @@ body {
   position: absolute;
   top: -1px;
   left: -1px;
-  border: 1px solid #888;
+  border: 1px solid #777;
   background-color: #aaa;
 }
-.game-box .game-box-div .mine-div:hover {
+.game-box .mine-div:hover {
   background-color: #999;
 }
-.game-box .game-box-div .mine-div:active {
+.game-box .mine-div:active {
   background-color: #888;
 }
-.game-box .game-box-div .mine-danger,
-.game-box .game-box-div .mine-danger:hover {
+.game-box .mine-danger,
+.game-box .mine-danger:hover {
   background-color: red;
 }
-.game-box .game-box-div .mine-safe,
-.game-box .game-box-div .mine-safe:hover {
+.game-box .mine-safe,
+.game-box .mine-safe:hover {
   background-color: green;
 }
-/************ end-背景的样式 ***************/
+/************ end-地雷的样式 ***************/
 /************ 结束画面的样式 ***************/
 .game-over,
 .game-start {
