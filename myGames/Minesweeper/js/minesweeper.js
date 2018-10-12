@@ -10,7 +10,7 @@ function MineSweeper() {
         coord: [], // 所有地雷的坐标 [x, y]
         number: [], // 所有的数字的坐标及大小 [x, y, num]
         count: null, // 地雷个数
-        hard: 10 / 400, // 地雷相对于总格子数的个数
+        hard: 40 / 400, // 地雷相对于总格子数的个数
         triggered: [], // 保存点击过的格子坐标信息
         search: [], // 自动翻开非雷区的记录数组
         queue: [], // 自动翻开非雷区的辅助队列
@@ -465,6 +465,7 @@ function MineSweeper() {
         }    
     }
 
+
     // 设置游戏
     MineSweeper.prototype.setGame = function() {
         $('.game-box').on('click', (ev) => {
@@ -494,13 +495,16 @@ function MineSweeper() {
             // 左右键同时按下触发
             if(ev.buttons == 3 && ev.target.className == 'game-box-div') {
                 let index = $(ev.target).attr('index').split(',');
-                this.setClickStyle(index, '#888');
-
-                // 设置监听左右键同时按下后松开事件
-                $(document).on('mouseup', () => {
-                    this.setClickStyle(index);
-                    $(document).off('mouseup');
-                });
+                if(this.isNumber(index)) {
+                    // 点击数字才触发
+                    if(!this.setClickOpen(index, '#888')) {
+                        // 设置监听左右键同时按下后松开事件
+                        $(document).on('mouseup', () => {
+                            this.setClickOpen(index);
+                            $(document).off('mouseup');
+                        });
+                    }     
+                }
             }
 
             // 右键触发
@@ -528,9 +532,13 @@ function MineSweeper() {
         });
     }
 
-    // 设置坐标周围八个位置上 div 的样式
-    MineSweeper.prototype.setClickStyle = function(xy, color = '') {
+    // 设置坐标周围八个位置上 div 的样式，并打开
+    // 鼠标左右键同时点击数字时，根据周围的标记的雷数，判断翻开周围 8 个格子
+    MineSweeper.prototype.setClickOpen = function(xy, color = '') {
         let [x, y] = [parseInt(xy[0] - 1), parseInt(xy[1]) - 1];
+        let number = parseInt(this.getIndex(xy).html()); // 获取该坐标的数字值
+        let mines = 0; // 记录该坐标周围被标记的地雷数量
+        let none = []; // 记录改坐标周围需要打开的格子
         for(let i = 0; i < 3; i++) {
             for(let j = 0; j < 3; j++) {
                 // 跳过自身的坐标
@@ -542,10 +550,36 @@ function MineSweeper() {
 
                     // 筛选出正确的格子
                     if(div.html() != '' && isNaN(div.html())) {
-                        div.children('div').css('background-color', color);
+                        if(!div.children().attr('mark')) {
+                            // 判断该格子是否被标记，如没有被标记
+                            div.children('div').css('background-color', color);
+                            none.push([x + j, y + i]); // 入数组
+                        }
+                        else {
+                            // 若被标记
+                            mines++;
+                        }
                     }
                 }
             }
         }
+        // 若该坐标周围的地雷被标记完，则打开其他的未打开格子
+        if(mines >= number && none.length != 0) {
+            // 打开
+            let temp = null;
+            while(temp = none.pop()) {
+                if(this.isMine(temp)) {
+                    this.gameOver();
+                    this.showOneMine(temp, 'danger');
+                    return true;
+                }
+                else {
+                    this.clickOne(temp);
+                    // return this.setClickOpen(temp); // 递归展开
+                    this.setClickOpen(temp);
+                }
+            }
+        }
+        this.gameWin(); // 判断游戏是否胜利
     }
 })();
