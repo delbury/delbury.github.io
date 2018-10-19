@@ -8,6 +8,7 @@ function Tetris() {
         this.dropNowType = []; // 记录当前出现的方块类型 0~6
         this.dropNextType = []; // 记录之后连续两个会出现的方块类型 0~6
         this.timer = null; // 游戏定时器
+        this.existCoords = []; // 保存存在未消除格子的 div 坐标
 
         return this.gameInit();
     }
@@ -21,6 +22,7 @@ function Tetris() {
         this.dropNowType = [];
         this.dropNextType = [];
         this.timer = null;
+        this.existCoords = [];
 
         this.createBoxDiv(); // 背景初始化
         this.createSidebar(); // 侧边栏初始化
@@ -69,10 +71,14 @@ function Tetris() {
                 this.createBlock(false);
                 for(let val of this.dropCoords) {
                     val[1]++;
-                    if(val[1] >= this.boxSize[1] - 1) {
+                    if(val[1] >= this.boxSize[1] - 1 || this.isOverlay(val)) {
+                        // 判断是否下落到底部或其它未消除的格子
                         if(this.timer) {
-                            clearInterval(this.timer);
-                            this.timer = null;
+                            clearInterval(this.timer); // 停止计时器
+                            this.timer = null; // 清空计时器
+                            this.gameOver(); // 判断游戏是否结束
+                            this.dropCoords.forEach(val => this.existCoords.push(val)); // 保存未消除的格子
+                            this.clearBlock(); // 消除一行或多行格子
                         }             
                     }
                 }
@@ -107,6 +113,21 @@ function Tetris() {
         }
 
         this.createRandomType(); // 补充后一个即将落下的方块类型
+    }
+
+    // 判断并消除一行或多行格子
+    Tetris.prototype.clearBlock = function() {
+        ;
+    }
+
+    // 判断是否游戏结束，并执行
+    Tetris.prototype.gameOver = function() {
+        ;
+    }
+
+    // 判断是否碰撞到其它未消除的格子
+    Tetris.prototype.isOverlay = function(xy) {
+        ;
     }
 
     // 随机生成下落方块的类型
