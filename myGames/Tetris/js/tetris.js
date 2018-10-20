@@ -9,6 +9,7 @@ function Tetris() {
         this.dropNextType = []; // 记录之后连续两个会出现的方块类型 0~6
         this.timer = null; // 游戏定时器
         this.existCoords = []; // 保存存在未消除格子的 div 坐标
+        this.speed = null; // 游戏速度
 
         return this.gameInit();
     }
@@ -23,6 +24,7 @@ function Tetris() {
         this.dropNextType = [];
         this.timer = null;
         this.existCoords = [];
+        this.speed = 200;
 
         this.createBoxDiv(); // 背景初始化
         this.createSidebar(); // 侧边栏初始化
@@ -61,34 +63,53 @@ function Tetris() {
 
     // 游戏开始
     Tetris.prototype.gameStart = function() {
-        this.createOneDrop(); // 创建一个下落的方块
-        this.createBlock(); 
-        console.log(this.dropNowType)
 
         document.onclick = function() {
-            // 定时下落
-            this.timer = setInterval(() => {
-                this.createBlock(false);
-                for(let val of this.dropCoords) {
-                    val[1]++;
-                    if(val[1] >= this.boxSize[1] - 1 || this.isOverlay(val)) {
-                        // 判断是否下落到底部或其它未消除的格子
-                        if(this.timer) {
-                            clearInterval(this.timer); // 停止计时器
-                            this.timer = null; // 清空计时器
-                            this.gameOver(); // 判断游戏是否结束
-                            this.dropCoords.forEach(val => this.existCoords.push(val)); // 保存未消除的格子
-                            this.clearBlock(); // 消除一行或多行格子
-                        }             
-                    }
+            this.setControls();
+            this.dropping();
+
+            document.onclick = null;
+        }.bind(this);
+
+    }
+
+    // 方块下落
+    Tetris.prototype.dropping = function() {
+        this.createOneDrop(); // 创建一个下落的方块
+        this.createBlock(); 
+
+        // 定时下落
+        this.timer = setInterval(() => {
+            this.createBlock(false); // 清除当前位置的图形
+            for(let val of this.dropCoords) {
+                val[1]++; // 纵坐标 +1
+                if(val[1] >= this.boxSize[1] - 1 || this.isOverlay(val)) {
+                    // 判断是否下落到底部或其它未消除的格子
+                    if(this.timer) {
+                        clearInterval(this.timer); // 停止计时器
+                        this.timer = null; // 清空计时器
+                        this.gameOver(); // 判断游戏是否结束
+                        this.dropCoords.forEach(val => this.existCoords.push(val)); // 保存未消除的格子
+                        this.clearBlock(); // 消除一行或多行格子
+
+                        this.dropNowType.shift(); // 清除当前的下落方块
+                    }             
                 }
-                this.createBlock();
-            }, 500);
-        }.bind(this) 
+            }
+            this.createBlock(); // 绘制当前位置的图形
+
+            if(!this.timer) {
+                this.dropping(); // 再次开始下落新的方块
+            }
+        }, this.speed);
     }
 
     // 创建一个新的下落方块
     Tetris.prototype.createOneDrop = function() {
+        // if(this.dropNowType.length != 0) {
+        //     this.dropNowType.shift();
+        // }
+
         this.createRandomType(); // 创建随机队列
 
         // 判断是否为空
@@ -127,7 +148,14 @@ function Tetris() {
 
     // 判断是否碰撞到其它未消除的格子
     Tetris.prototype.isOverlay = function(xy) {
-        ;
+        let [xp, yp] = [xy[0], xy[1] + 1]; // 纵坐标 +1 时，判断是否有格子与之重叠
+        for(let val of this.existCoords.values()) {
+            if([xp, yp].toString() == val.toString()) {
+                // 若存在重叠则返回 true
+                return true;
+            }
+        }
+        return false;
     }
 
     // 随机生成下落方块的类型
@@ -172,5 +200,30 @@ function Tetris() {
         xy[1] = parseInt(xy[1]);
         return $('.game-box-div').eq(xy[0] + xy[1] * this.boxSize[0]);
     }  
+
+    // 设置游戏的控制方式，判断位移的合法性
+    Tetris.prototype.setControls = function() { 
+        $(document).on('keydown', ev => {
+            ev = ev || window.event;
+            let temp = [];
+            // 判断位移后坐标值是否合法
+            if(this.dropCoords.every(val => {
+                let [x, y] = val; // 记录当前各个方块的坐标值
+                switch(ev.keyCode) {
+                    case 37: x--; break;
+                    case 39: x++; break;
+                    case 40: break;
+                    default: break;
+                }
+                temp.push([x , y]); // 暂存可能位移后的坐标值
+                return (x >= 0 && x < this.boxSize[0]);
+            })){
+                // 若合法则进行位移
+                this.createBlock(false);
+                this.dropCoords = temp;
+                this.createBlock();
+            }
+        })
+    }
 })();
 
