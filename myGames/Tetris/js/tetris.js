@@ -82,7 +82,7 @@ function Tetris() {
         this.timer = setInterval(() => {
             this.createBlock(false); // 清除当前位置的图形
             for(let val of this.dropCoords) {
-                val[1]++; // 纵坐标 +1
+                val[1]++; // 纵坐标 +1                
                 if(val[1] >= this.boxSize[1] - 1 || this.isOverlay(val)) {
                     // 判断是否下落到底部或其它未消除的格子
                     if(this.timer) {
@@ -216,7 +216,7 @@ function Tetris() {
                     default: break;
                 }
                 temp.push([x , y]); // 暂存可能位移后的坐标值
-                return (x >= 0 && x < this.boxSize[0]);
+                return (x >= 0 && x < this.boxSize[0]) && !this.hasBlock([x, y]);
             })){
                 // 若合法则进行位移
                 this.createBlock(false);
@@ -224,6 +224,13 @@ function Tetris() {
                 this.createBlock();
             }
         })
+    }
+
+    // 判断当前坐标是否存在 block
+    Tetris.prototype.hasBlock = function(xy) {
+        return this.existCoords.some(val => {
+            return val.toString() == xy.toString();
+        });
     }
 })();
 
