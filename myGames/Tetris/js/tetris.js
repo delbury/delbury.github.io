@@ -81,26 +81,30 @@ function Tetris() {
         // 定时下落
         this.timer = setInterval(() => {
             this.createBlock(false); // 清除当前位置的图形
-            for(let val of this.dropCoords) {
-                val[1]++; // 纵坐标 +1                
-                if(val[1] >= this.boxSize[1] - 1 || this.isOverlay(val)) {
-                    // 判断是否下落到底部或其它未消除的格子
-                    if(this.timer) {
-                        clearInterval(this.timer); // 停止计时器
-                        this.timer = null; // 清空计时器
-                        this.gameOver(); // 判断游戏是否结束
-                        this.dropCoords.forEach(val => this.existCoords.push(val)); // 保存未消除的格子
-                        this.clearBlock(); // 消除一行或多行格子
-
-                        this.dropNowType.shift(); // 清除当前的下落方块
-                    }             
+            if(!this.isDropStop()) { 
+                // 判断方块是否已经落到底部
+                for(let val of this.dropCoords) {
+                    val[1]++; // 纵坐标 +1                 
                 }
             }
+            else {
+                // 判断是否下落到底部或其它未消除的格子
+                if(this.timer) {
+                    this.createBlock(); // 绘制当前位置的图形
+                    clearInterval(this.timer); // 停止计时器
+                    this.timer = null; // 清空计时器
+                    this.gameOver(); // 判断游戏是否结束
+                    this.dropCoords.forEach(val => this.existCoords.push(val)); // 保存未消除的格子
+                    this.clearBlock(); // 消除一行或多行格子
+
+                    this.dropNowType.shift(); // 清除当前的下落方块
+
+                    return this.dropping();
+                } 
+            }
+            
             this.createBlock(); // 绘制当前位置的图形
 
-            if(!this.timer) {
-                this.dropping(); // 再次开始下落新的方块
-            }
         }, this.speed);
     }
 
@@ -128,6 +132,13 @@ function Tetris() {
             case 6: this.dropCoords = [[0, 0], [1, 0], [0, 1], [1, 1]];break;
             default: break;
         }
+
+        // dropCoords 坐标上移
+        let maxCol = Math.max.apply(Math, [...this.dropCoords].map(val => val[1])) + 1; // 获取一组格子列坐标的最大值
+        this.dropCoords.forEach(val => {
+            val[1] -= maxCol;
+        });
+
         // 初始生成的下落方块居中
         for(let val of this.dropCoords) {
             val[0] += Math.floor(this.boxSize[0] / 2) - 1;
@@ -158,6 +169,14 @@ function Tetris() {
         return false;
     }
 
+    // 判断正在下落的方块的下一格格子是否是底部或者已经存在格子
+    Tetris.prototype.isDropStop = function() {
+        return this.dropCoords.some(val => {
+            // 判断是否碰到其它方块或触底
+            return this.isOverlay(val) || (val[1] + 1 >= this.boxSize[1]);
+        });
+    }
+
     // 随机生成下落方块的类型
     Tetris.prototype.createRandomType = function() {
         // 判断当前是否非空，初始化设置
@@ -182,13 +201,17 @@ function Tetris() {
         // 绘制
         if(act) {
             for(let i = 0; i < this.dropCoords.length; i++) {
-                this.getIndex(this.dropCoords[i]).html('<div class="block"><div>');
+                if(this.dropCoords[i][1] >= 0) {
+                    this.getIndex(this.dropCoords[i]).html('<div class="block"><div>');
+                }
             }
         }
         // 清除
         else {
             for(let i = 0; i < this.dropCoords.length; i++) {
-                this.getIndex(this.dropCoords[i]).html('');
+                if(this.dropCoords[i][1] >= 0) {
+                    this.getIndex(this.dropCoords[i]).html('');
+                }
             }
         }
     }
