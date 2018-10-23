@@ -197,7 +197,20 @@ function Tetris() {
             case 6: this.dropCoords = [[0, 0], [1, 0], [0, 1], [1, 1]];break;
             default: break;
         }
-    
+
+        let [ox, oy] = this.oxy[this.dropNowType[0]]; // 对应类型方块的旋转中心
+
+        // 随机旋转初始方块
+        let random = Math.floor(Math.random() * 4);
+        for(let i = 0; i <= random; i++) {
+            let arr = [];
+            this.dropCoords.forEach((val) => {
+                let [x,y] = val;
+                arr.push([ox-oy+y,oy-x+ox]);
+            })
+            this.dropCoords = arr;
+        }
+
         // dropCoords 坐标上移
         let maxCol = Math.max.apply(Math, [...this.dropCoords].map(val => val[1])) + 1; // 获取一组格子列坐标的最大值
         this.dropCoords.forEach(val => {
@@ -210,7 +223,6 @@ function Tetris() {
         }
 
         // 设置旋转中心
-        let [ox, oy] = this.oxy[this.dropNowType[0]];
         this.dropOriginPoint = [ox + Math.floor(this.boxSize[0] / 2) - 1, oy - maxCol];
 
         this.createRandomType(); // 补充后一个即将落下的方块类型
@@ -251,7 +263,8 @@ function Tetris() {
         // 判断当前是否非空，初始化设置
         if(this.dropNowType.length == 0) {
             if(this.dropNextType.length == 0) {
-                this.dropNowType.push(Math.floor(Math.random() * 7)); // 随机类型
+                // 随机类型
+                this.dropNowType.push(Math.floor(Math.random() * 7));
             }
             else {
                 this.dropNowType.push(this.dropNextType.shift());
@@ -260,8 +273,32 @@ function Tetris() {
 
         // 判断数组是否为空
         while(this.dropNextType.length < 2) {
-            let num = Math.floor(Math.random() * 7); // 随机生成 0~6 的数字
-            this.dropNextType.push(num);
+            // 随机类型
+            let random = Math.floor(Math.random() * 20);
+            let type = null;
+            if(random < 2) {
+                type = 0;
+            }
+            else if(random < 6) {
+                type = 1;
+            }
+            else if(random < 10) {
+                type = 2;
+            }
+            else if(random < 12) {
+                type = 3;
+            }
+            else if(random < 14) {
+                type = 4;
+            }
+            else if(random < 18) {
+                type = 5;
+            }
+            else {
+                type = 6;
+            }
+
+            this.dropNextType.push(type);
         }
     }
 
