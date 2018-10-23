@@ -6,6 +6,8 @@ function Tetris() {
         this.boxSize = []; // 游戏 box 的大小
         this.dropCoords = []; // 记录正在下落的方块的坐标
         this.dropNowType = []; // 记录当前出现的方块类型 0~6
+        this.dropOriginPoint = []; // 当前的旋转中心
+        this.oxy = [[.5, 1.5], [0, 1], [1, 1], [1, 1], [1, 1], [1, 0], [.5, .5]]; // 不同 block 的旋转中心
         this.dropNextType = []; // 记录之后连续两个会出现的方块类型 0~6
         this.timer = null; // 游戏定时器
         this.existCoords = []; // 保存存在未消除格子的 div 坐标
@@ -22,6 +24,7 @@ function Tetris() {
         this.boxSize = [15, 20];
         this.dropCoords = [];
         this.dropNowType = [];
+        this.dropOriginPoint = [];
         this.dropNextType = [];
         this.timer = null;
         this.existCoords = [];
@@ -85,9 +88,12 @@ function Tetris() {
             this.createBlock(false); // 清除当前位置的图形
             if(!this.isDropStop()) { 
                 // 判断方块是否已经落到底部
-                for(let val of this.dropCoords) {
-                    val[1]++; // 纵坐标 +1                 
-                }
+                this.dropCoords.forEach(val => {
+                    val[1]++; // 纵坐标 +1    
+                })
+
+                this.dropOriginPoint[1]++; // 旋转中心下移
+
             }
             else {
                 // 判断是否下落到底部或其它未消除的格子
@@ -125,6 +131,8 @@ function Tetris() {
                 this.dropCoords.forEach(val => {
                     val[1]++;
                 });
+                this.dropOriginPoint[1]++; // 旋转中心坐标更新
+
                 if(this.isDropStop()) {
                     clearInterval(temptimer);
                     temptimer = null;
@@ -144,6 +152,27 @@ function Tetris() {
         }
     }
 
+    // 旋转正在下落的砖块
+    Tetris.prototype.rotateBlocks = function() {
+        this.createBlock(false); // 清空原图
+
+        let [ox, oy] = this.dropOriginPoint;
+        let arr = [];
+        this.dropCoords.forEach((val) => {
+            let [x,y] = val;
+            arr.push([ox-oy+y,oy-x+ox]);
+        })
+
+        // 判断旋转的合法性
+        if(arr.every(val => {
+            return !this.hasBlock(val) && val[0] >= 0 && val[0] <this.boxSize[0];
+        })) {
+            this.dropCoords = arr;
+        }
+
+        this.createBlock(); // 重新绘制
+    }
+
     // 创建一个新的下落方块
     Tetris.prototype.createOneDrop = function() {
         // if(this.dropNowType.length != 0) {
@@ -157,7 +186,7 @@ function Tetris() {
             return;
         }
 
-        // 判断并选择生成对应的方块类型
+        // 判断并选择生成对应的方块类型，前 4 个为对应方块的坐标，最后一位为旋转中心的坐标
         switch(this.dropNowType[0]) {
             case 0: this.dropCoords = [[0, 0], [0, 1], [0, 2], [0, 3]];break;
             case 1: this.dropCoords = [[0, 0], [1, 0], [0, 1], [0, 2]];break;
@@ -168,7 +197,7 @@ function Tetris() {
             case 6: this.dropCoords = [[0, 0], [1, 0], [0, 1], [1, 1]];break;
             default: break;
         }
-
+    
         // dropCoords 坐标上移
         let maxCol = Math.max.apply(Math, [...this.dropCoords].map(val => val[1])) + 1; // 获取一组格子列坐标的最大值
         this.dropCoords.forEach(val => {
@@ -179,6 +208,10 @@ function Tetris() {
         for(let val of this.dropCoords) {
             val[0] += Math.floor(this.boxSize[0] / 2) - 1;
         }
+
+        // 设置旋转中心
+        let [ox, oy] = this.oxy[this.dropNowType[0]];
+        this.dropOriginPoint = [ox + Math.floor(this.boxSize[0] / 2) - 1, oy - maxCol];
 
         this.createRandomType(); // 补充后一个即将落下的方块类型
     }
@@ -264,33 +297,45 @@ function Tetris() {
     Tetris.prototype.setControls = function() { 
         $(document).on('keydown', ev => {
             ev = ev || window.event;
-            let temp = [];
-            // 判断位移后坐标值是否合法
-            if(this.dropCoords.every(val => {
-                let [x, y] = val; // 记录当前各个方块的坐标值
-                switch(ev.keyCode) {
-                    case 37: x--; break;
-                    case 39: x++; break;
-                    default: break;
-                }
-                temp.push([x , y]); // 暂存可能位移后的坐标值
-                return (x >= 0 && x < this.boxSize[0]) && !this.hasBlock([x, y]);
-            })){
-                // 若合法则进行位移
-                this.createBlock(false);
-                this.dropCoords.forEach((val, index) => {
-                    val[0] = temp[index][0];
-                    val[1] = temp[index][1];
-                });
-                this.createBlock();
-                
-            }
+            if(ev.keyCode >= 37 && ev.keyCode <=40) {            
+                let temp = [];
+                // 判断位移后坐标值是否合法
+                if(this.dropCoords.every(val => {
+                    let [x, y] = val; // 记录当前各个方块的坐标值
+                    switch(ev.keyCode) {
+                        case 37: x--; break;
+                        case 39: x++; break;
+                        default: break;
+                    }
+                    temp.push([x , y]); // 暂存可能位移后的坐标值
+                    return (x >= 0 && x < this.boxSize[0]) && !this.hasBlock([x, y]);
+                })){
+                    // 若合法则进行位移
+                    this.createBlock(false);
+                    this.dropCoords = temp;
+                    this.createBlock();
 
-            if(ev.keyCode == 40) {
-                if(!this.isquickdropping) {
-                    this.quickDrop();
-                    return; // 完成后继续下一轮
-                }  
+                    // 旋转中心更新
+                    switch(ev.keyCode) {
+                        case 37: this.dropOriginPoint[0]--; break;
+                        case 39: this.dropOriginPoint[0]++; break;
+                        default: break;
+                    }
+                }
+
+                // 快速下落
+                if(ev.keyCode == 40) {
+                    if(!this.isquickdropping) {
+                        this.quickDrop();
+                        return; // 完成后继续下一轮
+                    }  
+                }
+
+                // 逆时针旋转
+                if(ev.keyCode == 38) {
+                    this.rotateBlocks();
+                }
+                ev.preventDefault(); // 阻止默认行为            
             }
         })
     }
