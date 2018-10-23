@@ -10,6 +10,7 @@ function Tetris() {
         this.timer = null; // 游戏定时器
         this.existCoords = []; // 保存存在未消除格子的 div 坐标
         this.speed = null; // 游戏速度
+        this.isquickdropping = false; // 快速下落标志
 
         return this.gameInit();
     }
@@ -25,6 +26,7 @@ function Tetris() {
         this.timer = null;
         this.existCoords = [];
         this.speed = 200;
+        this.isquickdropping = false;
 
         this.createBoxDiv(); // 背景初始化
         this.createSidebar(); // 侧边栏初始化
@@ -106,6 +108,40 @@ function Tetris() {
             this.createBlock(); // 绘制当前位置的图形
 
         }, this.speed);
+    }
+
+    // 快速下落
+    Tetris.prototype.quickDrop = function() {
+        if(!this.isDropStop()) {
+            this.isquickdropping = true;
+            // 暂停原下落动作
+            clearInterval(this.timer);
+            this.timer = null;
+
+            // 加速下落
+            let temptimer = setInterval(() => {
+
+                this.createBlock(false); // 清除原 block
+                this.dropCoords.forEach(val => {
+                    val[1]++;
+                });
+                if(this.isDropStop()) {
+                    clearInterval(temptimer);
+                    temptimer = null;
+
+                    // 保存数组
+                    this.createBlock(); // 绘制移动后的 block
+                    this.gameOver(); // 判断游戏是否结束
+                    this.dropCoords.forEach(val => this.existCoords.push(val)); // 保存未消除的格子
+                    this.clearBlock(); // 消除一行或多行格子
+                    this.dropNowType.shift(); // 清除当前的下落方块
+                    this.isquickdropping = false; // 初始化标志位
+                    return this.dropping();
+                }
+
+                this.createBlock(); // 绘制移动后的 block
+            }, 10);
+        }
     }
 
     // 创建一个新的下落方块
@@ -235,7 +271,6 @@ function Tetris() {
                 switch(ev.keyCode) {
                     case 37: x--; break;
                     case 39: x++; break;
-                    case 40: break;
                     default: break;
                 }
                 temp.push([x , y]); // 暂存可能位移后的坐标值
@@ -243,8 +278,19 @@ function Tetris() {
             })){
                 // 若合法则进行位移
                 this.createBlock(false);
-                this.dropCoords = temp;
+                this.dropCoords.forEach((val, index) => {
+                    val[0] = temp[index][0];
+                    val[1] = temp[index][1];
+                });
                 this.createBlock();
+                
+            }
+
+            if(ev.keyCode == 40) {
+                if(!this.isquickdropping) {
+                    this.quickDrop();
+                    return; // 完成后继续下一轮
+                }  
             }
         })
     }
