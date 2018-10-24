@@ -101,7 +101,12 @@ function Tetris() {
                     this.createBlock(); // 绘制当前位置的图形
                     clearInterval(this.timer); // 停止计时器
                     this.timer = null; // 清空计时器
-                    this.gameOver(); // 判断游戏是否结束
+
+                    if(this.isGameOver()) {
+                        // 判断游戏是否结束
+                        console.log('game over');
+                        return;
+                    }
                     this.dropCoords.forEach(val => this.existCoords.push(val)); // 保存未消除的格子
                     this.clearBlock(); // 消除一行或多行格子
 
@@ -139,7 +144,11 @@ function Tetris() {
 
                     // 保存数组
                     this.createBlock(); // 绘制移动后的 block
-                    this.gameOver(); // 判断游戏是否结束
+
+                    if(this.isGameOver()) {
+                        // 判断游戏是否结束
+                        return;
+                    }
                     this.dropCoords.forEach(val => this.existCoords.push(val)); // 保存未消除的格子
                     this.clearBlock(); // 消除一行或多行格子
                     this.dropNowType.shift(); // 清除当前的下落方块
@@ -234,8 +243,8 @@ function Tetris() {
     }
 
     // 判断是否游戏结束，并执行
-    Tetris.prototype.gameOver = function() {
-        ;
+    Tetris.prototype.isGameOver = function() {
+        return this.dropCoords.some(val => val[1] < 0);
     }
 
     // 判断是否碰撞到其它未消除的格子
