@@ -105,11 +105,11 @@ function Tetris() {
                     if(this.isGameOver()) {
                         // 判断游戏是否结束
                         console.log('game over');
+                        this.gameOver();
                         return;
                     }
                     this.dropCoords.forEach(val => this.existCoords.push(val)); // 保存未消除的格子
-                    this.clearBlock(); // 消除一行或多行格子
-
+                    this.clearBlock(this.dropCoords); // 消除一行或多行格子
                     this.dropNowType.shift(); // 清除当前的下落方块
 
                     return this.dropping();
@@ -131,7 +131,6 @@ function Tetris() {
 
             // 加速下落
             let temptimer = setInterval(() => {
-
                 this.createBlock(false); // 清除原 block
                 this.dropCoords.forEach(val => {
                     val[1]++;
@@ -139,19 +138,19 @@ function Tetris() {
                 this.dropOriginPoint[1]++; // 旋转中心坐标更新
 
                 if(this.isDropStop()) {
+                    this.createBlock(); // 绘制移动后的 block
                     clearInterval(temptimer);
                     temptimer = null;
-
                     // 保存数组
-                    this.createBlock(); // 绘制移动后的 block
-
                     if(this.isGameOver()) {
                         // 判断游戏是否结束
+                        this.gameOver();
                         return;
                     }
                     this.dropCoords.forEach(val => this.existCoords.push(val)); // 保存未消除的格子
-                    this.clearBlock(); // 消除一行或多行格子
+                    this.clearBlock(this.dropCoords); // 消除一行或多行格子
                     this.dropNowType.shift(); // 清除当前的下落方块
+
                     this.isquickdropping = false; // 初始化标志位
                     return this.dropping();
                 }
@@ -237,14 +236,80 @@ function Tetris() {
         this.createRandomType(); // 补充后一个即将落下的方块类型
     }
 
+    // 计算当前行下是否已经占满了格子
+    Tetris.prototype.isFullRow = function(row) {
+        let count = 0;
+        this.existCoords.forEach(val => {
+            if(val[1] == row) {
+                count++;
+            }
+        });
+        return count == this.boxSize[0];
+    }
+
     // 判断并消除一行或多行格子
-    Tetris.prototype.clearBlock = function() {
+    Tetris.prototype.clearBlock = function(arr) {
+        let rows = [];
+        let minrows = [];
+        // 获取最后停止状态下，格子所占的为第几行
+        for(let i of arr) {
+            // 筛选重复的值
+            if(!rows.includes(i[1])) {
+                rows.push(i[1]);
+            }
+        }
+
+        if(rows.length != 0) {
+            // 清空所有已经下落的方块
+            this.existCoords.forEach(val => {
+                this.getIndex(val).html('');
+            });
+
+            let clearrows = 0; // 记录清除的行数
+            for(let i of rows) {
+                // 消除满行的数据
+                if(this.isFullRow(i)) {
+                    minrows.push(i);
+                    // 去除需要消除的格子
+                    this.existCoords = this.existCoords.filter(val => {
+                        return val[1] != i;
+                    });
+
+                    clearrows++; // 已清除的行数 +1
+                }
+            }
+
+            // 上方的格子下移
+            this.existCoords = this.existCoords.map(val => {
+                if(val[1] < Math.min.apply(Math, minrows)) {
+                    return [val[0], val[1] + clearrows];
+                }
+                else {
+                    return val;
+                }
+            });
+
+            // 重新绘制
+            this.existCoords.forEach(val => {
+                this.getIndex(val).html('<div class="block"><div>');
+            });
+        }
+        
+    }
+
+    // 重亲绘制已经下落的方块
+    Tetris.prototype.updateDroppedBlocks = function() {
         ;
     }
 
     // 判断是否游戏结束，并执行
     Tetris.prototype.isGameOver = function() {
         return this.dropCoords.some(val => val[1] < 0);
+    }
+
+    // 游戏结束
+    Tetris.prototype.gameOver = function() {
+        ;
     }
 
     // 判断是否碰撞到其它未消除的格子
