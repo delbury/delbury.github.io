@@ -34,21 +34,20 @@ body {
     margin: 15px auto;
     border: 5px solid #555;
     vertical-align: top;
+}
+.game-box-div {
+    .div();
+    position: relative;
+    border: 1px dotted #eee;
+}
 
-    .game-box-div {
-        .div();
-        position: relative;
-        border: 1px dotted #eee;
-    }
-
-    .block {
-        .div();
-        position: absolute;
-        top: -1px;
-        left: -1px;
-        border: 1px solid #777;
-        background-color: #aaa;
-    }
+.block {
+    .div();
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    border: 1px solid #777;
+    background-color: #aaa;
 }
 /************ end-背景的样式 ***************/
 /************ 侧边栏的样式 ***************/
@@ -56,11 +55,34 @@ body {
     position: relative;
     display: inline-block;
     margin: 15px auto;
-    width: 5 * @onepx;
+    width: 6 * @onepx;
     height: 10 * @onepx;
     border: 5px solid #555;
     border-left: 0;
     vertical-align: top;
+}
+.preview {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+}
+.scores {
+    display: flex;
+    flex-direction: column;
+    height: 4 * @onepx;
+    // border-bottom: 1px solid #000;
+
+    p {
+        padding: 0 15px;
+        height: 2 * @onepx;
+        border-bottom: 1px dotted #666;
+        line-height: 2 * @onepx;
+        text-align: left;
+
+        span {
+            float: right;
+        }
+    }
 }
 /************ end-侧边栏的样式 ***************/
 

@@ -19,7 +19,7 @@ body {
   border: 5px solid #555;
   vertical-align: top;
 }
-.game-box .game-box-div {
+.game-box-div {
   box-sizing: border-box;
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
@@ -30,7 +30,7 @@ body {
   position: relative;
   border: 1px dotted #eee;
 }
-.game-box .block {
+.block {
   box-sizing: border-box;
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
@@ -50,11 +50,31 @@ body {
   position: relative;
   display: inline-block;
   margin: 15px auto;
-  width: 125px;
+  width: 150px;
   height: 250px;
   border: 5px solid #555;
   border-left: 0;
   vertical-align: top;
+}
+.preview {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+.scores {
+  display: flex;
+  flex-direction: column;
+  height: 100px;
+}
+.scores p {
+  padding: 0 15px;
+  height: 50px;
+  border-bottom: 1px dotted #666;
+  line-height: 50px;
+  text-align: left;
+}
+.scores p span {
+  float: right;
 }
 /************ end-侧边栏的样式 ***************/
 /************ 结束画面的样式 ***************/

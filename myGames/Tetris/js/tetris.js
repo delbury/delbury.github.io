@@ -6,9 +6,11 @@ function Tetris() {
         this.boxSize = []; // 游戏 box 的大小
         this.dropCoords = []; // 记录正在下落的方块的坐标
         this.dropNowType = []; // 记录当前出现的方块类型 0~6
+        this.dropNowTypeRotate = []; // 记录当前方块旋转次数
         this.dropOriginPoint = []; // 当前的旋转中心
         this.oxy = [[.5, 1.5], [0, 1], [1, 1], [1, 1], [1, 1], [1, 0], [.5, .5]]; // 不同 block 的旋转中心
         this.dropNextType = []; // 记录之后连续两个会出现的方块类型 0~6
+        this.dropNextTypeRotate = []; // 记录之后连续两个会出现的方块旋转次数
         this.timer = null; // 游戏定时器
         this.existCoords = []; // 保存存在未消除格子的 div 坐标
         this.speed = null; // 游戏速度
@@ -24,8 +26,10 @@ function Tetris() {
         this.boxSize = [15, 20];
         this.dropCoords = [];
         this.dropNowType = [];
+        this.dropNowTypeRotate = [];
         this.dropOriginPoint = [];
         this.dropNextType = [];
+        this.dropNextTypeRotate = [];
         this.timer = null;
         this.existCoords = [];
         this.speed = 200;
@@ -62,7 +66,24 @@ function Tetris() {
     // 创建侧边栏：展示分数、预览下一个方块等信息
     Tetris.prototype.createSidebar = function() {
         let sidebar = $('<div class="sidebar"></div>');
+        let scores = $(`<div class="scores"></div>`); // 展示分数等信息
+        let preview = $('<div class="preview"></div>'); // 展示预览方块
 
+        scores.html(`
+        <p>Scores: <span>233</span></p>
+        <p>Level: <span>666</span></p>
+        `);
+        // 创建预览界面
+        for(let i = 0; i < 6; i++) {
+            for(let j = 0; j < 6; j++) {
+                let div = $('<div class="game-box-div"></div>');
+                preview.append(div);
+            }
+            preview.append($('<div class="clear"></div>'));
+        }
+
+        sidebar.append(scores)
+        sidebar.append(preview);
         $('#app').append(sidebar);
     }
 
@@ -111,6 +132,7 @@ function Tetris() {
                     this.dropCoords.forEach(val => this.existCoords.push(val)); // 保存未消除的格子
                     this.clearBlock(this.dropCoords); // 消除一行或多行格子
                     this.dropNowType.shift(); // 清除当前的下落方块
+                    this.dropNowTypeRotate.shift(); // 清除当前方块的初始旋转次数
 
                     return this.dropping();
                 } 
@@ -150,6 +172,7 @@ function Tetris() {
                     this.dropCoords.forEach(val => this.existCoords.push(val)); // 保存未消除的格子
                     this.clearBlock(this.dropCoords); // 消除一行或多行格子
                     this.dropNowType.shift(); // 清除当前的下落方块
+                    this.dropNowTypeRotate.shift(); // 清除当前方块的初始旋转次数
 
                     this.isquickdropping = false; // 初始化标志位
                     return this.dropping();
@@ -158,6 +181,7 @@ function Tetris() {
                 this.createBlock(); // 绘制移动后的 block
             }, 10);
         }
+        console.log(this.dropNowTypeRotate,this.dropNextTypeRotate)
     }
 
     // 旋转正在下落的砖块
@@ -209,8 +233,8 @@ function Tetris() {
         let [ox, oy] = this.oxy[this.dropNowType[0]]; // 对应类型方块的旋转中心
 
         // 随机旋转初始方块
-        let random = Math.floor(Math.random() * 4);
-        for(let i = 0; i <= random; i++) {
+        // let random = Math.floor(Math.random() * 4);
+        for(let i = 0; i <= this.dropNowTypeRotate; i++) {
             let arr = [];
             this.dropCoords.forEach((val) => {
                 let [x,y] = val;
@@ -218,6 +242,8 @@ function Tetris() {
             })
             this.dropCoords = arr;
         }
+
+
 
         // dropCoords 坐标上移
         let maxCol = Math.max.apply(Math, [...this.dropCoords].map(val => val[1])) + 1; // 获取一组格子列坐标的最大值
@@ -339,9 +365,14 @@ function Tetris() {
             if(this.dropNextType.length == 0) {
                 // 随机类型
                 this.dropNowType.push(Math.floor(Math.random() * 7));
+                this.dropNowTypeRotate.push(Math.floor(Math.random() * 4))
             }
             else {
+                // 当前的方块类型被队列中的下一个替代
                 this.dropNowType.push(this.dropNextType.shift());
+
+                // 旋转次数相应更新
+                this.dropNowTypeRotate.push(this.dropNextTypeRotate.shift());
             }
         }
 
@@ -373,6 +404,7 @@ function Tetris() {
             }
 
             this.dropNextType.push(type);
+            this.dropNextTypeRotate.push(Math.floor(Math.random() * 4)); // 随机旋转次数
         }
     }
 
