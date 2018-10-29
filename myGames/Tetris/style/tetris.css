@@ -72,6 +72,8 @@ body {
   border-bottom: 1px dotted #666;
   line-height: 50px;
   text-align: left;
+  font-family: Courier;
+  font-weight: bold;
 }
 .scores p span {
   float: right;
