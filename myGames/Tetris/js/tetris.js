@@ -3,7 +3,7 @@ window.onload = function() {
 };
 
 function Tetris() {
-        this.boxSize = []; // 游戏 box 的大小
+        this.boxSize = [15, 20]; // 游戏 box 的大小
         this.dropCoords = []; // 记录正在下落的方块的坐标
         this.dropNowType = []; // 记录当前出现的方块类型 0~6
         this.dropNowTypeRotate = []; // 记录当前方块旋转次数
@@ -15,6 +15,19 @@ function Tetris() {
         this.existCoords = []; // 保存存在未消除格子的 div 坐标
         this.speed = null; // 游戏速度
         this.isquickdropping = false; // 快速下落标志
+        this.scores = null; // 记录分数
+        this.levels = null; // 记录等级，影响方块下落速度
+        this.previewBoxSize = [6, 6]; // 预览区的盒子大小
+        this.previewOriginalCoords = [
+            [[2, 1], [2, 2], [2, 3], [2, 4]],
+            [[2, 1], [3, 1], [2, 2], [2, 3]],
+            [[2, 1], [3, 1], [3, 2], [3, 3]],
+            [[2, 2], [3, 2], [3, 3], [4, 3]],
+            [[3, 2], [4, 2], [2, 3], [3, 3]],
+            [[2, 2], [3, 2], [4, 2], [3, 3]],
+            [[2, 2], [3, 2], [2, 3], [3, 3]],
+        ]; // 预览区中的各个方块的初始坐标，按 type 0 ~ 6 排列
+        this.previewOriginalxy = [2.5, 2.5]; // 预览区中的各个方块的旋转中心
 
         return this.gameInit();
     }
@@ -22,8 +35,9 @@ function Tetris() {
 (function() {
     // 游戏初始化
     Tetris.prototype.gameInit = function() {
+        $('#app').html(''); // 清空原游戏界面
+        $(document).off('keydown');
         // 参数初始化
-        this.boxSize = [15, 20];
         this.dropCoords = [];
         this.dropNowType = [];
         this.dropNowTypeRotate = [];
@@ -32,8 +46,10 @@ function Tetris() {
         this.dropNextTypeRotate = [];
         this.timer = null;
         this.existCoords = [];
-        this.speed = 200;
+        this.speed = 500;
         this.isquickdropping = false;
+        this.scores = 0;
+        this.levels = 1;
 
         this.createBoxDiv(); // 背景初始化
         this.createSidebar(); // 侧边栏初始化
@@ -70,12 +86,12 @@ function Tetris() {
         let preview = $('<div class="preview"></div>'); // 展示预览方块
 
         scores.html(`
-        <p>Scores: <span>233</span></p>
-        <p>Level: <span>666</span></p>
+        <p>Scores: <span>0</span></p>
+        <p>Level: <span>1</span></p>
         `);
         // 创建预览界面
-        for(let i = 0; i < 6; i++) {
-            for(let j = 0; j < 6; j++) {
+        for(let i = 0; i < this.previewBoxSize[0]; i++) {
+            for(let j = 0; j < this.previewBoxSize[1]; j++) {
                 let div = $('<div class="game-box-div"></div>');
                 preview.append(div);
             }
@@ -125,11 +141,11 @@ function Tetris() {
 
                     if(this.isGameOver()) {
                         // 判断游戏是否结束
-                        console.log('game over');
                         this.gameOver();
                         return;
                     }
                     this.dropCoords.forEach(val => this.existCoords.push(val)); // 保存未消除的格子
+                    this.scores += 4; // 基本分 +4
                     this.clearBlock(this.dropCoords); // 消除一行或多行格子
                     this.dropNowType.shift(); // 清除当前的下落方块
                     this.dropNowTypeRotate.shift(); // 清除当前方块的初始旋转次数
@@ -170,6 +186,7 @@ function Tetris() {
                         return;
                     }
                     this.dropCoords.forEach(val => this.existCoords.push(val)); // 保存未消除的格子
+                    this.scores += 4; // 基本分 +4
                     this.clearBlock(this.dropCoords); // 消除一行或多行格子
                     this.dropNowType.shift(); // 清除当前的下落方块
                     this.dropNowTypeRotate.shift(); // 清除当前方块的初始旋转次数
@@ -181,7 +198,6 @@ function Tetris() {
                 this.createBlock(); // 绘制移动后的 block
             }, 10);
         }
-        console.log(this.dropNowTypeRotate,this.dropNextTypeRotate)
     }
 
     // 旋转正在下落的砖块
@@ -207,10 +223,6 @@ function Tetris() {
 
     // 创建一个新的下落方块
     Tetris.prototype.createOneDrop = function() {
-        // if(this.dropNowType.length != 0) {
-        //     this.dropNowType.shift();
-        // }
-
         this.createRandomType(); // 创建随机队列
 
         // 判断是否为空
@@ -234,7 +246,7 @@ function Tetris() {
 
         // 随机旋转初始方块
         // let random = Math.floor(Math.random() * 4);
-        for(let i = 0; i <= this.dropNowTypeRotate; i++) {
+        for(let i = 0; i < this.dropNowTypeRotate; i++) {
             let arr = [];
             this.dropCoords.forEach((val) => {
                 let [x,y] = val;
@@ -260,6 +272,7 @@ function Tetris() {
         this.dropOriginPoint = [ox + Math.floor(this.boxSize[0] / 2) - 1, oy - maxCol];
 
         this.createRandomType(); // 补充后一个即将落下的方块类型
+        this.createPreviewBlocks(); // 更新下一个方块的预览图
     }
 
     // 计算当前行下是否已经占满了格子
@@ -305,6 +318,16 @@ function Tetris() {
                 }
             }
 
+            // 根据一次消除的行数加分
+            switch(clearrows) {
+                case 1: this.scores += 1 * this.boxSize[0] + 2 ** 1; break;
+                case 2: this.scores += 2 * this.boxSize[0] + 2 ** 2; break;
+                case 3: this.scores += 3 * this.boxSize[0] + 2 ** 3; break;
+                case 4: this.scores += 4 * this.boxSize[0] + 2 ** 4; break;
+                default: break;
+            }
+            this.updateScores(); // 更新游戏分数
+
             // 上方的格子下移
             this.existCoords = this.existCoords.map(val => {
                 if(val[1] < Math.min.apply(Math, minrows)) {
@@ -323,9 +346,39 @@ function Tetris() {
         
     }
 
-    // 重亲绘制已经下落的方块
-    Tetris.prototype.updateDroppedBlocks = function() {
-        ;
+    // 绘制下一个方块的预览图
+    Tetris.prototype.createPreviewBlocks = function() {
+        let divs = $('.sidebar .preview .game-box-div').html(''); // 清空预览图
+        let [ox, oy] = this.previewOriginalxy;
+        let nextBlock = [...this.previewOriginalCoords[this.dropNextType[0]]]; // 复制下一个方块的预览坐标
+
+        // 旋转
+        for(let i = 0; i < this.dropNextTypeRotate[0]; i++) {
+            let arr = [];
+            // 计算旋转后的坐标
+            nextBlock.forEach((val) => {
+                let [x,y] = val;
+                arr.push([ox-oy+y,oy-x+ox]);
+            })
+            nextBlock = arr;
+        }
+
+        // 绘图
+        nextBlock.forEach(val => {
+            divs.eq(val[0] + val[1] * this.previewBoxSize[0]).html('<div class="block"><div>')
+        });
+    }
+
+    // 更新游戏分数和下落速度等级
+    Tetris.prototype.updateScores = function() {
+        let msg = $('.scores p span');
+        msg.eq(0).html(this.scores); // 更新分数显示
+
+        if(this.scores >= 50 * this.levels && this.levels < 9) {
+            this.levels++; // 级别增加
+            this.speed -= 50; // 减少定时器间隔，加快下落速度
+            msg.eq(1).html(this.levels); // 更新级别显示
+        }
     }
 
     // 判断是否游戏结束，并执行
@@ -335,7 +388,31 @@ function Tetris() {
 
     // 游戏结束
     Tetris.prototype.gameOver = function() {
-        ;
+        console.log('game over');
+        let boxHeight = $('.game-box').innerHeight(); // game box 的高度
+        let boxWidth = $('.game-box').innerWidth(); // game box 的宽度
+        let setHeight = boxHeight * .75; // 弹出框的高度
+        let setWidth = boxWidth * .75; // 弹出框的宽度
+        let over = $('<div class="game-over"></div>');
+
+        // 将弹出框设置居中
+        over.css({
+            'height': setHeight + 'px',
+            'width': setWidth + 'px',
+            'top': (boxHeight - setHeight) / 2 + 'px',
+            'left': (boxWidth - setWidth) / 2 + 'px',
+        });
+
+        // 创建弹出框的内容
+        let re = $('<a href="javascript: void(0);">Restart the game</a>');
+        let score = $(`<p>Your score is : ${this.scores}</p>`);
+        // 重开游戏
+        re.on('click', () => {
+            this.gameInit();
+        })
+
+        over.html('<h1>Game Over</h1>').append(score, re);
+        $('.game-box').append(over); 
     }
 
     // 判断是否碰撞到其它未消除的格子
@@ -440,7 +517,9 @@ function Tetris() {
     Tetris.prototype.setControls = function() { 
         $(document).on('keydown', ev => {
             ev = ev || window.event;
-            if(ev.keyCode >= 37 && ev.keyCode <=40) {            
+            if(ev.keyCode >= 37 && ev.keyCode <=40) {
+                ev.preventDefault(); // 阻止默认行为            
+
                 let temp = [];
                 // 判断位移后坐标值是否合法
                 if(this.dropCoords.every(val => {
@@ -478,7 +557,6 @@ function Tetris() {
                 if(ev.keyCode == 38) {
                     this.rotateBlocks();
                 }
-                ev.preventDefault(); // 阻止默认行为            
             }
         })
     }
