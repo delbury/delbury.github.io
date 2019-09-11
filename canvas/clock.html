@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    .box {
+      position: relative;
+      margin: 0 auto;
+      width: 640px;
+      height: 640px;
+    }
+    #background {
+      position: absolute;
+      z-index: 0;
+      /* background-color: greenyellow; */
+    }
+    #hour {
+      position: absolute;
+      z-index: 3;
+    }
+    #minute {
+      position: absolute;
+      z-index: 2;
+    }
+    #second {
+      position: absolute;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <canvas id="background" width="640" height="640"></canvas>
+    <canvas id="hour" width="640" height="640"></canvas>
+    <canvas id="minute" width="640" height="640"></canvas>
+    <canvas id="second" width="640" height="640"></canvas>
+  </div>
+  <script src="./js/canvas.utils.js"></script>
+  <script>
+    const CENTER = [320, 320];
+    const PI = Math.PI;
+    let currentTime = getDegrees();
+    function getDegrees() {
+      const time = new Date();
+      const h = time.getHours();
+      const m = time.getMinutes();
+      const s = time.getSeconds();
+      const hd = (h % 12) * 30 + 30 * (m / 60 + s / 3600);
+      const md = m * 6 + 6 * s / 60;
+      const sd = s * 6;
+
+      return { hd, md, sd };
+    }
+    (function() {
+      const canvas = document.getElementById('background');
+      ctx = canvas.getContext('2d')
+      ctx.lineCap = 'round';
+      ctx.fillStyle = 'greenyellow';
+      ctx.lineWidth = '2';
+      ctx.strokeStyle = '#333';
+
+      // 外框
+      ctx.arc(...CENTER, 320, 0, PI * 2);
+      ctx.clip();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(...CENTER, 300, 0, PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(...CENTER, 5, 0, PI * 2);
+      // ctx.stroke();
+      ctx.fillStyle = '#999';
+      ctx.fill();
+
+      // 粗刻度线
+      ctx.lineWidth = '4';
+      for (let i = 0; i < 12; i++) {
+        ctx.save();
+        ctx.beginPath();
+        window.utils.rotateByCenter(ctx, ...CENTER, 30 * i);
+        ctx.moveTo(320, 40);
+        ctx.lineTo(320, 80);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 细刻度线
+      ctx.lineWidth = '1';
+      for (let i = 0; i < 60; i++) {
+        if (i % 5 !== 0) {
+          ctx.save();
+          ctx.beginPath();
+          window.utils.rotateByCenter(ctx, ...CENTER, 6 * i);
+          ctx.moveTo(320, 40);
+          ctx.lineTo(320, 60);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    })();
+
+    // 时针
+    const canvash = document.getElementById('hour');
+    const ctxh = canvash.getContext('2d');
+
+    // 指针
+    ctxh.fillStyle = '#993333';
+    ctxh.strokStyle = '#333';
+    spaningh(ctxh, currentTime.hd);
+
+    function spaningh(ctx, degree) {
+      ctxh.fillStyle = '#993333';
+      ctx.clearRect(0, 0, 640, 640);
+      ctx.save();
+      ctx.beginPath();
+      window.utils.rotateByCenter(ctx, ...CENTER, degree);
+      ctx.moveTo(320, 340);
+      ctx.lineTo(310, 330);
+      ctx.lineTo(320, 200);
+      ctx.lineTo(330, 330);
+      ctx.closePath();
+      // ctx.stroke();
+      ctx.fill();
+      // ctx.restore();
+
+      // ctxh.save();
+      ctxh.beginPath();
+      ctxh.arc(...CENTER, 10, 0, PI * 2);
+      ctxh.fillStyle = '#333';
+      ctxh.fill();
+      ctxh.restore();
+    }
+
+    // 分针
+    const canvasm = document.getElementById('minute');
+    const ctxm = canvasm.getContext('2d');
+
+    // 指针
+    ctxm.fillStyle = '#006666';
+    ctxm.strokStyle = '#333';
+    spaningm(ctxm, currentTime.md);
+    
+    function spaningm(ctx, degree) {
+      ctx.clearRect(0, 0, 640, 640);
+      ctx.save();
+      ctx.beginPath();
+      window.utils.rotateByCenter(ctx, ...CENTER, degree);
+      ctx.moveTo(320, 340);
+      ctx.lineTo(310, 330);
+      ctx.lineTo(320, 140);
+      ctx.lineTo(330, 330);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 秒针
+    const canvass = document.getElementById('second');
+    const ctxs = canvass.getContext('2d');
+
+    // 指针
+    ctxs.fillStyle = '#CC9909';
+    ctxs.strokStyle = '#333';
+    spanings(ctxs, currentTime.sd);
+    
+    function spanings(ctx, degree) {
+      ctx.clearRect(0, 0, 640, 640);
+      ctx.save();
+      ctx.beginPath();
+      window.utils.rotateByCenter(ctx, ...CENTER, degree);
+      ctx.moveTo(320, 340);
+      ctx.lineTo(310, 330);
+      ctx.lineTo(320, 100);
+      ctx.lineTo(330, 330);
+      ctx.closePath();
+      // ctx.stroke();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    window.onload = function() {
+      window.setInterval(() => {
+        currentTime = getDegrees();
+        spaningh(ctxh, currentTime.hd);
+        spaningm(ctxm, currentTime.md);
+        spanings(ctxs, currentTime.sd);
+      }, 1000);
+    }
+  </script>
+</body>
+</html>

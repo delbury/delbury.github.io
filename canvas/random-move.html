@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    html {
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // const worker = new Worker('./works/random-move.js');
+    const worker = new Worker('./works/random-trip.js');
+    worker.onmessage = ev => {
+      const data = ev.data;
+      ctx.drawImage(data, 0, 0);
+    }
+    worker.postMessage({
+      type: 0,
+      data: { width: canvas.width, height: canvas.height }
+    });
+
+    canvas.onmousemove = ev => {
+      const { offsetX, offsetY } = ev;
+      worker.postMessage({
+        type: 1,
+        data: { offsetX, offsetY }
+      });
+    }
+    canvas.onmouseleave = ev => {
+      worker.postMessage({
+        type: 2,
+      });
+    }
+    // const particles = [];
+    // const particleNum = 200;
+    // class Particle {
+    //   constructor(props) {
+    //     this.x = Math.random() * canvas.width;
+    //     this.y = Math.random() * canvas.height;
+    //     this.vx = Math.random() * 4 - 2;
+    //     this.vy = Math.random() * 4 - 2;
+    //     this.speedLevel = Math.random() + 0.5;
+    //     this.speedTotal = Math.floor((Math.random() + 1) * 200);
+    //     this.speedCount = 0;
+    //     this.size = Math.random() * 2;
+    //     this.color = '#' + (Math.random() * 0xffffff << 0).toString(16);
+    //     this.dv = 0;
+    //   }
+
+    //   move() {
+    //     this.speedCtrlSin();
+    //     this.x += (this.vx + this.dv) * this.speedLevel;
+    //     this.y += (this.vy + this.dv) * this.speedLevel;
+    //     if(this.x < 0 || this.x > canvas.width) {
+    //       this.vx = -this.vx;
+    //     }
+    //     if(this.y < 0 || this.y > canvas.height) {
+    //       this.vy = -this.vy;
+    //     }
+    //   }
+
+    //   draw() {
+    //     this.move();
+    //     ctx.beginPath();
+    //     ctx.fillStyle = this.color;
+    //     ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    //     ctx.fill();
+    //   }
+
+    //   speedCtrlSin() {
+    //     const rad = this.speedCount / this.speedTotal * Math.PI * 2;
+    //     this.dv = Math.sin(rad);
+    //     this.speedCount++;
+    //     if(this.speedCount > this.speedTotal) {
+    //       this.speedCount = 0;
+    //     }
+    //   }
+    // }
+    // function animateFrame() {
+    //   ctx.fillStyle = '#000000';
+    //   ctx.fillRect(0, 0, canvas.width, canvas.height);
+    //   for(let item of particles) {
+    //     item.draw();
+    //   }
+    //   return requestAnimationFrame(animateFrame);
+    // }
+    // function initEffect() {
+    //   for(let i = 0; i < particleNum; i++) {
+    //     particles.push(new Particle());
+    //   }
+    // }
+
+    // initEffect();
+    // animateFrame();
+  </script>
+</body>
+</html>

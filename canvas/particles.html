@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>粒子</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    html {
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    let particleIndex = 0,
+        particles = {},
+        particleNum = 0.2,
+        center = [undefined, undefined];
+
+    canvas.onclick = ev => {
+      const { offsetX, offsetY } = ev;
+      center = [offsetX, offsetY];
+    }
+
+    class Particle {
+      constructor(ox = canvas.width / 2, oy = canvas.height / 2) {
+        // this.x = canvas.width / 2;
+        // this.y = canvas.height / 2;
+        this.x = ox;
+        this.y = oy;
+        this.speed = 1;
+        this.dir = Math.random() > 0.5 ? 1 : -1;
+        this.vx = (Math.random() * 6 - 3) * this.speed;
+        this.vy = (Math.random() * 4 - 2) * this.speed;
+        this.growth = (Math.abs(this.vx) + Math.abs(this.vy)) * 0.007;
+        particleIndex++;
+        particles[particleIndex] = this;
+        this.id = particleIndex;
+        this.size = Math.random() * 2;
+        this.color = getColor();
+      }
+
+      draw() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.size += this.growth * this.dir;
+        if(this.size <= 0) {
+          delete particles[this.id];
+          return;
+        }
+        if(this.x - this.size > canvas.width || this.y - this.size > canvas.height || this.x + this.size < 0 || this.y + this.size < 0) {
+          delete particles[this.id];
+        }
+
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    animate();
+
+    function getColor() {
+      return '#' + (Math.random() * 0xffffff << 0).toString(16);
+    }
+    function animate() {
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if(true || Math.random() > particleNum) {
+        new Particle(
+          // canvas.width * Math.random(),
+          // canvas.height * Math.random()
+          ...center
+        );
+      }
+      for(let key in particles) {
+        particles[key].draw();
+      }
+      return requestAnimationFrame(animate);
+    }
+  </script>
+</body>
+</html>

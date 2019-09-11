@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>画板</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      text-align: center;
+    }
+    #canvas {
+      margin-top: 50px;
+      border: 1px dashed;
+      color: skyblue;
+      border-radius: 5px;
+    }
+    #canvas:hover {
+      color: rgb(0, 68, 255);
+      cursor: crosshair;
+    }
+    #canvas ~ div {
+      margin-top: 10px;
+      text-align: center;
+    }
+    #canvas ~ div input {
+      width: 50px;
+      vertical-align: middle;
+    }
+    #canvas ~ div label {
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="800" height="480"></canvas>
+  <div>
+    <input id="back" type="button" value="后退">
+    <input id="forward" type="button" value="前进">
+    <label>线宽：<input id="width" type="number" min="0.5" max="10" step="0.5"></label>
+    <label>颜色：<input id="color" type="color"></label>
+    <input id="reset" type="button" value="重置">
+    <input id="clear" type="button" value="清除">
+    <input id="export" type="button" value="导出">
+  </div>
+  <script>
+    class DrawPen {
+      constructor() {
+        this.canvas = document.getElementById('canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.defaultOptions = {
+          lineWidth: 1,
+          fillStyle: '#000000',
+          strokeStyle: '#000000'
+        };
+        this.ctrls = {
+          lineWidth: document.getElementById('width'),
+          strokeStyle: document.getElementById('color')
+        };
+        this.history = {
+          list: [],
+          length: 10,
+          index: 0
+        };
+      }
+
+      saveHistory() {
+        // 保存历史
+        const data = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        const { length, index } = this.history;
+        if(this.history.list.length !== index) {
+          this.history.list = this.history.list.splice(0, index);
+        }
+        if(this.history.list.length < length) {
+          this.history.list.push(data);
+          this.history.index++;
+        } else {
+          this.history.list.shift();
+          this.history.list.push(data);
+        }
+      }
+      backHistory() {
+        // 撤销
+        const { list, index } = this.history;
+        if(index > 1) {
+          const i = --this.history.index - 1;
+          const data = list[i];
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          this.ctx.putImageData(data, 0, 0);
+        }
+      }
+      forwardHistory() {
+        // 前进
+        const { list, index } = this.history;
+        if(index < list.length) {
+          const data = list[this.history.index++];
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          this.ctx.putImageData(data, 0, 0);
+        }
+      }
+
+      initCanvas() {
+        this.canvas.onmousedown = ev => {
+          const { offsetX, offsetY } = ev;
+          drawStart(this.ctx, offsetX, offsetY);
+
+          this.canvas.onmousemove = ev => {
+            const { offsetX, offsetY } = ev;
+            drawLine(this.ctx, offsetX, offsetY);
+          };
+          document.onmouseup = ev => {
+            this.canvas.onmousemove = null;
+            document.onmouseup = null;
+            this.saveHistory(); // 保存历史
+          };
+        };
+        this.saveHistory();
+        this.initCtrls();
+      }
+      initCtrls() {
+        for(let key in this.ctrls) {
+          if(this.ctrls[key]) {
+            if(this.defaultOptions[key]) {
+              this.ctrls[key].value = this.defaultOptions[key];
+            }
+            this.ctrls[key].onchange = ev => {
+              this.ctx[key] = ev.target.value;
+            };
+          }
+        }
+        document.getElementById('reset').onclick = () => {
+          for(let key in this.defaultOptions) {
+            this.ctx[key] = this.defaultOptions[key];
+            if(this.ctrls[key]) {
+              this.ctrls[key].value = this.defaultOptions[key];
+            }
+          }
+        };
+        document.getElementById('clear').onclick = () => {
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          this.saveHistory();
+        };
+        document.getElementById('back').onclick = () => {
+          this.backHistory();
+        };
+        document.getElementById('forward').onclick = () => {
+          this.forwardHistory();
+        };
+        document.getElementById('export').onclick = () => {
+          this.canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = '手绘_' + Date.now();
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+          });
+        };
+      }
+    };
+    const dp = new DrawPen();
+    dp.initCanvas();
+
+    function drawStart(ctx, x, y) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
+    function drawLine(ctx, x, y) {
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+  </script>
+</body>
+</html>

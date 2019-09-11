@@ -4,12 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <style>
+        .display-box {
+            display: flex;
+            /* justify-content: center; */
+            padding: 10px 50px;
+        }
+        .display-box > section:not(:last-child) {
+            margin-right: 100px;
+        }
+    </style>
 </head>
 <body>
-    <div>
-        <h1><a href="./myGames/Snake/snake.html" target="_self">Snake Game</a></h1>
-        <h1><a href="./myGames/Minesweeper/minesweeper.html" target="_self">Mineswepper</a></h1>
-        <h1><a href="./myGames/Tetris/tetris.html" target="_self">Tetris</a></h1>
-        <!-- <h1><a href="./bili" target="_self">bilibili_demo</a></h1> -->
+    <div class="display-box">
+        <section>
+            <header>
+                <h1>Simple Games</h1>
+            </header>
+            <article>
+                <ul>
+                    <li><h2><a href="./myGames/Snake/snake.html" target="_self">Snake</a></h2></li>
+                    <li><h2><a href="./myGames/Minesweeper/minesweeper.html" target="_self">Mineswepper</a></h2></li>
+                    <li><h2><a href="./myGames/Tetris/tetris.html" target="_self">Tetris</a></h2></li>
+                </ul>
+            </article>
+        </section>
+        <section>
+            <header>
+                <h1>Canvas Demos</h1>
+            </header>
+            <article>
+                <ul>
+                    <li><h2><a href="./canvas/clock.html" target="_self">Clock</a></h2></li>
+                    <li><h2><a href="./canvas/infinity-picture.html" target="_self">Infinity Picture (by worker)</a></h2></li>
+                    <li><h2><a href="./canvas/particles.html" target="_self">Radio Particles</a></h2></li>
+                    <li><h2><a href="./canvas/pictureBorad.html" target="_self">Writing Board</a></h2></li>
+                    <li><h2><a href="./canvas/random-move.html" target="_self">Random Move (by worker)</a></h2></li>
+                </ul>
+            </article>
+        </section>
     </div>
+    
 </body>

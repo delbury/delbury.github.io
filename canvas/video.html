@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    .video {
+      display: none;
+      width: 100vw;
+    }
+    .video video {
+      width: 100%;
+    }
+    .canvas {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="video">
+    <video id="video" src="./videos/video.mp4" controls></video>
+  </div>
+  <div class="canvas">
+    <canvas id="canvas"></canvas>
+  </div>
+  <script>
+    const width = 192 * 4;
+    const height = 108 * 4;
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    // worker
+    const worker = new Worker('./works/video.js');
+    worker.onmessage = ev => {
+      const data = ev.data;
+      ctx.putImageData(data, 0, 0);
+    }
+    
+    video.onloadeddata = ev => {
+      ctx.drawImage(video, 0, 0, width, height);
+      const imgd = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      worker.postMessage(imgd);
+    }
+    video.addEventListener('play', ev => {
+    });
+
+    // startWorker();
+  </script>
+</body>
+</html>
