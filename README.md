@@ -1,4 +1,4 @@
-# DelBury.github.io
+# delbury.github.io
 ------------------------
 ## **Games**
 + ### Snake
@@ -6,4 +6,13 @@
 + ### Minesweeper
   #### Minesweeper Game (HTML/CSS/JS)
   ### Tetris
-  #### Tetris Game (HTML/CSS/JS)git 
+  #### Tetris Game (HTML/CSS/JS)
+  
+## **Canvas Demos**
++ ### Clock
++ ### Infinity Picture
+  #### by Worker & OffscreenCanvas & requestAnimationFrame
++ ### Radio Particles
++ ### Writing Borad
++ ### Random Move
+  #### by Worker
