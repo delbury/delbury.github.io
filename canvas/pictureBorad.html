@@ -35,6 +35,10 @@
       color: rgb(0, 68, 255);
       /* cursor: move; */
     }
+    #canvas {
+      border: 1px dashed #ccc;
+      border-radius: 5px;
+    }
     #canvas.pen {
       cursor: url("./assets/ico/pen.png"), auto;
     }
@@ -130,7 +134,13 @@
       <ul class="tools">
         <li><label>线宽：<input id="width" type="number" min="0.5" max="10" step="0.5"></label></li>
         <li><label>线色：<input id="color" type="color"></label></li>
-        <li><label>填色：<input id="fillcolor" type="color"></label></li>
+        <li>
+          <label>
+            色板：
+            <input id="fillcolor" type="color">
+          </label>
+          <input id="fillcolortext" type="text" readonly style="width: 60px; font-family: monospace;">
+        </li>
       </ul>
       <ul class="tools">
         <li>
@@ -139,7 +149,7 @@
             <label><input type="radio" name="mode" value="pen" checked>铅笔</label>
             <label><input type="radio" name="mode" value="erase">橡皮</label>
             <label><input type="radio" name="mode" value="get">取色</label>
-            <label><input type="radio" name="mode" value="fill">填充</label>
+            <!-- <label><input type="radio" name="mode" value="fill">填充</label> -->
           </label>
         </li>
       </ul>
@@ -261,41 +271,41 @@
             const r = parseInt(color[0] + color[1], 16);
             const g = parseInt(color[2] + color[3], 16);
             const b = parseInt(color[4] + color[5], 16);
-            const getIndex = (x, y) => this.canvas.width * y + x; // 二维坐标转换为 imageData 的一维坐标
+            const getIndex = (x, y) => (this.canvas.width * +y + +x) * 4; // 二维坐标转换为 imageData 的一维坐标
             const oIndex = getIndex(offsetX, offsetY); // 点击的点的坐标
 
             // 原始的 rgb 值
-            const sr = imageData[oIndex], sg = imageData[oIndex + 1], sb = imageData[oIndex + 2];
+            const sr = imageData.data[oIndex], sg = imageData.data[oIndex + 1], sb = imageData.data[oIndex + 2];
             const tempArr = [[offsetX, offsetY].join(',')];
-            let count = 10;
-            console.log(offsetX, offsetY)
+            let count = 1000;
             do {
               const [x, y] = tempArr.pop().split(',');
               const index = getIndex(x, y);
+              if(index < 0 || index > this.canvas.width * this.canvas.height * 4) {
+                break;
+              }
               imageData.data[index] = r;
               imageData.data[index + 1] = g;
               imageData.data[index + 2] = b;
 
               const temp = [
-                [x, y - 1],
-                [x + 1, y],
-                [x, y + 1],
-                [x - 1, y]
+                [+x, +y - 1],
+                [+x + 1, +y],
+                [+x, +y + 1],
+                [+x - 1, +y]
               ];
               temp.map(([x, y]) => {
                 if(x >= 0 && x < this.canvas.width && y >= 0 && y < this.canvas.height) {
                   const ti = getIndex(x, y);
-                  if(ti[index] === sr && ti[index + 1] === sg && ti[index + 2] === sb) {
+                  if(imageData.data[ti] === sr && imageData.data[ti + 1] === sg && imageData.data[ti + 2] === sb) {
                     const xy = [x, y].join(',');
                     if(!tempArr.includes(xy)) {
                       tempArr.push(xy);
-                      console.log(xy)
                     }
                   }
                 }
               });
-              if(!(count--)) break;
-            } while(tempArr.length);
+            } while(count-- && tempArr.length);
             this.ctx.putImageData(imageData, 0, 0);
             this.saveHistory();
           } else if(this.flags.mode === 'get') {
@@ -307,6 +317,7 @@
               hex += item.toString(16).padStart(2, '0');
             });
             this.ctrls.fillStyle.value = hex;
+            document.getElementById('fillcolortext').value = hex;
           }
         };
         this.saveHistory();
@@ -336,6 +347,7 @@
             };
           }
         }
+        document.getElementById('fillcolortext').value = this.defaultOptions.fillStyle;
         document.getElementById('reset').onclick = () => {
           this.resetConfig();
         };
