@@ -20,6 +20,7 @@ export default class Block extends Controller {
 
   
   saveStatus() {
+    this.saveJumpOriginY();
     this._tempW = this.w;
     this._tempH = this.h;
     this._tempX = this.x;
@@ -47,6 +48,7 @@ export default class Block extends Controller {
   }
   releaseForce(time = 160) {
     if(!this._jumpConter) {
+      this.differStatus();
       this._jumpConter = 0;
     }
     if(this._jumpConter * 16 >= time) {

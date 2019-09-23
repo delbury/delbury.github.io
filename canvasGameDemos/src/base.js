@@ -1,12 +1,21 @@
 export class Base {
-  constructor(x = 0, y = 0, w = 0, h = 0) {
+  constructor(x = 0, y = 0, w = 0, h = 0, boundary = {}) {
     this.x = x;
     this.y = y;
     this.w = w;
     this.h = h;
+    this.boundary = boundary; // xmin, xmax, ymin, ymax
   }
   set x(val) {
-    this._x = Math.round(val) || 0;
+    const { xmin, xmax } = this.boundary ? this.boundary : {};
+    const num = Math.round(val);
+    if(xmin !== undefined && num <= xmin) {
+      this._x = xmin;
+    } else if(xmax !== undefined && (num + this.w) >= xmax) {
+      this._x = xmax - this.w;
+    } else {
+      this._x = Math.round(val) || 0;
+    }
   }
   get x() {
     return this._x || 0;
@@ -78,8 +87,8 @@ export class Base {
 }
 
 export class Controller extends Base {
-  constructor({ x = 0, y = 0, w = 0, h = 0, vx = 0, vy = 0 } = { x: 0, y: 0, w: 0, h: 0, vx: 0, vy: 0 }) {
-    super(x, y, w, h);
+  constructor({ x = 0, y = 0, w = 0, h = 0, vx = 0, vy = 0, boundary } = { x: 0, y: 0, w: 0, h: 0, vx: 0, vy: 0 }) {
+    super(x, y, w, h, boundary);
     this.vx = vx;
     this.vy = vy;
     this.moveable = true; // 可移动
@@ -240,5 +249,14 @@ export class Controller extends Base {
     this.jumpTick();
     this.draw();
   }
+}
+
+export class Text {
+  constructor(canvas, ctx, text) {
+    this.canvas = canvas;
+    this.ctx = ctx;
+    this.text = text;
+  }
+  createText() {}
 }
 

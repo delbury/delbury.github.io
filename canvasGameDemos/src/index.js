@@ -1,42 +1,109 @@
 import Block from './block.js';
+import Hinder from './hinder.js';
+import GameOver from './over.js';
+import Score from './score.js';
 
 class Game {
   constructor(canvas) {
     this.canvas = canvas;
-    this.ctx = this.canvas.getContext('2d');
-    this.dirs = []; // 方向数组
-    this.flags = {
-      isSpacePressed: false,
-    };
-    this.block = [
-      new Block(this.ctx, { x: 50, y: 200, w: 40, h: 40 }),
-      // new Block(this.ctx, { x: 200, y: 200, w: 40, h: 40 })
-    ]; // 可移动方块
-    // this.block[1].moveable = false;
+    this.ctx = this.canvas.getContext('2d');  
   }
 
   // 初始化
-  init() {
+  init(cb) {
+    this.ctx.beginPath();
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.dirs = []; // 方向数组
+    this.flags = {
+      isSpacePressed: false,
+      isGameOver: false
+    };
+    this.gameSpeed = 4; // 游戏速度
+    this.totalCounter = 0; // 障碍物计数
+    this.defaultParams = { x: 50, y: 350, w: 40, h: 40 };
+    this.block = [
+      new Block(this.ctx, { ...this.defaultParams, boundary: { xmin: 0, xmax: this.canvas.width } }),
+      // new Block(this.ctx, { x: 200, y: 200, w: 40, h: 40 })
+    ]; // 可移动方块
+
+    const fn = () => Math.round(Math.random() * 200 + 400);
+    const d1 = fn(), d2 = d1 + fn(), d3 = d2 + fn();
+    this.hinders = [
+      this.createRandomHinder(this.defaultParams, d1),
+      this.createRandomHinder(this.defaultParams, d2),
+      this.createRandomHinder(this.defaultParams, d3)
+    ];
+    this.score = new Score(this.canvas, this.ctx);
+
     this.bindCtrls();
     this.block[0].speed = 5;
+
+    cb && cb();
   }
 
   // 每一帧
   tick() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.moveTo(0, 240);
-    this.ctx.lineTo(800, 240);
-    this.ctx.stroke();
-
-    const time = 160;
+    this.createFloor(this.defaultParams);
+    this.score.tick();
     this.block.map(item => {
       if(this.flags.isSpacePressed) {
         item.storingForce(1, 1);
       } else if(item.jumping) {
-        item.releaseForce(time);
+        item.releaseForce(160);
       }
       item.tick();
     });
+    this.hinders.map(item => {
+      item.scrollLeft(this.gameSpeed);
+      item.tick();
+      if(item.isOverlap(this.block[0])) {
+        this.flags.isGameOver = true;
+        console.log('game over !');
+      }
+    });
+    
+    //  移除并新增障碍物
+    if(this.hinders[0] && this.hinders[0].isOutofScreen()) {
+      this.score.gainScore(this.gameSpeed); // 加分
+      this.gainCounter(); // 计数
+      this.hinders.shift();
+      const index = this.hinders.length - 1;
+      this.hinders.push(this.createRandomHinder(
+        this.defaultParams,
+        this.hinders[index].x + Math.round(Math.random() * 200 + 400))
+      );
+    }
+  }
+
+  // 加速
+  speedUp() {
+    this.gameSpeed *= 1.05;
+  }
+
+  // 计数
+  gainCounter() {
+    this.totalCounter++;
+    if(this.totalCounter === 5) {
+      this.speedUp();
+      this.totalCounter = 0;
+    }
+  }
+
+  // 创建障碍物
+  createRandomHinder(params, x) {
+    const w = Math.round((Math.random() + 1) * params.w);
+    const h = Math.round((Math.random() * 3 + 1) * params.h);
+    const y = params.y + params.h - h;
+    return new Hinder(this.ctx, { ...params, w, h, x, y });
+  }
+
+  // 水平线
+  createFloor(params) {
+    const y = params.y + params.h;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.moveTo(0, y);
+    this.ctx.lineTo(this.canvas.width, y);
+    this.ctx.stroke();
   }
 
   // 控制所有方块
@@ -47,13 +114,7 @@ class Game {
     this.block.map(item => item.jump(gv, g));
   }
   saveBlocks() {
-    this.block.map(item => {
-      item.saveJumpOriginY();
-      item.saveStatus()
-    });
-  }
-  differBlocks() {
-    this.block.map(item => item.differStatus());
+    this.block.map(item => item.saveStatus());
   }
 
   hasBlockJumping() {
@@ -135,7 +196,6 @@ class Game {
         gv = 15;
       }
       this.jumpBlocks(gv, 0.5);
-      this.differBlocks();
       ev.preventDefault();
     }
   }
@@ -153,6 +213,12 @@ const game = new Game(document.getElementById('canvas'));
 game.init();
 
 requestAnimationFrame(function tick() {
+  if(game.flags.isGameOver) {
+    const over = new GameOver(game.canvas, game.ctx, undefined, () => {
+      game.init(tick);
+    });
+    return;
+  }
   game.tick();
   return requestAnimationFrame(tick);
 });
