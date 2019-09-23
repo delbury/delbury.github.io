@@ -6,14 +6,14 @@ export class Base {
     this.h = h;
   }
   set x(val) {
-    this._x = val || 0;
+    this._x = Math.round(val) || 0;
   }
   get x() {
     return this._x || 0;
   }
 
   set y(val) {
-    this._y = val || 0;
+    this._y = Math.round(val) || 0;
   }
   get y() {
     return this._y || 0;
@@ -80,11 +80,12 @@ export class Base {
 export class Controller extends Base {
   constructor({ x = 0, y = 0, w = 0, h = 0, vx = 0, vy = 0 } = { x: 0, y: 0, w: 0, h: 0, vx: 0, vy: 0 }) {
     super(x, y, w, h);
-    this.xv = vx;
+    this.vx = vx;
     this.vy = vy;
-    this.moveable = true;
-    this.jumpable = true;
-    this.jumping = false;
+    this.moveable = true; // 可移动
+    this.forbidMoveDir = 0; // 禁止移动的方向：  0: 不禁止；  3：垂直；  12：水平
+    this.jumpable = true; // 可跳跃
+    this.jumping = false; // 跳跃状态中
   }
   set vx(val) {
     this._vx = val || 0;
@@ -130,6 +131,10 @@ export class Controller extends Base {
     const type = dirs.length ? dirs.reduce((a, b) => a + b) : 0;
     // console.log(dirs, type)
     const fn = (dir) => {
+      if(this.forbidMoveDir) {
+        // 禁止方向
+        if(this.forbidMoveDir & dir) return;
+      }
       switch(dir) {
         case 1: // 上
           this.vx = 0;
@@ -177,8 +182,11 @@ export class Controller extends Base {
   // 移动
   moveTick() {
     if(this.moveable) {
-      this.x += this.vx * this.speed;
-      this.y += this.vy * this.speed;
+      const dx = this.vx * this.speed, dy = this.vy * this.speed;
+      this.x += dx;
+      this.y += dy;
+
+      this.afterMove(dx, dy);
     }
   }
 
@@ -187,6 +195,9 @@ export class Controller extends Base {
     return !this.jumping && this.jumpable;
   }
 
+  saveJumpOriginY() {
+    this._originY = this.y;
+  }
   jump(gv = 10, g = 0.5) {
     if(this.jumpable && !this.jumping) {
       this.gv = gv;
@@ -194,7 +205,6 @@ export class Controller extends Base {
       this._isJumpRising = true;
       this.jumping = true;
       this._jumpTempGV = this.gv;
-      this._originY = this.y;
     }
   }
   jumpTick() {
@@ -212,14 +222,17 @@ export class Controller extends Base {
       this.y += this._jumpTempGV;
       this._jumpTempGV += this.g;
       if((this._jumpTempGV - this.gv) >= Number.EPSILON) {
+        this.y = this._originY ? this._originY : this.y; // 消除误差
         this.jumping = false;
-        this.y = this._originY; // 消除误差
+        this.afterJump();
       }
     }
   }
 
   // 绘制
   draw() {}
+  afterJump() {}
+  afterMove(dx, dy) {}
 
   // 每一帧
   tick() {

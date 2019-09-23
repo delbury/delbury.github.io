@@ -6,13 +6,13 @@ class Game {
     this.ctx = this.canvas.getContext('2d');
     this.dirs = []; // 方向数组
     this.flags = {
-      isSpacePressed: false
+      isSpacePressed: false,
     };
     this.block = [
-      new Block(this.ctx, { x: 300, y: 200, w: 40, h: 40 }),
-      new Block(this.ctx, { x: 200, y: 200, w: 40, h: 40 })
+      new Block(this.ctx, { x: 50, y: 200, w: 40, h: 40 }),
+      // new Block(this.ctx, { x: 200, y: 200, w: 40, h: 40 })
     ]; // 可移动方块
-    this.block[1].moveable = false;
+    // this.block[1].moveable = false;
   }
 
   // 初始化
@@ -24,10 +24,19 @@ class Game {
   // 每一帧
   tick() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.moveTo(0, 200);
-    this.ctx.lineTo(800, 200);
+    this.ctx.moveTo(0, 240);
+    this.ctx.lineTo(800, 240);
     this.ctx.stroke();
-    this.block.map(item => item.tick());
+
+    const time = 160;
+    this.block.map(item => {
+      if(this.flags.isSpacePressed) {
+        item.storingForce(1, 1);
+      } else if(item.jumping) {
+        item.releaseForce(time);
+      }
+      item.tick();
+    });
   }
 
   // 控制所有方块
@@ -36,6 +45,19 @@ class Game {
   }
   jumpBlocks(gv, g) {
     this.block.map(item => item.jump(gv, g));
+  }
+  saveBlocks() {
+    this.block.map(item => {
+      item.saveJumpOriginY();
+      item.saveStatus()
+    });
+  }
+  differBlocks() {
+    this.block.map(item => item.differStatus());
+  }
+
+  hasBlockJumping() {
+    return this.block.some(item => item.jumping);
   }
 
   // 方向键按下
@@ -68,9 +90,10 @@ class Game {
         default: break;
       }
       ev.preventDefault();
-    } else if(ev.code === 'Space' && !this.isSpacePressed) {
-      this.isSpacePressed = true;
+    } else if(ev.code === 'Space' && !this.flags.isSpacePressed && !this.hasBlockJumping()) {
+      this.flags.isSpacePressed = true;
       this._jumpCounter = Date.now();
+      this.saveBlocks(); // 记录信息
       ev.preventDefault();
     }
   }
@@ -100,8 +123,8 @@ class Game {
         default: break;
       }
       ev.preventDefault();
-    } else if(ev.code === 'Space') {
-      this.isSpacePressed = false;
+    } else if(ev.code === 'Space' && this.flags.isSpacePressed) {
+      this.flags.isSpacePressed = false;
       const counter = Date.now() - this._jumpCounter;
       let gv = 0;
       if(counter <= 200) {
@@ -112,6 +135,7 @@ class Game {
         gv = 15;
       }
       this.jumpBlocks(gv, 0.5);
+      this.differBlocks();
       ev.preventDefault();
     }
   }
