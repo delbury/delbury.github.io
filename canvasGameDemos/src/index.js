@@ -1,12 +1,13 @@
 import Block from './block.js';
 import Hinder from './hinder.js';
-import GameOver from './over.js';
+import Panel from './panel.js';
 import Score from './score.js';
 
 class Game {
   constructor(canvas) {
     this.canvas = canvas;
-    this.ctx = this.canvas.getContext('2d');  
+    this.ctx = this.canvas.getContext('2d');
+    this.defaultParams = { x: 50, y: 350, w: 40, h: 40 }; // 默认参数
   }
 
   // 初始化
@@ -16,11 +17,11 @@ class Game {
     this.dirs = []; // 方向数组
     this.flags = {
       isSpacePressed: false,
-      isGameOver: false
+      isGameOver: false,
+      canDoubleJumped: false
     };
     this.gameSpeed = 4; // 游戏速度
     this.totalCounter = 0; // 障碍物计数
-    this.defaultParams = { x: 50, y: 350, w: 40, h: 40 };
     this.block = [
       new Block(this.ctx, { ...this.defaultParams, boundary: { xmin: 0, xmax: this.canvas.width } }),
       // new Block(this.ctx, { x: 200, y: 200, w: 40, h: 40 })
@@ -35,8 +36,9 @@ class Game {
     ];
     this.score = new Score(this.canvas, this.ctx);
 
-    this.bindCtrls();
     this.block[0].speed = 5;
+
+    this.bindCtrls();
 
     cb && cb();
   }
@@ -58,7 +60,12 @@ class Game {
       item.tick();
       if(item.isOverlap(this.block[0])) {
         this.flags.isGameOver = true;
+        this.removeCtrls();
         console.log('game over !');
+      }
+      if(item.star.isOverlap(this.block[0])) {
+        // 吃到星星
+        item.killStar();
       }
     });
     
@@ -151,10 +158,16 @@ class Game {
         default: break;
       }
       ev.preventDefault();
-    } else if(ev.code === 'Space' && !this.flags.isSpacePressed && !this.hasBlockJumping()) {
-      this.flags.isSpacePressed = true;
-      this._jumpCounter = Date.now();
-      this.saveBlocks(); // 记录信息
+    } else if(ev.code === 'Space') {
+      if(!this.flags.isSpacePressed && !this.hasBlockJumping()) {
+        this.flags.isSpacePressed = true;
+        this._jumpCounter = Date.now();
+        this.saveBlocks(); // 记录信息
+      } else if(this.flags.canDoubleJumped) {
+        this.jumpBlocks(10, 0.5);
+        this.flags.canDoubleJumped = false; // 恢复二段跳
+      }
+      
       ev.preventDefault();
     }
   }
@@ -196,6 +209,7 @@ class Game {
         gv = 15;
       }
       this.jumpBlocks(gv, 0.5);
+      this.flags.canDoubleJumped = true;
       ev.preventDefault();
     }
   }
@@ -210,15 +224,29 @@ class Game {
 }
 
 const game = new Game(document.getElementById('canvas'));
-game.init();
+startGame('Game Start !', 'start');
 
-requestAnimationFrame(function tick() {
+function startGame(title, label) {
+  new Panel({
+    canvas: game.canvas,
+    ctx: game.ctx,
+    title: title,
+    buttons: [
+      {
+        label: label,
+        cb: () => game.init(tick)
+      }
+    ]
+  });
+
+}
+function tick() {
   if(game.flags.isGameOver) {
-    const over = new GameOver(game.canvas, game.ctx, undefined, () => {
-      game.init(tick);
-    });
+    startGame('GAME OVER !', 'again');
     return;
   }
   game.tick();
   return requestAnimationFrame(tick);
-});
+};
+
+

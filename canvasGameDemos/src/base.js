@@ -1,5 +1,5 @@
 export class Base {
-  constructor(x = 0, y = 0, w = 0, h = 0, boundary = {}) {
+  constructor(x = 0, y = 0, w = 0, h = w, boundary = {}) {
     this.x = x;
     this.y = y;
     this.w = w;
@@ -68,6 +68,19 @@ export class Base {
     this._y = val - this._h;
   }
 
+  get centerX() {
+    return this._x + this._w / 2;
+  }
+  set centerX(val) {
+    this._x = val - this._w / 2;
+  }
+  get centerY() {
+    return this._y + this._h / 2;
+  }
+  set centerY(val) {
+    this._y = val - this._h / 2;
+  }
+
   // 相对位置判断
   isleft(another) {
     return this.right < another.left;
@@ -87,7 +100,7 @@ export class Base {
 }
 
 export class Controller extends Base {
-  constructor({ x = 0, y = 0, w = 0, h = 0, vx = 0, vy = 0, boundary } = { x: 0, y: 0, w: 0, h: 0, vx: 0, vy: 0 }) {
+  constructor({ x, y, w, h, vx = 0, vy = 0, boundary } = { vx: 0, vy: 0 }) {
     super(x, y, w, h, boundary);
     this.vx = vx;
     this.vy = vy;
@@ -208,7 +221,7 @@ export class Controller extends Base {
     this._originY = this.y;
   }
   jump(gv = 10, g = 0.5) {
-    if(this.jumpable && !this.jumping) {
+    if(this.jumpable) {
       this.gv = gv;
       this.g = g;
       this._isJumpRising = true;
@@ -230,7 +243,7 @@ export class Controller extends Base {
       // 下落
       this.y += this._jumpTempGV;
       this._jumpTempGV += this.g;
-      if((this._jumpTempGV - this.gv) >= Number.EPSILON) {
+      if((this.y - this._originY) >= Number.EPSILON) {
         this.y = this._originY ? this._originY : this.y; // 消除误差
         this.jumping = false;
         this.afterJump();

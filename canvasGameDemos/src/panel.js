@@ -1,14 +1,14 @@
 import { Text } from './base.js';
 
 export default class GameOver extends Text {
-  constructor(canvas, ctx, text = 'GAME OVER !', cb) {
-    super(canvas, ctx, text);
+  constructor({ canvas, ctx, title, buttons }) {
+    super(canvas, ctx, title);
 
     this.createText();
     // this.backgroundBlur(); // 背景高斯模糊
-    this.buttons = [
-      (new Button(canvas, ctx, 'again')).bindEvents(null, null, 100, 40, 5, undefined, cb)
-    ];
+    this.buttons = buttons.map(item =>
+      (new Button(canvas, ctx, item.label)).bindEvents(null, null, 100, 40, 5, 'skyblue', item.cb)
+    );
   }
 
   createText() {
@@ -53,7 +53,7 @@ class Button extends Text {
    * @param {Number} h 高
    * @param {Number} r 边框弧度
    */
-  createButton(x, y, w, h, r, color = 'skyblue') {
+  createButton(x, y, w, h, r, color) {
     x = x === null ? this.canvas.width / 2 : x;
     y = y === null ? this.canvas.height / 2 : y;
     this.args = [x, y, w, h, r]; // 保存参数
@@ -79,7 +79,7 @@ class Button extends Text {
     this.ctx.font = '20px sans-serif';
     this.ctx.textBaseline = 'middle'
     const tw = this.ctx.measureText(this.text).width;
-    this.ctx.fillText(this.text, x - ((w - tw) / 2), y);
+    this.ctx.fillText(this.text, x - tw / 2, y);
     this.ctx.restore();
 
     
