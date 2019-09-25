@@ -36,6 +36,7 @@ class Game {
     ];
     this.score = new Score(this.canvas, this.ctx);
 
+    this.block[0].jumpReset = () => this.flags.canDoubleJumped = false;
     this.block[0].speed = 5;
 
     this.bindCtrls();

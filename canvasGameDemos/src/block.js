@@ -63,7 +63,9 @@ export default class Block extends Controller {
   afterJump() {
     this._jumpConter = null;
     this._storingCounter = null;
+    this.jumpReset && this.jumpReset();
   }
+  jumpReset() {}
   afterMove(dx, dy) {
     if(this._tempX) {
       this._tempX += dx;
