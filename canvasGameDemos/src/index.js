@@ -128,9 +128,10 @@ class Game {
     return this.block.some(item => item.jumping);
   }
 
-  // 方向键按下
+  // 按键
   keyDown(ev) {
     if(ev.keyCode >= 37 && ev.keyCode <= 40) {
+      // 方向键按下
       const fn = type => {
         const last = this.dirs[this.dirs.length - 1];
         if(last !== undefined && last === type) return;
@@ -159,21 +160,23 @@ class Game {
       }
       ev.preventDefault();
     } else if(ev.code === 'Space') {
-      if(!this.flags.isSpacePressed && !this.hasBlockJumping()) {
+      // 空格键按下
+      if(!this.flags.isSpacePressed && !this.hasBlockJumping() && !this.flags.canDoubleJumped) {
         this.flags.isSpacePressed = true;
         this._jumpCounter = Date.now();
         this.saveBlocks(); // 记录信息
       } else if(this.flags.canDoubleJumped) {
+        this.flags.canDoubleJumped = false; // 禁止二段跳
         this.jumpBlocks(10, 0.5);
-        this.flags.canDoubleJumped = false; // 恢复二段跳
       }
       
       ev.preventDefault();
     }
   }
-  // 方向键松开
+  // 松键
   keyUp(ev) {
     if(ev.keyCode >= 37 && ev.keyCode <= 40) {
+      // 方向键松开
       const fn = type => {
         const index = this.dirs.indexOf(type);
         if(index >= 0) {
@@ -198,6 +201,7 @@ class Game {
       }
       ev.preventDefault();
     } else if(ev.code === 'Space' && this.flags.isSpacePressed) {
+      // 空格松开
       this.flags.isSpacePressed = false;
       const counter = Date.now() - this._jumpCounter;
       let gv = 0;
