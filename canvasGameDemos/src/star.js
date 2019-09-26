@@ -23,6 +23,9 @@ export default class Star extends Base {
     this.radial.addColorStop(0.6, 'white');
     this.radial.addColorStop(1, 'grey');
     this.isDead = false;
+    this.isDying = false;
+    this.degree = 0;
+    this.alpha = 1;
   }
 
   getScale() {
@@ -41,35 +44,53 @@ export default class Star extends Base {
     ];
   }
 
-  killSelf() {
-    // this.ctx.clearRect(this.x, this.y, this.w, this.h * 1);
-  }
   draw() {
-    // this.killSelf();
     // 画光环
-    this.ctx.save();
-    this.ctx.beginPath();
-    // this.ctx.translate(0, 0);
-    this.ctx.scale(1, 0.5);
-    this.ctx.translate(this.centerX, this.centerY / 0.5);
-    this.ctx.arc(0, this.radius, this.radius, 0, 2 * Math.PI);
-    this.ctx.closePath();
-    this.ctx.fillStyle = this.radial;
-    // this.ctx.stroke();
-    this.ctx.fill();
-    this.ctx.restore();
+    if(!this.isDying) {
+      this.ctx.save();
+      this.ctx.beginPath();
+      // this.ctx.translate(0, 0);
+      this.ctx.scale(1, 0.5);
+      this.ctx.translate(this.centerX, this.centerY / 0.5);
+      this.ctx.arc(0, this.radius, this.radius, 0, 2 * Math.PI);
+      this.ctx.closePath();
+      this.ctx.fillStyle = this.radial;
+      // this.ctx.stroke();
+      this.ctx.fill();
+      this.ctx.restore();
+    }
 
     const sc = this.getScale();
-    if(!sc) return; // 防止除数为 0
+    if(!sc && !this.isDying) return; // 防止除数为 0
     this.ctx.save();
     this.ctx.beginPath();
-    // 调整画布
-    // this.ctx.translate(0, 0);
-    this.ctx.scale(sc, 1);
-    this.ctx.translate(this.centerX / sc, this.centerY);
+
+    // 调整画布，星星z轴旋转效果
+    if(!this.isDying) {
+      // this.ctx.translate(0, 0);
+      this.ctx.scale(sc, 1);
+      this.ctx.translate(this.centerX / sc, this.centerY);
+    } else {
+      if(this.degree >= 360) {
+        this.degree = 0;
+      }
+      this.ctx.translate(this.centerX, this.centerY);
+      this.ctx.rotate(this.degree * Math.PI / 180);
+      this.degree += 10;
+      this.y -= 5;
+      if(this.y < -this.h) {
+        this.isDying = false;
+        this.isDead = true;
+      }
+    }
+
+
+    // 构造星星圆角
     this.ctx.arc(0, 0, this.radius - this.borderRadius, 0, 2 * Math.PI);
     this.ctx.closePath();
     this.ctx.clip();
+
+    // 绘制五角星
     this.ctx.beginPath();
     this.vertexs.map((item, index) => {
       if(index === 0) {
@@ -80,8 +101,13 @@ export default class Star extends Base {
     });
     this.ctx.closePath();
     this.ctx.fillStyle = this.gradient;
-    // this.ctx.stroke();
+    this.ctx.save();
+    if(this.isDying) {
+      this.ctx.globalAlpha = this.alpha;
+      this.alpha -= 0.01; 
+    }
     this.ctx.fill();
+    this.ctx.restore();
     this.ctx.restore();
   }
 
@@ -114,7 +140,6 @@ export default class Star extends Base {
     this.x -= dx;
   }
   dead() {
-    this.isDead = true;
-    // this.killSelf();
+    this.isDying = true;
   }
 }

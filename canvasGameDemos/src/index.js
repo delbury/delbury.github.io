@@ -96,8 +96,9 @@ class Game {
       }
 
       // 吃到星星
-      if(item.star && item.star.isOverlap(this.block[0])) {
+      if(item.star && item.star.isOverlap(this.block[0]) && !item.star.isDying) {
         item.killStar();
+        this.score.gainScore(this.gameSpeed * 5);
       }
 
       item.tick();
