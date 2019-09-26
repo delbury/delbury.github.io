@@ -9,12 +9,16 @@ export default class Hinder extends Block {
     this.starAlive = true;
 
     this.starSize = 50;
-    this.star = new Star(ctx, this.x + ((this.w - this.starSize) / 2), this.y - this.starSize - 20, this.starSize, this.starSize, 3);
+    this.starProbable = 35; // 0 ~ 100%
+    const flag = Math.floor(Math.random() * 100) < this.starProbable;
+    this.star = flag
+      ? new Star(ctx, this.x + ((this.w - this.starSize) / 2), this.y - this.starSize - 20, this.starSize, this.starSize, 3)
+      : null;
   }
   scrollLeft(dx) {
     this.x -= dx;
-    if(this.starAlive) {
-      this.star.x -= dx;
+    if(this.star && this.starAlive) {
+      this.star.scrollLeft(dx);
     }
   }
   isOutofScreen() {
@@ -23,12 +27,14 @@ export default class Hinder extends Block {
 
   tick() {
     super.tick();
-    if(this.starAlive) {
+    if(this.star && this.starAlive) {
       this.star.tick();
     }
   }
 
   killStar() {
+    this.star.dead();
+    this.star = null;
     this.starAlive = false;
   }
 }

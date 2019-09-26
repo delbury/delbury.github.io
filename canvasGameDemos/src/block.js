@@ -4,7 +4,7 @@ export default class Block extends Controller {
   constructor(ctx, props) {
     if(!(ctx instanceof CanvasRenderingContext2D)) throw new Error('need canvas 2d context');
     super(props);
-    this.fillColor = '#999999';
+    this.fillColor = '#333333';
     this.strokeColor = '#666666';
     this.ctx = ctx;
 
@@ -13,7 +13,7 @@ export default class Block extends Controller {
 
   draw() {
     this.ctx.save();
-    this.ctx.fillStyle = this.fillStyle;
+    this.ctx.fillStyle = this.fillColor;
     this.ctx.fillRect(this.x, this.y, this.w, this.h);
     this.ctx.restore();
   }

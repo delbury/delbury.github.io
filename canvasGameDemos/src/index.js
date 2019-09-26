@@ -20,24 +20,47 @@ class Game {
       isGameOver: false,
       canDoubleJumped: false
     };
-    this.gameSpeed = 4; // 游戏速度
+    this.gameSpeed = 3; // 游戏速度
     this.totalCounter = 0; // 障碍物计数
     this.block = [
       new Block(this.ctx, { ...this.defaultParams, boundary: { xmin: 0, xmax: this.canvas.width } }),
       // new Block(this.ctx, { x: 200, y: 200, w: 40, h: 40 })
     ]; // 可移动方块
 
-    const fn = () => Math.round(Math.random() * 200 + 400);
-    const d1 = fn(), d2 = d1 + fn(), d3 = d2 + fn();
-    this.hinders = [
-      this.createRandomHinder(this.defaultParams, d1),
-      this.createRandomHinder(this.defaultParams, d2),
-      this.createRandomHinder(this.defaultParams, d3)
-    ];
+    this.range = {
+      start: 400,
+      end: 600
+    }
+    const fn = () => Math.round(Math.random() * (this.range.end - this.range.start) + this.range.start);
+    this.hinders = [];
+    // const d1 = fn(), d2 = d1 + fn(), d3 = d2 + fn();
+    // this.hinders = [
+    //   this.createRandomHinder(this.defaultParams, d1),
+    //   this.createRandomHinder(this.defaultParams, d2),
+    //   this.createRandomHinder(this.defaultParams, d3),
+    //   this.createRandomHinder(this.defaultParams, d3),
+    //   this.createRandomHinder(this.defaultParams, d3)
+    // ];
+    const initHinders = function* () {
+      let d = fn();
+      yield d;
+      while(true) {
+        const temp = d + fn();
+        yield temp;
+        d = temp;
+
+      }
+    };
+    const ih = initHinders();
+    for(let i = 0; i < 4; i++) {
+      this.hinders.push(this.createRandomHinder(this.defaultParams, ih.next().value));
+    }
+
     this.score = new Score(this.canvas, this.ctx);
 
     this.block[0].jumpReset = () => this.flags.canDoubleJumped = false;
     this.block[0].speed = 5;
+    this.block[0].fillColor = '#bbbbbb';
 
     this.bindCtrls();
 
@@ -46,8 +69,11 @@ class Game {
 
   // 每一帧
   tick() {
-    this.createFloor(this.defaultParams);
-    this.score.tick();
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.createFloor(this.defaultParams); // 地板帧
+    this.score.tick(); // 分数帧
+
+    // 控制的方块的帧
     this.block.map(item => {
       if(this.flags.isSpacePressed) {
         item.storingForce(1, 1);
@@ -56,18 +82,25 @@ class Game {
       }
       item.tick();
     });
+
+    // 障碍物帧
     this.hinders.map(item => {
+      // 向左滚动
       item.scrollLeft(this.gameSpeed);
-      item.tick();
+
+      // 撞墙结束游戏
       if(item.isOverlap(this.block[0])) {
         this.flags.isGameOver = true;
         this.removeCtrls();
         console.log('game over !');
       }
-      if(item.star.isOverlap(this.block[0])) {
-        // 吃到星星
+
+      // 吃到星星
+      if(item.star && item.star.isOverlap(this.block[0])) {
         item.killStar();
       }
+
+      item.tick();
     });
     
     //  移除并新增障碍物
@@ -78,14 +111,16 @@ class Game {
       const index = this.hinders.length - 1;
       this.hinders.push(this.createRandomHinder(
         this.defaultParams,
-        this.hinders[index].x + Math.round(Math.random() * 200 + 400))
+        this.hinders[index].x + Math.round(Math.random() * (this.range.end - this.range.start) + this.range.start))
       );
     }
   }
 
   // 加速
   speedUp() {
-    this.gameSpeed *= 1.05;
+    if(this.gameSpeed <= 12) {
+      this.gameSpeed += 0.5;
+    }
   }
 
   // 计数
@@ -108,10 +143,12 @@ class Game {
   // 水平线
   createFloor(params) {
     const y = params.y + params.h;
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.save();
+    this.ctx.beginPath();
     this.ctx.moveTo(0, y);
     this.ctx.lineTo(this.canvas.width, y);
     this.ctx.stroke();
+    this.ctx.restore();
   }
 
   // 控制所有方块
