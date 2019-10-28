@@ -42,8 +42,11 @@
     #canvas.pen {
       cursor: url("./assets/ico/pen.png"), auto;
     }
-    #canvas.erase {
-      cursor: url("./assets/ico/erase.png"), auto;
+    #canvas.erase-16 {
+      cursor: url("./assets/ico/erase_16x16.png"), auto;
+    }
+    #canvas.erase-32 {
+      cursor: url("./assets/ico/erase_32x32.png"), auto;
     }
     #canvas.fill {
       cursor: url("./assets/ico/fill.png") 2 26, auto;
@@ -67,6 +70,9 @@
     .tools input {
       width: 50px;
       vertical-align: middle;
+    }
+    .tools input[type="file"] {
+      width: unset;
     }
     .tools label {
       display: flex;
@@ -100,6 +106,34 @@
     input[type="radio"] {
       width: 25px;
     }
+
+    .eraseLabel {
+      position: relative;
+    }
+    .eraseLabel-16:hover::before {
+      display: block;
+      content: "";
+      box-sizing: border-box;
+      width: 16px;
+      height: 16px;
+      position: absolute;
+      background: #fff;
+      border: 1px solid;
+      top: -16px;
+      box-shadow: 1px 1px 3px #999;
+    }
+    .eraseLabel-32:hover::before {
+      display: block;
+      content: "";
+      box-sizing: border-box;
+      width: 32px;
+      height: 32px;
+      position: absolute;
+      background: #fff;
+      border: 1px solid;
+      top: -32px;
+      box-shadow: 1px 1px 3px #999;
+    }
   </style>
 </head>
 <body>
@@ -126,9 +160,17 @@
         </li>
       </ul>
       <ul class="tools">
+        <li><input id="remove" type="button" value="移除"></li>
+        <li>
+          <form id="importForm">
+            <input id="import" type="file" accept="image/*" value="导入">
+          </form>
+        </li>
+      </ul>
+      <ul class="tools">
           <li><label>宽：<input id="bgw" type="number" min="800" step="1" value="800"></label></li>
           <li><label>高：<input id="bgh" type="number" min="480" step="1" value="480"></label></li>
-          <li><label>拖动：<input id="manualbg" type="checkbox"></label></li>
+          <!-- <li><label>拖动：<input id="manualbg" type="checkbox"></label></li> -->
           <li><input id="resetbg" type="button" value="默认"></li>
       </ul>
       <ul class="tools">
@@ -147,7 +189,14 @@
           <label id="modegroup">
             模式：
             <label><input type="radio" name="mode" value="pen" checked>铅笔</label>
-            <label><input type="radio" name="mode" value="erase">橡皮</label>
+            <label class="eraseLabel eraseLabel-16">
+              <input type="radio" name="mode" value="erase">
+              <select id="eraseSizes" style="margin-right: 5px;">
+                <option value="16" selected>16x16</option>
+                <option value="32">32x32</option>
+              </select>
+              橡皮
+            </label>
             <label><input type="radio" name="mode" value="get">取色</label>
             <!-- <label><input type="radio" name="mode" value="fill">填充</label> -->
           </label>
@@ -183,6 +232,8 @@
           resizable: false,
           mode: 'pen'
         };
+        this.backgroundImage = null;
+        this.eraseSize = this.defaultOptions.eraseSize;
       }
 
       saveHistory() {
@@ -193,11 +244,11 @@
           this.history.list = this.history.list.splice(0, index);
         }
         if(this.history.list.length < length) {
-          this.history.list.push(data);
+          this.history.list.push({ data, width: this.canvas.width, height: this.canvas.height });
           this.history.index++;
         } else {
           this.history.list.shift();
-          this.history.list.push(data);
+          this.history.list.push({ data, width: this.canvas.width, height: this.canvas.height });
         }
       }
       backHistory() {
@@ -205,7 +256,9 @@
         const { list, index } = this.history;
         if(index > 1) {
           const i = --this.history.index - 1;
-          const data = list[i];
+          const data = list[i].data;
+          this.canvas.width = list[i].width;
+          this.canvas.height = list[i].height;
           this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
           this.ctx.putImageData(data, 0, 0);
         }
@@ -214,9 +267,11 @@
         // 前进
         const { list, index } = this.history;
         if(index < list.length) {
-          const data = list[this.history.index++];
+          const item = list[this.history.index++];
           this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-          this.ctx.putImageData(data, 0, 0);
+          this.canvas.width = item.width;
+          this.canvas.height = item.height;
+          this.ctx.putImageData(item.data, 0, 0);
         }
       }
 
@@ -228,10 +283,13 @@
       }
 
       // 设置白色背景颜色
-      setWhiteBackgrond(ox = 0, oy = 0, ex = this.canvas.width, ey = this.canvas.height) {
+      setWhiteBackgrond(ox = 0, oy = 0, ex = this.canvas.width, ey = this.canvas.height, clearImage = false) {
         this.ctx.save();
         this.ctx.fillStyle = 'rgb(255, 255, 255)';
         this.ctx.fillRect(ox, oy, ex, ey);
+        if(this.backgroundImage && !clearImage) {
+          this.ctx.drawImage(this.backgroundImage, 0, 0);
+        }
         this.ctx.restore();
       }
 
@@ -240,15 +298,17 @@
         this.setWhiteBackgrond();
         this.canvas.onmousedown = ev => {
           if(this.flags.mode === 'erase') {
+            const { offsetX, offsetY } = ev;
+            this.setWhiteBackgrond(offsetX, offsetY, this.eraseSize, this.eraseSize, true);
             this.canvas.onmousemove = ev => {
               const { offsetX, offsetY } = ev;
-              this.setWhiteBackgrond(offsetX, offsetY, this.defaultOptions.eraseSize, this.defaultOptions.eraseSize);
-              document.onmouseup = ev => {
-                this.canvas.onmousemove = null;
-                document.onmouseup = null;
-                this.saveHistory(); // 保存历史
-              };
-            }
+              this.setWhiteBackgrond(offsetX, offsetY, this.eraseSize, this.eraseSize, true);
+            };
+            document.onmouseup = ev => {
+              this.canvas.onmousemove = null;
+              document.onmouseup = null;
+              this.saveHistory(); // 保存历史
+            };
           } else if(this.flags.mode === 'pen') {
             const { offsetX, offsetY } = ev;
             drawStart(this.ctx, offsetX, offsetY);
@@ -381,6 +441,10 @@
           }
           switch(ev.key) {
             case 'Escape':
+              if(this.backgroundImage) {
+                this.canvas.width = this.backgroundImage.width;
+                this.canvas.height = this.backgroundImage.height;
+              }
               this.setWhiteBackgrond();
               this.saveHistory();
               break;
@@ -414,41 +478,89 @@
           document.getElementById('bgw').value = w;
           document.getElementById('bgh').value = h;
         };
-        document.getElementById('manualbg').onchange = ev => {
-          this.flags.resizable = ev.target.checked;
+        // document.getElementById('manualbg').onchange = ev => {
+        //   this.flags.resizable = ev.target.checked;
 
-          const borderbox = document.getElementById('borderbox');
-          if(this.flags.resizable) {
-            borderbox.style.resize = 'both';
-            borderbox.style.overflow = 'hidden';
-            borderbox.onmousedown = ev => {
-              if(ev.target !== borderbox) return;
-              borderbox.onmousemove = ev => {
-                let { clientWidth, clientHeight } = ev.target;
-                clientWidth -= 10;
-                clientHeight -= 10;
-                this.resizeCanvas(clientWidth, clientHeight);
-                document.getElementById('bgw').value = clientWidth;
-                document.getElementById('bgh').value = clientHeight;
-              };
-              borderbox.onmouseup = () => {
-                borderbox.onmousemove = null;
-                borderbox.onmouseup = null;
-              };
-            };
-          } else {
-            borderbox.style.resize = 'unset';
-            borderbox.style.overflow = 'unset';
-            borderbox.onmousedown = null;
+        //   const borderbox = document.getElementById('borderbox');
+        //   if(this.flags.resizable) {
+        //     borderbox.style.resize = 'both';
+        //     borderbox.style.overflow = 'hidden';
+        //     borderbox.onmousedown = ev => {
+        //       if(ev.target !== borderbox) return;
+        //       borderbox.onmousemove = ev => {
+        //         let { clientWidth, clientHeight } = ev.target;
+        //         clientWidth -= 10;
+        //         clientHeight -= 10;
+        //         this.resizeCanvas(clientWidth, clientHeight);
+        //         document.getElementById('bgw').value = clientWidth;
+        //         document.getElementById('bgh').value = clientHeight;
+        //       };
+        //       borderbox.onmouseup = () => {
+        //         borderbox.onmousemove = null;
+        //         borderbox.onmouseup = null;
+        //       };
+        //     };
+        //   } else {
+        //     borderbox.style.resize = 'unset';
+        //     borderbox.style.overflow = 'unset';
+        //     borderbox.onmousedown = null;
+        //   }
+        // }
+
+        // 橡皮大小选择
+        document.getElementById('eraseSizes').onchange = ev => {
+          this.eraseSize = parseInt(ev.target.value);
+          if(this.flags.mode === 'erase') {
+            this.canvas.className = `${this.flags.mode}-${this.eraseSize}`;
           }
-        }
+          const ele = document.querySelector('.eraseLabel');
+          ele.classList.remove('eraseLabel-16', 'eraseLabel-32');
+          ele.classList.add('eraseLabel-' + this.eraseSize);
+        };
 
         // 模式选择
         document.getElementById('modegroup').onchange = ev => {
           if(ev.target.type === 'radio') {
             this.flags.mode = ev.target.value;
-            this.canvas.className = this.flags.mode;
+            if(this.flags.mode === 'erase') {
+              this.canvas.className = `${this.flags.mode}-${this.eraseSize}`;
+            } else {
+              this.canvas.className = this.flags.mode;
+            }
           }
+        };
+
+        // 导入图片
+        document.getElementById('import').onchange = ev => {
+          const file = ev.target.files[0];
+          const reg = /^image\//;
+          if(!file.type || !reg.test(file.type)) {
+            alert('error file type !')
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = ev => {
+            const res = reader.result;
+            const img = new Image();
+            img.onload = ev => {
+              this.backgroundImage = img;
+              this.canvas.width = img.width;
+              this.canvas.height = img.height;
+              this.ctx.drawImage(img, 0, 0);
+              this.saveHistory();
+            };
+            img.src = res;
+          };
+          reader.readAsDataURL(file);
+        };
+
+        // 移除图片
+        document.getElementById('remove').onclick = ev => {
+          document.getElementById('importForm').reset();
+          this.backgroundImage = null;
+          this.canvas.width = this.defaultOptions.canvasWidth;
+          this.canvas.height = this.defaultOptions.canvasHeight;
+          this.setWhiteBackgrond();
         };
       }
     };
