@@ -1,0 +1,71 @@
+* {
+  box-sizing: border-box;
+}
+
+body,
+html {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* 键盘box */
+.piano-keyboard {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 白键 */
+.key-white {
+  position: relative;
+  width: 50px;
+  height: 150px;
+}
+
+/* 黑键 */
+.key-black {
+  position: absolute;
+  top: 0;
+  right: -15px;
+  z-index: 1;
+  width: 30px;
+  height: 75px;
+}
+
+/* 真实按键 */
+.key-inner {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #333;
+  cursor: pointer;
+}
+
+.key-white>.key-inner {
+  background-color: white;
+  box-shadow: 5px 5px 5px #999;
+}
+
+.key-white>.key-inner:hover {
+  box-shadow: 4px 4px 5px #999;
+}
+
+.key-white>.key-inner:active,
+.key-white>.key-inner.is-keydown {
+  box-shadow: 2px 2px 5px #999;
+  background: linear-gradient(to bottom, white 0%, #eee 100%);
+}
+
+.key-black>.key-inner {
+  background-color: black;
+}
+
+.key-black>.key-inner:hover {
+  background-color: #333;
+}
+
+.key-black>.key-inner:active,
+.key-black>.key-inner.is-keydown {
+  background-color: #555;
+}

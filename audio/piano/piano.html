@@ -1,44 +1,22 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Piano</title>
-  <style>
-    body, html {
-      overflow: hidden;
-    }
-    .piano-keyboard {
-      height: 100vh;
-      display: flex;
-    }
-    .key-white {
-      position: relative;
-      width: 50px;
-      height: 150px;
-      border: 1px solid #333;
-      background-color: white;
-    }
-    .key-black {
-      position: absolute;
-      top: 0;
-      right: -15px;
-      z-index: 1;
-      width: 30px;
-      height: 75px;
-      border: 1px solid #333;
-      background-color: black;
-    }
-  </style>
+  <link rel="stylesheet" href="./style/index.css">
 </head>
+
 <body>
   <div id="piano-keyboard" class="piano-keyboard"></div>
 
   <script type="module">
     // 52 白色，36 黑色
     import { Piano } from './js/index.js'
-    const piano = new Piano()
+    window.piano = new Piano()
   </script>
 </body>
+
 </html>
