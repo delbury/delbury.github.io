@@ -85,11 +85,44 @@ export class Note {
 }
 
 /**
+ * 弹奏音符
+ */
+
+export class NotePlay extends Note {
+  constructor(actx, str) {
+    super(str)
+    this.actx = actx || new AudioContext()
+    this.tempo = 60 / 120
+  }
+
+  createNodes() {
+    this.gainNode = this.actx.createGain()
+    this.oscNode = this.actx.createOscillator()
+    this.oscNode.connect(this.gainNode)
+    this.gainNode.connect(this.actx.destination)
+    
+    this.oscNode.type = 'sine'
+    this.oscNode.frequency.value = this.frequency
+    this.gainNode.gain.value = 3.4
+    this.gainNode.gain.linearRampToValueAtTime(1, this.actx.currentTime + 0.01);
+  }
+
+  play() {
+    this.createNodes()
+    this.oscNode.start(this.actx.currentTime)
+    this.gainNode.gain.exponentialRampToValueAtTime(0.001, this.actx.currentTime + 1);
+    this.oscNode.stop(this.actx.currentTime + this.tempo * this.duration)
+  }
+}
+
+
+/**
  * 音频序列
  */
 
 export class Sequence {
   constructor(actx, tempo, notes) {
     this.actx = actx || new AudioContext()
+    this.tempo = tempo
   }
 }
