@@ -3,6 +3,8 @@
  * 音名：C / #C,bD / D / #D,bE / E / F / #F,bG / G / #G,bA / A / #A,bB / B
  */
 
+import IRBase64 from '../resource/IR.js'
+
 // CONST_PARAMS，常量
 export const CP = {
   enharmonics: (() => {
@@ -22,7 +24,8 @@ export const CP = {
     }
     return arr
   })(), // 中央组的音调，C4 ~ B4
-  middleLevel: 4
+  middleLevel: 4,
+  IR: null
 }
 
 // 正则表达式
@@ -31,6 +34,23 @@ const regs = {
   num: /(\d+)/,
   float: /^[0-9.]$/
 }
+
+// getIR()
+
+/**
+ * 获取 IR
+ */
+
+async function getIR() {
+  const bs = atob(IRBase64)
+  const len = bs.length
+  const bytes = new Uint8Array(len)
+  for(let i = 0; i < len; i++) {
+    bytes[i] = bs.charCodeAt(i)
+  }
+  CP.IR = await (new AudioContext()).decodeAudioData(bytes.buffer)
+}
+
 
 /**
  * 音符
@@ -98,19 +118,22 @@ export class NotePlay extends Note {
   createNodes() {
     this.gainNode = this.actx.createGain()
     this.oscNode = this.actx.createOscillator()
+
     this.oscNode.connect(this.gainNode)
     this.gainNode.connect(this.actx.destination)
-    
+
+
     this.oscNode.type = 'sine'
     this.oscNode.frequency.value = this.frequency
-    this.gainNode.gain.value = 3.4
-    this.gainNode.gain.linearRampToValueAtTime(1, this.actx.currentTime + 0.01);
+    // this.oscNode.detune.value = 1200
+    // this.gainNode.gain.value = 3.4
+    this.gainNode.gain.exponentialRampToValueAtTime(1, this.actx.currentTime + 0.001);
   }
 
   play() {
     this.createNodes()
     this.oscNode.start(this.actx.currentTime)
-    this.gainNode.gain.exponentialRampToValueAtTime(0.001, this.actx.currentTime + 1);
+    this.gainNode.gain.exponentialRampToValueAtTime(0.001, this.actx.currentTime + this.tempo * this.duration);
     this.oscNode.stop(this.actx.currentTime + this.tempo * this.duration)
   }
 }
@@ -121,8 +144,62 @@ export class NotePlay extends Note {
  */
 
 export class Sequence {
-  constructor(actx, tempo, notes) {
+  constructor(actx, notes, { tempo = 120, loop = false, staccato = 0, waveType = 'sine', staccato = 0 } = {}) {
     this.actx = actx || new AudioContext()
     this.tempo = tempo
+    this.waveType = waveType
+    this.staccato = staccato
+    this.notes = this.createNotes(notes)
+  }
+
+  // 创建音符实例
+  createNotes(notes) {
+    return notes.map(item => {
+      return new Note(item)
+    })
+  }
+
+  // 创建播放列表
+  scheduleNote(index, when) {
+    const duration = 60 / this.tempo * this.notes[index].duration
+    const cutoff = duration * (1 - this.staccato)
+
+    // TODO 设置频率
+    // TODO 计算下一个时间
+  }
+
+  // 创建效果节点
+  createEffectNodes() {
+    this.effectNode = this.gainNode
+
+    this.gainNode = this.actx.createGain()
+    this.gainNode.connect(this.actx.destination)
+    this.gainNode.gain.exponentialRampToValueAtTime(1, this.actx.currentTime + 0.001);
+  }
+
+  // 创建音源节点
+  createSourceNode() {
+    this.stop() // 关闭
+
+    this.osc = this.actx.createOscillator()
+    this.sourceNode = this.osc
+    this.sourceNode.connect(this.effectNode)
+
+    this.osc.type = this.waveType
+  }
+
+  // 停止播放
+  stop() {
+    if(this.sourceNode) {
+      this.sourceNode.stop()
+      this.sourceNode.onended = null
+      this.sourceNode.disconnect()
+      this.sourceNode = null
+    }
+  }
+
+  // 开始播放
+  play(when) {
+    this.createSourceNode()
   }
 }
