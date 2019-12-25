@@ -127,7 +127,7 @@ export class NotePlay extends Note {
     this.oscNode.frequency.value = this.frequency
     // this.oscNode.detune.value = 1200
     // this.gainNode.gain.value = 3.4
-    this.gainNode.gain.exponentialRampToValueAtTime(1, this.actx.currentTime + 0.001);
+    this.gainNode.gain.exponentialRampToValueAtTime(1, this.actx.currentTime + 0.001)
   }
 
   play() {
@@ -144,12 +144,14 @@ export class NotePlay extends Note {
  */
 
 export class Sequence {
-  constructor(actx, notes, { tempo = 120, loop = false, staccato = 0, waveType = 'sine', staccato = 0 } = {}) {
+  constructor(actx, notes, { tempo = 120, loop = false, staccato = 0, waveType = 'sine' } = {}) {
     this.actx = actx || new AudioContext()
     this.tempo = tempo
     this.waveType = waveType
     this.staccato = staccato
+    this.loop = loop
     this.notes = this.createNotes(notes)
+    this.effectNode = this.createEffectNodes()
   }
 
   // 创建音符实例
@@ -162,19 +164,23 @@ export class Sequence {
   // 创建播放列表
   scheduleNote(index, when) {
     const duration = 60 / this.tempo * this.notes[index].duration
-    const cutoff = duration * (1 - this.staccato)
+    const cutoff = duration * (1 - this.staccato || 0)
 
-    // TODO 设置频率
-    // TODO 计算下一个时间
+    this.osc.frequency.setValueAtTime(this.notes[index].frequency, when) // 设置频率
+    this.gainNode.gain.exponentialRampToValueAtTime(1, when) // 设置增益
+
+    this.osc.frequency.setValueAtTime(0, when + cutoff)
+    this.gainNode.gain.exponentialRampToValueAtTime(0.0001, when + cutoff)
+
+    return when + duration // TODO 计算下一个时间
   }
 
   // 创建效果节点
   createEffectNodes() {
-    this.effectNode = this.gainNode
-
     this.gainNode = this.actx.createGain()
     this.gainNode.connect(this.actx.destination)
-    this.gainNode.gain.exponentialRampToValueAtTime(1, this.actx.currentTime + 0.001);
+
+    return this.gainNode
   }
 
   // 创建音源节点
@@ -191,8 +197,8 @@ export class Sequence {
   // 停止播放
   stop() {
     if(this.sourceNode) {
-      this.sourceNode.stop()
       this.sourceNode.onended = null
+      this.sourceNode.stop()
       this.sourceNode.disconnect()
       this.sourceNode = null
     }
@@ -200,6 +206,15 @@ export class Sequence {
 
   // 开始播放
   play(when) {
+    when = when || this.actx.currentTime
     this.createSourceNode()
+    this.sourceNode.start()
+    this.notes.forEach((note, index) => {
+      when = this.scheduleNote(index, when)
+    })
+    this.osc.stop(when)
+    this.osc.onended = () => {
+      this.loop ? this.play() : null
+    }
   }
 }

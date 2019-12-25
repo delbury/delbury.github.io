@@ -10,13 +10,23 @@
 </head>
 
 <body>
+  <button id="play">播放</button>
   <div id="piano-keyboard" class="piano-keyboard"></div>
 
   <script type="module">
     // 52 白色，36 黑色
     import { Piano } from './js/index.js'
-    import { NotePlay } from './js/music.js'
+    import { NotePlay, Sequence } from './js/music.js'
     window.piano = new Piano()
+
+    document.getElementById('play').onclick = ev => {
+      const actx = new AudioContext()
+      const song = (base) => [
+        'A4'
+      ]
+      const seq = new Sequence(actx, song(), { loop: false })
+      seq.play()
+    }
   </script>
 </body>
 
