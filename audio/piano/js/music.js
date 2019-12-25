@@ -17,13 +17,7 @@ export const CP = {
     })
     return map
   })(), // 音符名
-  middles: (() => {
-    const arr = []
-    for (let i = 1; i <= 12; i++) {
-      arr.push(440 * Math.pow(2, (i - 10) / 12))
-    }
-    return arr
-  })(), // 中央组的音调，C4 ~ B4
+  middles: calcCenterFreq(), // 中央组的音调，C4 ~ B4
   middleLevel: 4,
   IR: null
 }
@@ -36,6 +30,18 @@ const regs = {
 }
 
 // getIR()
+
+/**
+ * 计算中央组的频率
+ */
+function calcCenterFreq(offset = 0) {
+  const arr = []
+  for (let i = 1; i <= 12; i++) {
+    arr.push(440 * Math.pow(2, (i + offset - 10) / 12))
+  }
+  return arr
+}
+
 
 /**
  * 获取 IR
@@ -61,8 +67,9 @@ async function getIR() {
  * new Note('A4 0.125') 任意数字，4 / N(分音符)
  */
 export class Note {
-  constructor(str) {
+  constructor(str, middles = CP.middles) {
     const params = str.split(regs.space)
+    this.middles = middles
     this.frequency = this.getFrequency(params[0]) || 0 // 计算频率
     this.duration = this.getDuration(params[1]) || 0 // 计算持续时间
   }
@@ -73,7 +80,7 @@ export class Note {
     if (params[0] === '-') {
       return 0
     } else {
-      return CP.middles[CP.enharmonics.get(params[0])] * (2 ** (Number(params[1]) - CP.middleLevel))
+      return this.middles[CP.enharmonics.get(params[0])] * (2 ** (Number(params[1]) - CP.middleLevel))
     }
   }
 
@@ -141,23 +148,35 @@ export class NotePlay extends Note {
 
 /**
  * 音频序列
+ * @param {AudioContext} actx
+ * @param {Array} notes 
+ * @param {Object}  
  */
 
 export class Sequence {
-  constructor(actx, notes, { tempo = 120, loop = false, staccato = 0, waveType = 'sine' } = {}) {
+  constructor(actx, notes, { tempo = 120, loop = false, staccato = 0, waveType = 'sine', tone = 'C' } = {}) {
     this.actx = actx || new AudioContext()
     this.tempo = tempo
     this.waveType = waveType
     this.staccato = staccato
     this.loop = loop
+    this.tone = tone
+
+    this.middles = this.createTone()
     this.notes = this.createNotes(notes)
     this.effectNode = this.createEffectNodes()
+  }
+
+  // 变调
+  createTone() {
+    const offset = CP.enharmonics.get(this.tone)
+    return calcCenterFreq(offset)
   }
 
   // 创建音符实例
   createNotes(notes) {
     return notes.map(item => {
-      return new Note(item)
+      return new Note(item, this.middles)
     })
   }
 
