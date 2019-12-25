@@ -167,10 +167,10 @@ export class Sequence {
     const cutoff = duration * (1 - this.staccato || 0)
 
     this.osc.frequency.setValueAtTime(this.notes[index].frequency, when) // 设置频率
-    this.gainNode.gain.exponentialRampToValueAtTime(1, when) // 设置增益
+    this.gainNode.gain.linearRampToValueAtTime(1, when + 0.01) // 设置增益
 
     this.osc.frequency.setValueAtTime(0, when + cutoff)
-    this.gainNode.gain.exponentialRampToValueAtTime(0.0001, when + cutoff)
+    this.gainNode.gain.exponentialRampToValueAtTime(0.01, when + cutoff)
 
     return when + duration // TODO 计算下一个时间
   }
