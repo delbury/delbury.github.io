@@ -17,6 +17,16 @@ export const CP = {
     })
     return map
   })(), // 音符名
+  numberNotes: (() => {
+    const arr = ['1', '#1,b2', '2', '#2,b3', '3', '4', '#4,b5', '5', '#5,b6', '6', '#6,b7', '7']
+    const map = new Map()
+    arr.forEach((item, index) => {
+      item.split(',').forEach(it => {
+        map.set(it, index)
+      })
+    })
+    return map
+  })(), // 简谱
   middles: calcCenterFreq(), // 中央组的音调，C4 ~ B4
   middleLevel: 4,
   IR: null
@@ -67,20 +77,24 @@ async function getIR() {
  * new Note('A4 0.125') 任意数字，4 / N(分音符)
  */
 export class Note {
-  constructor(str, middles = CP.middles) {
+  constructor(str, middles = CP.middles, isNumber = false) {
     const params = str.split(regs.space)
     this.middles = middles
-    this.frequency = this.getFrequency(params[0]) || 0 // 计算频率
+    this.frequency = this.getFrequency(params[0], isNumber) || 0 // 计算频率
     this.duration = this.getDuration(params[1]) || 0 // 计算持续时间
   }
 
   // 根据字符串计算当前音符的频率
-  getFrequency(str) {
-    const params = str.split(regs.num)
-    if (params[0] === '-') {
-      return 0
+  getFrequency(str, isNumber) {
+    if(isNumber) {
+      // 简谱
     } else {
-      return this.middles[CP.enharmonics.get(params[0])] * (2 ** (Number(params[1]) - CP.middleLevel))
+      const params = str.split(regs.num)
+      if (params[0] === '-') {
+        return 0
+      } else {
+        return this.middles[CP.enharmonics.get(params[0])] * (2 ** (Number(params[1]) - CP.middleLevel))
+      }
     }
   }
 
