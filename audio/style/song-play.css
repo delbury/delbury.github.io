@@ -1,0 +1,30 @@
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  border: none;
+  background-color: #1890ff;
+  color: #fff;
+  padding: 5px 10px;
+  outline: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+button:hover {
+  background-color: #40a9ff;
+}
+button:active {
+  background-color: #096dd9;
+}
+button + button {
+  margin-left: 10px;
+}
+
+.control-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+}

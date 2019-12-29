@@ -178,7 +178,6 @@ export class Sequence {
 
     this.middles = this.createTone()
     this.notes = this.createNotes(notes)
-    this.effectNode = this.createEffectNodes()
   }
 
   // 变调
@@ -218,30 +217,32 @@ export class Sequence {
 
   // 创建音源节点
   createSourceNode() {
-    this.stop() // 关闭
-
     this.osc = this.actx.createOscillator()
-    this.sourceNode = this.osc
-    this.sourceNode.connect(this.effectNode)
-
+    this.osc.connect(this.effectNode)
     this.osc.type = this.waveType
   }
 
   // 停止播放
   stop() {
-    if(this.sourceNode) {
-      this.sourceNode.onended = null
-      this.sourceNode.stop()
-      this.sourceNode.disconnect()
-      this.sourceNode = null
+    if(this.osc) {
+      this.osc.onended = null
+      this.osc.stop()
+      this.osc.disconnect(this.effectNode)
+      this.osc = null
+      this.effectNode.disconnect()
+      this.effectNode = null
     }
   }
 
   // 开始播放
   play(when) {
+    this.stop() // 关闭
     when = when || this.actx.currentTime
+
+    this.effectNode = this.createEffectNodes()
     this.createSourceNode()
-    this.sourceNode.start()
+
+    this.osc.start()
     this.notes.forEach((note, index) => {
       when = this.scheduleNote(index, when)
     })
