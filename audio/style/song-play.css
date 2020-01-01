@@ -23,8 +23,12 @@ button + button {
 }
 
 .control-box {
+  margin: 20px 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 400px;
+}
+
+.control-box + .control-box {
+  margin-top: 0;
 }

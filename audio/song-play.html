@@ -10,7 +10,7 @@
 </head>
 
 <body>
-  <div class="control-box" id="controls">
+  <div class="control-box" id="waveType">
     <button data-type="sine">sine</button>
     <button data-type="square">square</button>
     <button data-type="sawtooth">sawtooth</button>
@@ -18,61 +18,47 @@
     <!-- <button id="play-custom">custom</button> -->
     <button data-type="stop">stop</button>
   </div>
+  <div class="control-box" id="songs">
+    <button data-type="city_of_sky">天空の城</button>
+    <button data-type="the_white_arks_return">つないだ手にキスを</button>
+    <button data-type="stop">stop</button>
+  </div>
   
   <script type="module">
     import { NotePlay, Sequence } from './js/music.js'
+    import songs from './js/songs.js'
 
     const actx = new AudioContext()
-    const song = (base) => [
-      // '- q', '- q', '- q', 
-      'A4 e', 'B4 e',
-      'C5 qe', 'B4 e', 'C5 q', 'E5, q',
-      'B4 hq', 'E4 e', 'E4 e',
-      'A4 qe', 'G4 e', 'A4 q', 'C5 q',
-      'G4 hq', 'E4 q',
-      'F4 qe', 'E4 e', 'F4 q', 'C5 q',
-      'E4 h', '- e', 'C5 e', 'C5 e', 'C5 e',
-      'B4 qe', '#F4 e', 'F4 q', 'B4 q',
-      'B4 h', '- q', 'A4 e', 'B4 e',
-      'C5 qe', 'B4 e', 'C5 q', 'E5 q',
-      'B4 hq', 'E4 e', 'E4 e',
-      'A4 qe', 'G4 e', 'A4 q', 'C5 q',
-      'G4 hq', 'D4 e', 'E4 e',
-      'F4 q', 'C5 e', 'B4 e', 'B4 e', 'C5 e', 'C5 q',
-      'D5 e', 'D5 e', 'E5 e', 'C5 e', 'C5 h',
-      'C5 e', 'B4 e', 'A4 e', 'A4 e', 'B4 q', '#G4 q',
-      'A4 hq', 'C5 e', 'D5 e',
-      'E5 qe', 'D5 e', 'E5 q', 'G5 q',
-      'D5 hq', 'G4 e', 'G4 e',
-      'C5 qe', 'B4 e', 'C5 q', 'E5 q',
-      'E5 w',
-      'A4 e', 'B4 e', 'C5 eq', 'B4 q', 'D5 e', 'D5 e',
-      'C5 qe', 'G4 e', 'G4 h',
-      'F5 q', 'E5 q', 'D5 q', 'C5 q',
-      'E5 hq', 'E5 q',
-      'A5 h', 'G5 q', 'G5 q',
-      'E5 e', 'D5 e', 'C5 h', '- e', 'C5 e',
-      'D5 q', 'C5 e', 'D5 e', 'D5 q', 'G5 q',
-      'E5 hq', 'E5 q',
-      'A5 h', 'G5 h',
-      'E5 e', 'D5 e', 'C5 h', '- e', 'C5 e',
-      'D5 q', 'C5 e', 'D5 e', 'D5 q', 'B4 q',
-      'A4 hq', // 'A4 e', 'B4 e'
-    ]
-    const seq = new Sequence(actx, song(), {
+    const seq = new Sequence(actx, songs.default.notes, {
       loop: true,
-      tempo: 120,
+      tempo: 60,
       waveType: 'sine', // sine | square | sawtooth | triangle | custom
-      tone: 'D'
+      ...songs.default
     })
     window.seq = seq
-    document.getElementById('controls').onclick = ev => {
+
+    // 音色控制
+    document.getElementById('waveType').onclick = ev => {
       if(ev.target.tagName === 'BUTTON') {
         const type = ev.target.dataset.type
         if(type === 'stop') {
           seq.stop()
         } else {
           seq.waveType = ev.target.dataset.type
+          seq.play()
+        }
+      }
+    }
+
+    // 歌曲控制
+    document.getElementById('songs').onclick = ev => {
+      if(ev.target.tagName === 'BUTTON') {
+        const type = ev.target.dataset.type
+        if(type === 'stop') {
+          seq.stop()
+        } else {
+          seq.stop()
+          seq.changeNotes(songs[ev.target.dataset.type])
           seq.play()
         }
       }

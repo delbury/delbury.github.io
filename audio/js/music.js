@@ -36,7 +36,8 @@ export const CP = {
 const regs = {
   space: /\s+/,
   num: /(\d+)/,
-  float: /^[0-9.]$/
+  float: /^[0-9.]$/,
+  simple: /(^[#b]?\d{1})/
 }
 
 // getIR()
@@ -75,26 +76,55 @@ async function getIR() {
  * new Note('- e') === 0Hz, 休止符，八分音符 --> 0.5
  * new Note('A4 es') === 440Hz, 附点八分音符，即 0.5 + 0.25
  * new Note('A4 0.125') 任意数字，4 / N(分音符)
+ * new Note('#1+- q') 简谱字符串，数字表示
  */
 export class Note {
-  constructor(str, middles = CP.middles, isNumber = false) {
-    const params = str.split(regs.space)
+  constructor(str, isNumber = false, middles = CP.middles, ) {
     this.middles = middles
-    this.frequency = this.getFrequency(params[0], isNumber) || 0 // 计算频率
-    this.duration = this.getDuration(params[1]) || 0 // 计算持续时间
+    if(isNumber) {
+      this.translateNumberString(str)
+    } else {
+      const params = str.split(regs.space)
+      this.frequency = this.getFrequency(params[0], isNumber) || 0 // 计算频率
+      this.duration = this.getDuration(params[1]) || 0 // 计算持续时间
+    }
+  }
+
+  // 转换简谱字符串
+  translateNumberString(str) {
+    const params = str.split(regs.space)
+    const freParams = params[0].split(regs.simple)
+    freParams.shift()
+
+    // 统计字符
+    let octaveCount = 4 // 升降八度计数
+    freParams[1].split('').map(str => {
+      switch(str) {
+        case '+': // 升八度
+          octaveCount++
+          break
+        case '-': // 降八度
+        octaveCount--
+          break
+      }
+    })
+
+    if(freParams[0] === '0') {
+      this.frequency = 0
+    } else {
+      this.frequency = this.middles[CP.numberNotes.get(freParams[0])] * (2 ** (octaveCount - CP.middleLevel))
+    }
+    
+    this.duration = this.getDuration(params[1])
   }
 
   // 根据字符串计算当前音符的频率
-  getFrequency(str, isNumber) {
-    if(isNumber) {
-      // 简谱
+  getFrequency(str) {
+    const params = str.split(regs.num)
+    if (params[0] === '-') {
+      return 0
     } else {
-      const params = str.split(regs.num)
-      if (params[0] === '-') {
-        return 0
-      } else {
-        return this.middles[CP.enharmonics.get(params[0])] * (2 ** (Number(params[1]) - CP.middleLevel))
-      }
+      return this.middles[CP.enharmonics.get(params[0])] * (2 ** (Number(params[1]) - CP.middleLevel))
     }
   }
 
@@ -168,7 +198,9 @@ export class NotePlay extends Note {
  */
 
 export class Sequence {
-  constructor(actx, notes, { tempo = 120, loop = false, staccato = 0, waveType = 'sine', tone = 'C' } = {}) {
+  constructor(actx, notes, {
+    tempo = 120, loop = false, staccato = 0, waveType = 'sine', tone = 'C', isNumber = false
+  } = {}) {
     this.actx = actx || new AudioContext()
     this.tempo = tempo
     this.waveType = waveType
@@ -177,19 +209,34 @@ export class Sequence {
     this.tone = tone
 
     this.middles = this.createTone()
-    this.notes = this.createNotes(notes)
+    this.notes = this.createNotes(notes, isNumber)
+  }
+
+  // 变换歌曲
+  changeNotes({ notes, isNumber, tone }) {
+    if(tone) {
+      this.tone = tone
+      this.middles = this.createTone()
+    }
+    this.notes = this.createNotes(notes, isNumber)
   }
 
   // 变调
+  // changeTone(tone) {
+  //   this.tone = tone
+  //   this.middles = this.createTone()
+  // }
+
+  // 创建曲调
   createTone() {
     const offset = CP.enharmonics.get(this.tone)
     return calcCenterFreq(offset)
   }
 
   // 创建音符实例
-  createNotes(notes) {
+  createNotes(notes, isNumber) {
     return notes.map(item => {
-      return new Note(item, this.middles)
+      return new Note(item, isNumber, this.middles)
     })
   }
 
