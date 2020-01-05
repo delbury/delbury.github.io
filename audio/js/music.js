@@ -84,18 +84,40 @@ export class Note {
     if(isNumber) {
       this.translateNumberString(str)
     } else {
-      const params = str.split(regs.space)
-      this.frequency = this.getFrequency(params[0], isNumber) || 0 // 计算频率
-      this.duration = this.getDuration(params[1]) || 0 // 计算持续时间
+      this.translateString(str)
     }
+  }
+
+  // 转换曲谱
+  translateString(str) {
+    const params = str.split(regs.space)
+    this.setFrequency(params[0]) // 计算频率
+    this.setDuration(params[1]) // 计算持续时间
   }
 
   // 转换简谱字符串
   translateNumberString(str) {
     const params = str.split(regs.space)
-    const freParams = params[0].split(regs.simple)
-    freParams.shift()
+    const freStrs = params[0].split('/') // 频率字符串数组
 
+    if(freStrs.length === 1) {
+      const freParams = freStrs[0].split(regs.simple)
+      freParams.shift()
+      this.frequency = this.calcNumberFre(freParams)
+    } else {
+      this.frequency = []
+      freStrs.forEach(str => {
+        const freParams = str.split(regs.simple)
+        freParams.shift()
+        this.frequency.push(this.calcNumberFre(freParams))
+      })
+    }
+
+    this.setDuration(params[1])
+  }
+
+  // 计算简谱的频率
+  calcNumberFre(freParams) {
     // 统计字符
     let octaveCount = 4 // 升降八度计数
     freParams[1].split('').map(str => {
@@ -110,29 +132,46 @@ export class Note {
     })
 
     if(freParams[0] === '0') {
-      this.frequency = 0
+      return 0
     } else {
-      this.frequency = this.middles[CP.numberNotes.get(freParams[0])] * (2 ** (octaveCount - CP.middleLevel))
+      return this.middles[CP.numberNotes.get(freParams[0])] * (2 ** (octaveCount - CP.middleLevel))
     }
-    
-    this.duration = this.getDuration(params[1])
   }
 
   // 根据字符串计算当前音符的频率
-  getFrequency(str) {
-    const params = str.split(regs.num)
-    if (params[0] === '-') {
-      return 0
+  setFrequency(str) {
+    const strs = str.split('/')
+
+    // 单音
+    if(strs.length === 1) {
+      const params = strs[0].split(regs.num)
+      if (params[0] === '-') {
+        this.frequency = 0
+      } else {
+        this.frequency = this.middles[CP.enharmonics.get(params[0])] * (2 ** (Number(params[1]) - CP.middleLevel))
+      }
+
+    // 和弦音
     } else {
-      return this.middles[CP.enharmonics.get(params[0])] * (2 ** (Number(params[1]) - CP.middleLevel))
+      this.frequency = []
+      strs.forEach(str => {
+        const params = str.split(regs.num)
+        if (params[0] === '-') {
+          this.frequency.push(0)
+        } else {
+          this.frequency.push(
+            this.middles[CP.enharmonics.get(params[0])] * (2 ** (Number(params[1]) - CP.middleLevel))
+          )
+        }
+      })
     }
   }
 
   // 根据字符串计算当前音符的持续时间
-  getDuration(str) {
+  setDuration(str) {
     // 判断是否为浮点数
     if (regs.float.test(str)) {
-      return parseFloat(str)
+      this.duration = parseFloat(str)
     } else {
       /**
        * w: 全音符（whole）
@@ -140,17 +179,19 @@ export class Note {
        * q: 四分音符（quarter）
        * e: 八分音符（eighth）
        * s: 十六分音符（sixteenth）
+       * t: 三十二分音符
        */
-      return str.toLowerCase().split('').reduce((sum, curr) => {
+      this.duration = str.toLowerCase().split('').reduce((sum, curr) => {
         switch (curr) {
           case 'w': return 4 + sum
           case 'h': return 2 + sum
           case 'q': return 1 + sum
           case 'e': return 0.5 + sum
           case 's': return 0.25 + sum
+          case 't': return 0.125 + sum
           default: return 0 + sum
         }
-      }, 0)
+      }, 0) || 0
     }
   }
 }
@@ -213,7 +254,10 @@ export class Sequence {
   }
 
   // 变换歌曲
-  changeNotes({ notes, isNumber, tone }) {
+  changeNotes({ notes, isNumber, tone, tempo }) {
+    if(tempo) {
+      this.tempo = tempo
+    }
     if(tone) {
       this.tone = tone
       this.middles = this.createTone()
@@ -236,8 +280,13 @@ export class Sequence {
   // 创建音符实例
   createNotes(notes, isNumber) {
     return notes.map(item => {
+      if(typeof item === 'object') {
+        this.tone = item.tone
+        this.middles = this.createTone()
+        return null
+      }
       return new Note(item, isNumber, this.middles)
-    })
+    }).filter(item => !!item)
   }
 
   // 创建播放列表
@@ -245,38 +294,70 @@ export class Sequence {
     const duration = 60 / this.tempo * this.notes[index].duration
     const cutoff = duration * (1 - this.staccato || 0)
 
-    this.osc.frequency.setValueAtTime(this.notes[index].frequency, when) // 设置频率
-    this.gainNode.gain.linearRampToValueAtTime(1, when + 0.01) // 设置增益
+    // 是否和弦
+    if(this.notes[index].frequency.constructor === Array) {
+      this.notes[index].frequency.forEach((fre, index) => {
+        this.osc[index].frequency.setValueAtTime(fre, when) // 设置频率
+        this.gainNode[index].gain.linearRampToValueAtTime(1, when + 0.01) // 设置增益
+        this.osc[index].frequency.setValueAtTime(0, when + cutoff)
+        this.gainNode[index].gain.exponentialRampToValueAtTime(0.01, when + cutoff) // 音符淡出
+      })
+    } else {
+      this.osc[0].frequency.setValueAtTime(this.notes[index].frequency, when) // 设置频率
+      this.gainNode[0].gain.linearRampToValueAtTime(1, when + 0.01) // 设置增益
 
-    this.osc.frequency.setValueAtTime(0, when + cutoff)
-    this.gainNode.gain.exponentialRampToValueAtTime(0.01, when + cutoff)
+      this.osc[0].frequency.setValueAtTime(0, when + cutoff)
+      this.gainNode[0].gain.exponentialRampToValueAtTime(0.01, when + cutoff) // 音符淡出
+    }
 
     return when + duration // TODO 计算下一个时间
   }
 
   // 创建效果节点
   createEffectNodes() {
-    this.gainNode = this.actx.createGain()
-    this.gainNode.connect(this.actx.destination)
+    this.gainNode = [
+      this.actx.createGain(),
+      this.actx.createGain(),
+      this.actx.createGain(),
+      this.actx.createGain()
+    ]
+    this.gainNode.forEach(gain => {
+      gain.connect(this.actx.destination)
+    })
 
     return this.gainNode
   }
 
   // 创建音源节点
   createSourceNode() {
-    this.osc = this.actx.createOscillator()
-    this.osc.connect(this.effectNode)
-    this.osc.type = this.waveType
+    this.osc = [
+      // 主振源
+      this.actx.createOscillator(),
+
+      // 和弦
+      this.actx.createOscillator(),
+      this.actx.createOscillator(),
+      this.actx.createOscillator()
+    ]
+    this.osc.forEach((osc, index) => {
+      osc.type = this.waveType
+      osc.frequency.setValueAtTime(0, this.actx.currentTime) // 设置频率
+      osc.connect(this.effectNode[index])
+    })
   }
 
   // 停止播放
   stop() {
     if(this.osc) {
-      this.osc.onended = null
-      this.osc.stop()
-      this.osc.disconnect(this.effectNode)
+      this.osc.forEach(osc => {
+        osc.onended = null
+        osc.stop()
+        osc.disconnect(this.effectNode)
+      })
       this.osc = null
-      this.effectNode.disconnect()
+      this.effectNode.forEach(gain => {
+        gain.disconnect()
+      })
       this.effectNode = null
     }
   }
@@ -289,12 +370,12 @@ export class Sequence {
     this.effectNode = this.createEffectNodes()
     this.createSourceNode()
 
-    this.osc.start()
+    this.osc.forEach(osc => osc.start())
     this.notes.forEach((note, index) => {
       when = this.scheduleNote(index, when)
     })
-    this.osc.stop(when)
-    this.osc.onended = () => {
+    this.osc.forEach(osc => osc.stop(when))
+    this.osc[0].onended = () => {
       this.loop ? this.play() : null
     }
   }

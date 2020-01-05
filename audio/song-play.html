@@ -21,6 +21,8 @@
   <div class="control-box" id="songs">
     <button data-type="city_of_sky">天空の城</button>
     <button data-type="the_white_arks_return">つないだ手にキスを</button>
+    <button data-type="missing_through_time_and_space">時空を越えた想い</button>
+    <button data-type="test">test</button>
     <button data-type="stop">stop</button>
   </div>
   
@@ -31,7 +33,6 @@
     const actx = new AudioContext()
     const seq = new Sequence(actx, songs.default.notes, {
       loop: true,
-      tempo: 60,
       waveType: 'sine', // sine | square | sawtooth | triangle | custom
       ...songs.default
     })

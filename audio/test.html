@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+  <button id="play">play</button>
+  <script>
+    document.getElementById('play').onclick = ev => {
+      const actx = new AudioContext()
+      const osc = actx.createOscillator()
+      const gain = actx.createGain()
+      const real = new Float32Array(2)
+      const imag = new Float32Array(2)
+      real[0] = 1
+      imag[0] = 1
+      real[1] = 2
+      imag[1] = 1
+      const wave = actx.createPeriodicWave(real, imag)
+      osc.setPeriodicWave(wave)
+
+      osc.connect(gain)
+      gain.connect(actx.destination)
+
+      osc.start()
+      gain.gain.linearRampToValueAtTime(1, actx.currentTime + 0.01)
+      gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 1)
+      osc.stop(1)
+    }
+  </script>
+</body>
+</html>
