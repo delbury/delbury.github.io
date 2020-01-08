@@ -5,20 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Document</title>
+  <style>
+    canvas {
+      margin: 50px;
+      display: block;
+      border: 1px solid skyblue;
+    }
+  </style>
 </head>
 <body>
+  <audio id="audio" src="../../resource/notes/c3.mp3"></audio>
   <button id="play">play</button>
+  <button id="play-audio">audio</button>
+  <canvas id="canvas" width="800" height="360"></canvas>
   <script>
-    document.getElementById('play').onclick = ev => {
+    const handleClick = () => {
       const actx = new AudioContext()
       const osc = actx.createOscillator()
+      osc.frequency.value = 261
       const gain = actx.createGain()
-      const real = new Float32Array(2)
-      const imag = new Float32Array(2)
-      real[0] = 1
-      imag[0] = 1
-      real[1] = 2
-      imag[1] = 1
+      const real = new Float32Array(5)
+      const imag = new Float32Array(5)
+      // for(let i in real) {
+      //   real[i] = 0
+      // }
+
+      real[0] = 0
+      real[1] = 10
+      real[2] = 8
+      real[3] = 7
+      real[4] = 5
+
+      imag[0] = 0
+      imag[1] = 10
+      imag[2] = 8
+      imag[3] = 7
+      imag[4] = 5
       const wave = actx.createPeriodicWave(real, imag)
       osc.setPeriodicWave(wave)
 
@@ -29,6 +51,97 @@
       gain.gain.linearRampToValueAtTime(1, actx.currentTime + 0.01)
       gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 1)
       osc.stop(1)
+    }
+    document.getElementById('play').onclick = handleClick
+
+
+    const audio = document.getElementById('audio')
+    const actx = new AudioContext()
+    // const source = actx.createMediaElementSource(audio)
+    const source = actx.createOscillator()
+    source.frequency.value = 261
+    const real = new Float32Array(5)
+    const imag = new Float32Array(5)
+    for(let i in real) {
+      real[i] = 0
+    }
+
+    // real[0] = 0
+    // real[1] = 10
+    // real[2] = 8
+    // real[3] = 7
+    // real[4] = 5
+
+    imag[0] = 0
+    imag[1] = 1
+    imag[2] = 0
+    imag[3] = 0
+    imag[4] = 4
+    const wave = actx.createPeriodicWave(real, imag)
+    source.setPeriodicWave(wave)
+
+
+    const gain = actx.createGain()
+    gain.gain.value = 2
+    const analyser = actx.createAnalyser()
+    const bufferLen = analyser.frequencyBinCount
+    let buffer = new Uint8Array(bufferLen)
+    source.connect(gain).connect(analyser).connect(actx.destination)
+
+    let running = false
+    audio.onended = () => running = false
+
+    const canvas = document.getElementById('canvas')
+    const ctx = canvas.getContext('2d')
+    ctx.strokStyle = '#333'
+    const { width, height } = canvas
+    const dx = width / bufferLen * 2
+    const dy = height / 256
+    let x = 0
+    const arr = []
+
+    const fn = () => requestAnimationFrame(() => {
+      // analyser.getByteTimeDomainData(buffer)
+      analyser.getByteFrequencyData(buffer)
+      // ctx.clearRect(0, 0, width, height)
+      ctx.beginPath()
+      let x = 0
+      for(let i = 0; i < bufferLen; i++) {
+        const y = height - buffer[i] * dy
+        // const y = buffer[i] * dy
+        if(i === 0) {
+          ctx.moveTo(x, y)
+        } else {
+          arr.push(x, y)
+          ctx.lineTo(x, y)
+        }
+        x += dx
+
+        // if(y > 180) {
+        //   console.log(x)
+        // }
+      }
+      ctx.stroke()
+
+      if(running) {
+        fn()
+      }
+    })
+
+    document.getElementById('play-audio').onclick = ev => {
+      arr.length = 0
+      ctx.clearRect(0, 0, width, height)
+      x = 0
+      ctx.beginPath()
+      ctx.moveTo(x, height / 2)
+      running = true
+      // audio.play()
+      source.start()
+      gain.gain.linearRampToValueAtTime(1, actx.currentTime + 0.01)
+      gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 1)
+      source.stop(actx.currentTime + 1)
+      source.onended = () => running = false
+      fn()
     }
   </script>
 </body>
