@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,10 +14,12 @@
     }
   </style>
 </head>
+
 <body>
   <audio id="audio" src="../../resource/notes/c3.mp3"></audio>
   <button id="play">play</button>
   <button id="play-audio">audio</button>
+  <button id="stop">stop</button>
   <canvas id="canvas" width="800" height="360"></canvas>
   <script>
     const handleClick = () => {
@@ -58,11 +61,11 @@
     const audio = document.getElementById('audio')
     const actx = new AudioContext()
     // const source = actx.createMediaElementSource(audio)
-    const source = actx.createOscillator()
+    let source = actx.createOscillator()
     source.frequency.value = 261
     const real = new Float32Array(5)
     const imag = new Float32Array(5)
-    for(let i in real) {
+    for (let i in real) {
       real[i] = 0
     }
 
@@ -94,7 +97,10 @@
     const canvas = document.getElementById('canvas')
     const ctx = canvas.getContext('2d')
     ctx.strokStyle = '#333'
-    const { width, height } = canvas
+    const {
+      width,
+      height
+    } = canvas
     const dx = width / bufferLen * 2
     const dy = height / 256
     let x = 0
@@ -103,13 +109,13 @@
     const fn = () => requestAnimationFrame(() => {
       // analyser.getByteTimeDomainData(buffer)
       analyser.getByteFrequencyData(buffer)
-      // ctx.clearRect(0, 0, width, height)
+      ctx.clearRect(0, 0, width, height)
       ctx.beginPath()
       let x = 0
-      for(let i = 0; i < bufferLen; i++) {
+      for (let i = 0; i < bufferLen; i++) {
         const y = height - buffer[i] * dy
         // const y = buffer[i] * dy
-        if(i === 0) {
+        if (i === 0) {
           ctx.moveTo(x, y)
         } else {
           arr.push(x, y)
@@ -123,26 +129,47 @@
       }
       ctx.stroke()
 
-      if(running) {
+      if (running) {
         fn()
       }
     })
 
     document.getElementById('play-audio').onclick = ev => {
+      if (running) {
+        return
+      }
+      running = true
       arr.length = 0
       ctx.clearRect(0, 0, width, height)
       x = 0
       ctx.beginPath()
       ctx.moveTo(x, height / 2)
-      running = true
       // audio.play()
       source.start()
       gain.gain.linearRampToValueAtTime(1, actx.currentTime + 0.01)
       gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 1)
+
       source.stop(actx.currentTime + 1)
-      source.onended = () => running = false
+      source.onended = () => {
+        source.disconnect()
+        source = actx.createOscillator()
+        source.setPeriodicWave(wave)
+        source.connect(gain)
+        running = false
+      }
       fn()
+    }
+
+    document.getElementById('stop').onclick = () => {
+      running = false
+    }
+    document.onkeydown = ev => {
+      if (ev.keyCode === 32) {
+        running = false
+        ev.preventDefault()
+      }
     }
   </script>
 </body>
+
 </html>
