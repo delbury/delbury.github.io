@@ -76,7 +76,7 @@
     // real[4] = 5
 
     imag[0] = 0
-    imag[1] = 0.5
+    imag[1] = 1
     imag[2] = 0
     imag[3] = 0
     imag[4] = 0.5
@@ -85,10 +85,13 @@
 
 
     const gain = actx.createGain()
-    gain.gain.value = 2
+    gain.gain.value = 0.5
     const analyser = actx.createAnalyser()
+    const maxDB = 0
+    const minDB = -100
     // analyser.smoothingTimeConstant = 0.7
     // analyser.minDecibels = -120
+    analyser.maxDecibels = 0
     const bufferLen = analyser.frequencyBinCount
     let buffer = new Uint8Array(bufferLen)
     source.connect(gain).connect(analyser).connect(actx.destination)
@@ -109,7 +112,7 @@
     const arr = []
 
     const fnLine = (n) => {
-      const ddb = ((-30) - (-100)) / n
+      const ddb = (maxDB - minDB) / n
       ctx.moveTo(20, height)
       ctx.lineTo(20, height - 20)
       for(let i = 0; i <= 10; i++) {
@@ -123,9 +126,9 @@
         ctx.setLineDash([])
 
         if(i === 0) {
-          ctx.strokeText(-30 - ddb * i + '', 2, i / n * height + 10)
+          ctx.strokeText(Math.round(maxDB - ddb * i + ''), 2, i / n * height + 10)
         } else {
-          ctx.strokeText(-30 - ddb * i + '', 2, i / n * height)
+          ctx.strokeText(Math.round(maxDB - ddb * i + ''), 2, i / n * height)
         }
       }
     }
@@ -134,7 +137,7 @@
       analyser.getByteFrequencyData(buffer)
       ctx.clearRect(0, 0, width, height)
       ctx.beginPath()
-      fnLine(7)
+      fnLine(10)
       ctx.beginPath()
       let x = 20
       for (let i = 0; i < bufferLen; i++) {
@@ -171,8 +174,8 @@
       ctx.moveTo(x, height / 2)
       // audio.play()
       source.start()
-      gain.gain.linearRampToValueAtTime(1, actx.currentTime + 0.01)
-      gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 1)
+      // gain.gain.linearRampToValueAtTime(1, actx.currentTime + 0.01)
+      // gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 1)
 
       source.stop(actx.currentTime + 1)
       source.onended = () => {
