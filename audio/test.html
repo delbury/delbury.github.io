@@ -16,14 +16,14 @@
 </head>
 
 <body>
-  <audio id="audio" src="../../resource/notes/c3.mp3"></audio>
+  <audio id="audio" src="../../resource/notes/40.c-1.mp3"></audio>
   <button id="play">play</button>
   <button id="play-wave">wave</button>
   <button id="play-audio">audio</button>
   <button id="stop">stop</button>
   <canvas id="canvas" width="800" height="600"></canvas>
   <script>
-    const VOL = 1047
+    const VOL = 261 || 1047
     const handleClick = () => {
       const actx = new AudioContext()
       const osc = actx.createOscillator()
@@ -65,11 +65,27 @@
     const audioSource = actx.createMediaElementSource(audio)
     let source = actx.createOscillator()
     source.frequency.value = VOL
-    const N = 5
-    let real = new Float32Array(N)
-    let imag = new Float32Array(N)
+    const dbs = [
+      -54, -52, -58, -60, -58, -60, -56.5, -63,
+      -64.5, -63, -74.5, -67, -74.5, -76
+    ]
+    const amps = []
+    for(let i = dbs.length - 1; i >= 0; i--) {
+      const ddb = dbs[i] - dbs[dbs.length - 1]
+      amps.unshift(Math.pow(10, ddb / 10))
+    }
+    const LEN = dbs.length + 1
+    let real = new Float32Array(LEN)
+    let imag = new Float32Array(LEN)
     for (let i in real) {
       real[i] = 0
+    }
+    for (let i in imag) {
+      if(i == 0) {
+        imag[0] = 0
+      } else {
+        imag[i] = amps[i - 1]
+      }
     }
 
     // real[0] = 0
@@ -78,11 +94,11 @@
     // real[3] = 7
     // real[4] = 5
 
-    imag[0] = 0
-    imag[1] = 100
-    imag[2] = 15.85
-    imag[3] = 6.31
-    imag[4] = 1
+    // imag[0] = 0
+    // imag[1] = 100
+    // imag[2] = 15.85
+    // imag[3] = 6.31
+    // imag[4] = 1
     // 
     // ;
     // ([imag, real] = [real, imag])
@@ -91,7 +107,7 @@
 
 
     const gain = actx.createGain()
-    gain.gain.value = 0.5
+    gain.gain.value = 1
     const analyser = actx.createAnalyser()
     analyser.fftSize = 4096 * 2
     const maxDB = -30
@@ -186,7 +202,7 @@
       // audio.play()
       source.start()
       gain.gain.linearRampToValueAtTime(1, actx.currentTime + 0.01)
-      gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 1)
+      gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 1)
       gain.gain.linearRampToValueAtTime(0, actx.currentTime + 1.5)
 
       source.stop(actx.currentTime + 1.5)

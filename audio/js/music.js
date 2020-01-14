@@ -328,6 +328,30 @@ export class Sequence {
     return this.gainNode
   }
 
+  // 创建自定义波形
+  createWave() {
+    const dbs = [-54, -52, -58, -60, -58, -60, -56.5, -63, -64.5, -63, -74.5, -67, -74.5, -76]
+    const amps = []
+    for(let i = dbs.length - 1; i >= 0; i--) {
+      const ddb = dbs[i] - dbs[dbs.length - 1]
+      amps.unshift(Math.pow(10, ddb / 10))
+    }
+    const LEN = dbs.length + 1
+    let real = new Float32Array(LEN)
+    let imag = new Float32Array(LEN)
+    for (let i in real) {
+      real[i] = 0
+    }
+    for (let i in imag) {
+      if(i == 0) {
+        imag[0] = 0
+      } else {
+        imag[i] = amps[i - 1]
+      }
+    }
+    return this.actx.createPeriodicWave(real, imag)
+  }
+
   // 创建音源节点
   createSourceNode() {
     this.osc = [
@@ -340,7 +364,11 @@ export class Sequence {
       this.actx.createOscillator()
     ]
     this.osc.forEach((osc, index) => {
-      osc.type = this.waveType
+      if(this.waveType === 'custom') {
+        osc.setPeriodicWave(this.createWave())
+      } else {
+        osc.type = this.waveType
+      }
       osc.frequency.setValueAtTime(0, this.actx.currentTime) // 设置频率
       osc.connect(this.effectNode[index])
     })

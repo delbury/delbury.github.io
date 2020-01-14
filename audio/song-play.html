@@ -15,6 +15,7 @@
     <button data-type="square">square</button>
     <button data-type="sawtooth">sawtooth</button>
     <button data-type="triangle">triangle</button>
+    <button data-type="custom">custom</button>
     <!-- <button id="play-custom">custom</button> -->
     <button data-type="stop">stop</button>
   </div>
@@ -33,7 +34,7 @@
     const actx = new AudioContext()
     const seq = new Sequence(actx, songs.default.notes, {
       loop: true,
-      waveType: 'sine', // sine | square | sawtooth | triangle | custom
+      waveType: 'custom', // sine | square | sawtooth | triangle | custom
       ...songs.default
     })
     window.seq = seq
