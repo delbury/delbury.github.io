@@ -5,6 +5,33 @@
 
 import IRBase64 from '../resource/IR.js'
 
+// 工具类
+export class Tools {
+  // 创建自定义钢琴音色波形
+  static createPianoWave(actx) {
+    const dbs = [-54, -52, -58, -60, -58, -60, -56.5, -63, -64.5, -63, -74.5, -67, -74.5, -76]
+    const amps = []
+    for(let i = dbs.length - 1; i >= 0; i--) {
+      const ddb = dbs[i] - dbs[dbs.length - 1]
+      amps.unshift(Math.pow(10, ddb / 10))
+    }
+    const LEN = dbs.length + 1
+    let real = new Float32Array(LEN)
+    let imag = new Float32Array(LEN)
+    for (let i in real) {
+      real[i] = 0
+    }
+    for (let i in imag) {
+      if(i == 0) {
+        imag[0] = 0
+      } else {
+        imag[i] = amps[i - 1]
+      }
+    }
+    return actx.createPeriodicWave(real, imag)
+  }
+}
+
 // CONST_PARAMS，常量
 export const CP = {
   enharmonics: (() => {
@@ -204,7 +231,7 @@ export class NotePlay extends Note {
   constructor(actx, str) {
     super(str)
     this.actx = actx || new AudioContext()
-    this.tempo = 60 / 120
+    this.tempo = 120 / 120
   }
 
   createNodes() {
@@ -215,7 +242,8 @@ export class NotePlay extends Note {
     this.gainNode.connect(this.actx.destination)
 
 
-    this.oscNode.type = 'sine'
+    // this.oscNode.type = 'sine'
+    this.oscNode.setPeriodicWave(Tools.createPianoWave(this.actx))
     this.oscNode.frequency.value = this.frequency
     // this.oscNode.detune.value = 1200
     // this.gainNode.gain.value = 3.4
@@ -328,30 +356,6 @@ export class Sequence {
     return this.gainNode
   }
 
-  // 创建自定义波形
-  createWave() {
-    const dbs = [-54, -52, -58, -60, -58, -60, -56.5, -63, -64.5, -63, -74.5, -67, -74.5, -76]
-    const amps = []
-    for(let i = dbs.length - 1; i >= 0; i--) {
-      const ddb = dbs[i] - dbs[dbs.length - 1]
-      amps.unshift(Math.pow(10, ddb / 10))
-    }
-    const LEN = dbs.length + 1
-    let real = new Float32Array(LEN)
-    let imag = new Float32Array(LEN)
-    for (let i in real) {
-      real[i] = 0
-    }
-    for (let i in imag) {
-      if(i == 0) {
-        imag[0] = 0
-      } else {
-        imag[i] = amps[i - 1]
-      }
-    }
-    return this.actx.createPeriodicWave(real, imag)
-  }
-
   // 创建音源节点
   createSourceNode() {
     this.osc = [
@@ -365,7 +369,7 @@ export class Sequence {
     ]
     this.osc.forEach((osc, index) => {
       if(this.waveType === 'custom') {
-        osc.setPeriodicWave(this.createWave())
+        osc.setPeriodicWave(Tools.createPianoWave(this.actx))
       } else {
         osc.type = this.waveType
       }
