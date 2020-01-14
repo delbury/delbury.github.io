@@ -18,14 +18,16 @@
 <body>
   <audio id="audio" src="../../resource/notes/c3.mp3"></audio>
   <button id="play">play</button>
+  <button id="play-wave">wave</button>
   <button id="play-audio">audio</button>
   <button id="stop">stop</button>
-  <canvas id="canvas" width="800" height="360"></canvas>
+  <canvas id="canvas" width="800" height="600"></canvas>
   <script>
+    const VOL = 1047
     const handleClick = () => {
       const actx = new AudioContext()
       const osc = actx.createOscillator()
-      osc.frequency.value = 261
+      osc.frequency.value = VOL
       const gain = actx.createGain()
       const real = new Float32Array(5)
       const imag = new Float32Array(5)
@@ -60,11 +62,12 @@
 
     const audio = document.getElementById('audio')
     const actx = new AudioContext()
-    // const source = actx.createMediaElementSource(audio)
+    const audioSource = actx.createMediaElementSource(audio)
     let source = actx.createOscillator()
-    source.frequency.value = 261
-    const real = new Float32Array(5)
-    const imag = new Float32Array(5)
+    source.frequency.value = VOL
+    const N = 5
+    let real = new Float32Array(N)
+    let imag = new Float32Array(N)
     for (let i in real) {
       real[i] = 0
     }
@@ -76,10 +79,13 @@
     // real[4] = 5
 
     imag[0] = 0
-    imag[1] = 1
-    imag[2] = 0
-    imag[3] = 0
-    imag[4] = 0.5
+    imag[1] = 100
+    imag[2] = 15.85
+    imag[3] = 6.31
+    imag[4] = 1
+    // 
+    // ;
+    // ([imag, real] = [real, imag])
     const wave = actx.createPeriodicWave(real, imag)
     source.setPeriodicWave(wave)
 
@@ -87,13 +93,15 @@
     const gain = actx.createGain()
     gain.gain.value = 0.5
     const analyser = actx.createAnalyser()
-    const maxDB = 0
-    const minDB = -100
+    analyser.fftSize = 4096 * 2
+    const maxDB = -30
+    const minDB = -80
     // analyser.smoothingTimeConstant = 0.7
     // analyser.minDecibels = -120
     analyser.maxDecibels = 0
     const bufferLen = analyser.frequencyBinCount
     let buffer = new Uint8Array(bufferLen)
+    // let buffer = new Float32Array(bufferLen)
     source.connect(gain).connect(analyser).connect(actx.destination)
 
     let running = false
@@ -106,38 +114,41 @@
       width,
       height
     } = canvas
-    const dx = (width - 20) / bufferLen * 2
+    const dx = (width - 20) / bufferLen * 3
     const dy = height / 256
     let x = 20
     const arr = []
 
     const fnLine = (n) => {
       const ddb = (maxDB - minDB) / n
-      ctx.moveTo(20, height)
-      ctx.lineTo(20, height - 20)
-      for(let i = 0; i <= 10; i++) {
+      for (let i = 0; i <= n; i++) {
+        ctx.moveTo(20 + (width - 20) / n * i, height)
+        ctx.lineTo(20 + (width - 20) / n * i, 0)
+      }
+      for (let i = 0; i <= n; i++) {
         ctx.setLineDash([3, 3, 6])
         ctx.save()
-        ctx.strokeStyle = '#999'
+        ctx.strokeStyle = '#bbb'
         ctx.moveTo(25, i / n * height)
         ctx.lineTo(width, i / n * height)
         ctx.stroke()
         ctx.restore()
         ctx.setLineDash([])
 
-        if(i === 0) {
-          ctx.strokeText(Math.round(maxDB - ddb * i + ''), 2, i / n * height + 10)
+        if (i === 0) {
+          ctx.strokeText(Math.round((maxDB - ddb * i) * 10) / 10, 2, i / n * height + 10)
         } else {
-          ctx.strokeText(Math.round(maxDB - ddb * i + ''), 2, i / n * height)
+          ctx.strokeText(Math.round((maxDB - ddb * i) * 10) / 10, 2, i / n * height)
         }
       }
     }
     const fn = () => requestAnimationFrame(() => {
       // analyser.getByteTimeDomainData(buffer)
+      // analyser.getFloatFrequencyData(buffer)
       analyser.getByteFrequencyData(buffer)
       ctx.clearRect(0, 0, width, height)
       ctx.beginPath()
-      fnLine(10)
+      fnLine(25)
       ctx.beginPath()
       let x = 20
       for (let i = 0; i < bufferLen; i++) {
@@ -162,7 +173,7 @@
       }
     })
 
-    document.getElementById('play-audio').onclick = ev => {
+    document.getElementById('play-wave').onclick = ev => {
       if (running) {
         return
       }
@@ -174,18 +185,35 @@
       ctx.moveTo(x, height / 2)
       // audio.play()
       source.start()
-      // gain.gain.linearRampToValueAtTime(1, actx.currentTime + 0.01)
-      // gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 1)
+      gain.gain.linearRampToValueAtTime(1, actx.currentTime + 0.01)
+      gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 1)
+      gain.gain.linearRampToValueAtTime(0, actx.currentTime + 1.5)
 
-      source.stop(actx.currentTime + 1)
+      source.stop(actx.currentTime + 1.5)
       source.onended = () => {
         source.disconnect()
         source = actx.createOscillator()
-        source.frequency.value = 261
+        source.frequency.value = VOL
         source.setPeriodicWave(wave)
         source.connect(gain)
         running = false
       }
+      fn()
+    }
+
+    document.getElementById('play-audio').onclick = ev => {
+      if (running) {
+        return
+      }
+      running = true
+      arr.length = 0
+      ctx.clearRect(0, 0, width, height)
+      x = 20
+      ctx.beginPath()
+      ctx.moveTo(x, height / 2)
+
+      audioSource.connect(gain)
+      audio.play()
       fn()
     }
 
@@ -197,6 +225,10 @@
         running = false
         ev.preventDefault()
       }
+    }
+
+    function db2power(db) {
+      return Math.pow(10, db / 10 - 12)
     }
   </script>
 </body>
