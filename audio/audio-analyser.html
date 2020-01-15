@@ -1,12 +1,65 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Document</title>
+  <title>Audio Analyser</title>
+  <link rel="stylesheet" href="./style/audio-analyser.css">
 </head>
+
 <body>
-  
+  <div class="container">
+    <div class="control-bar">
+      <div class="control-box" data-title="音频文件">
+        <input id="file" class="none" type="file" accept=".mp3, .ogg">
+        <button>播放</button>
+        <button>暂停</button>
+        <button>停止</button>
+        <button onclick="file.click()">选择音频文件</button>
+        <span id="fileName" class="file-name none">
+          <span class="text"></span>
+          <span class="close">X</span>
+        </span>
+      </div>
+      <div class="control-box" data-title="振荡器">
+        <button>开始</button>
+        <button>停止</button>
+      </div>
+    </div>
+
+    <div class="canvas-box">
+      <canvas id="time-domain"></canvas>
+      <canvas id="freq-domain"></canvas>
+    </div>
+  </div>
+
+  <script type="module">
+    import { BaseCanvas } from './js/analyser.js'
+    const fileNameEle = document.getElementById('fileName')
+    const fileEle = document.getElementById('file')
+    // 选择文件
+    fileEle.onchange = ev => {
+      const file = ev.target.files[0]
+      console.log(file)
+      if(file) {
+        fileNameEle.classList.remove('none')
+        fileNameEle.querySelector('.text').innerHTML = file.name
+      } 
+    }
+
+    // 取消文件
+    fileNameEle.querySelector('.close').onclick = ev => {
+      fileEle.value = ''
+      fileNameEle.classList.add('none')
+      fileNameEle.querySelector('.text').innerHTML = ''
+    }
+
+    // 测试代码
+    const timeDomain = new BaseCanvas(document.getElementById('time-domain'))
+    // 测试代码结束
+  </script>
 </body>
+
 </html>
