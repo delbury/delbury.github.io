@@ -14,9 +14,9 @@
     <div class="control-bar">
       <div class="control-box" data-title="音频文件">
         <input id="file" class="none" type="file" accept=".mp3, .ogg">
-        <button>播放</button>
-        <button>暂停</button>
-        <button>停止</button>
+        <button id="file-play">播放</button>
+        <!-- <button id="file-pause">暂停</button> -->
+        <button id="file-stop">停止</button>
         <button onclick="file.click()">选择音频文件</button>
         <span id="fileName" class="file-name none">
           <span class="text"></span>
@@ -36,16 +36,19 @@
   </div>
 
   <script type="module">
-    import { BaseCanvas } from './js/analyser.js'
+    import { BaseCanvas, AudioPlayer } from './js/analyser.js'
     const fileNameEle = document.getElementById('fileName')
     const fileEle = document.getElementById('file')
+    let player = null
+
     // 选择文件
     fileEle.onchange = ev => {
       const file = ev.target.files[0]
-      console.log(file)
       if(file) {
         fileNameEle.classList.remove('none')
         fileNameEle.querySelector('.text').innerHTML = file.name
+
+        player = new AudioPlayer(file)
       } 
     }
 
@@ -54,6 +57,20 @@
       fileEle.value = ''
       fileNameEle.classList.add('none')
       fileNameEle.querySelector('.text').innerHTML = ''
+    }
+
+    // 播放文件
+    document.getElementById('file-play').onclick = () => {
+      if(player) {
+        player.start()
+      }
+    }
+
+    // 停止播放
+    document.getElementById('file-stop').onclick = () => {
+      if(player) {
+        player.stop()
+      }
     }
 
     // 测试代码

@@ -94,3 +94,108 @@ export class BaseCanvas {
     this.ctx.restore()
   }
 }
+
+export class AudioPlayer {
+  constructor(file) {
+    if(!(/^audio/).test(file.type)) {
+      throw new Error('传入必须为音频文件')
+    }
+
+    this.init(file)
+  }
+
+  // 初始化
+  async init(file) {
+    this.actx = new AudioContext()
+    this.audioBuffer = await this.decodeFile(file)
+    this.source = null
+    this.gain = this.createGain(2)
+    this.gain.connect(this.actx.destination)
+  }
+
+  // 解析音频文件
+  async decodeFile(file) {
+    const arraybuffer = await new Promise(resolve => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        resolve(reader.result)
+      }
+      reader.readAsArrayBuffer(file)
+    })
+    const audiobuffer = await this.actx.decodeAudioData(arraybuffer)
+    return audiobuffer
+  }
+
+  // 创建源节点
+  createSource(ab) {
+    const source = this.actx.createBufferSource()
+    source.buffer = ab
+    return source
+  }
+
+  // 创建增益节点
+  createGain(val = 1) {
+    const gainNode = this.actx.createGain()
+    gainNode.gain.value = val
+    return gainNode
+  }
+
+  // 创建分析节点
+  createAnalyser({size, min, max, smooth} = {}) {
+    const analyser = this.actx.createAnalyser()
+    analyser.fftSize = size
+    analyser.minDecibels = min
+    analyser.maxDecibels = max
+    analyser.smoothingTimeConstant = smooth
+    return analyser
+  }
+
+  getAnalyserData(domain = 'freq', type = 'btye') {
+    if(!this.analyser) {
+      return
+    }
+    if(!this.analyserBuffer) {
+      if(type === 'byte') {
+        this.analyserBuffer = new Uint8Array(this.analyser.frequencyBinCount)
+      } else if(type === 'freq') {
+        this.analyserBuffer = new Float32Array(this.analyser.frequencyBinCount)
+      }
+    }
+    if(domain === 'freq') {
+      if(type === 'byte') {
+        this.analyser.getByteFrequencyData(this.analyserBuffer)
+      } else if(type === 'float') {
+        this.analyser.getFloatFrequencyData(this.analyserBuffer)
+      }
+    } else if(domain === 'time') {
+      if(type === 'byte') {
+        this.analyser.getByteTimeDomainData(this.analyserBuffer)
+      } else if(type === 'float') {
+        this.analyser.getFloatTimeDomainData(this.analyserBuffer)
+      }
+    }
+
+    return this.analyserBuffer
+  }
+
+  // 播放
+  start() {
+    if(this.source) {
+      this.source.stop()
+      this.source.disconnect()
+      this.source = null
+    }
+    this.source = this.createSource(this.audioBuffer)
+    this.source.connect(this.gain)
+    this.source.start()
+  }
+
+  // 停止
+  stop() {
+    if(this.source) {
+      this.source.stop()
+      this.source.disconnect()
+      this.source = null
+    }
+  }
+}
