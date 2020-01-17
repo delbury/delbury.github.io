@@ -30,16 +30,22 @@
     </div>
 
     <div class="canvas-box">
-      <canvas id="time-domain"></canvas>
       <canvas id="freq-domain"></canvas>
+      <canvas id="time-domain"></canvas>
     </div>
   </div>
 
   <script type="module">
-    import { BaseCanvas, AudioPlayer } from './js/analyser.js'
-    const fileNameEle = document.getElementById('fileName')
-    const fileEle = document.getElementById('file')
-    let player = null
+    import { AudioAnalyser } from './js/analyser.js'
+    const fileNameEle = document.getElementById('fileName') // 展示文件名元素
+    const fileEle = document.getElementById('file') // 选择文件元素
+    const audioAnalyser = new AudioAnalyser() // 音频分析器实例
+    audioAnalyser.initCharts({
+      freqCanvas: document.getElementById('freq-domain'), // 绑定频谱图
+      timeCanvas: document.getElementById('time-domain') // 绑定波形图
+    })
+
+    window.audioAnalyser = audioAnalyser
 
     // 选择文件
     fileEle.onchange = ev => {
@@ -48,7 +54,7 @@
         fileNameEle.classList.remove('none')
         fileNameEle.querySelector('.text').innerHTML = file.name
 
-        player = new AudioPlayer(file)
+        audioAnalyser.createAudioPlayer(file)
       } 
     }
 
@@ -61,20 +67,19 @@
 
     // 播放文件
     document.getElementById('file-play').onclick = () => {
-      if(player) {
-        player.start()
+      if(audioAnalyser.runnable) {
+        audioAnalyser.start()
       }
     }
 
     // 停止播放
     document.getElementById('file-stop').onclick = () => {
-      if(player) {
-        player.stop()
+      if(audioAnalyser.runnable) {
+        audioAnalyser.stop()
       }
     }
 
     // 测试代码
-    const timeDomain = new BaseCanvas(document.getElementById('time-domain'))
     // 测试代码结束
   </script>
 </body>
