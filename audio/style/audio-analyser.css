@@ -26,13 +26,13 @@ html {
   flex-direction: column;
 }
 
-.canvas-box canvas {
+.canvas-box .canvas {
   margin-bottom: 10px;
   display: block;
   border: 1px dashed skyblue;
 }
 
-.canvas-box canvas:last-of-type {
+.canvas-box .canvas:last-of-type {
   margin-bottom: 0;
 }
 

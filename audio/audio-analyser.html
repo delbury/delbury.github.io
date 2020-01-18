@@ -17,6 +17,7 @@
         <button id="file-play">播放</button>
         <!-- <button id="file-pause">暂停</button> -->
         <button id="file-stop">停止</button>
+        <button id="file-reset">重置</button>
         <button onclick="file.click()">选择音频文件</button>
         <span id="fileName" class="file-name none">
           <span class="text"></span>
@@ -30,8 +31,12 @@
     </div>
 
     <div class="canvas-box">
-      <canvas id="freq-domain"></canvas>
-      <canvas id="time-domain"></canvas>
+      <div class="canvas">
+        <canvas id="freq-domain"></canvas>
+      </div>
+      <div class="canvas">
+        <canvas id="time-domain"></canvas>
+      </div>
     </div>
   </div>
 
@@ -77,6 +82,11 @@
       if(audioAnalyser.runnable) {
         audioAnalyser.stop()
       }
+    }
+
+    // 重置
+    document.getElementById('file-reset').onclick = () => {
+      audioAnalyser.freqChart.resetScale()
     }
 
     // 测试代码

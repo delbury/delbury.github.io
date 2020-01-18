@@ -1,5 +1,8 @@
 export class BaseCanvas {
-  constructor(canvas, { width, height = 300 } = {}) {
+  constructor(
+    canvas,
+    { width, height = 300, scalable = false, waveType = '' } = {}
+  ) {
     if (!canvas || canvas.tagName !== 'CANVAS') {
       throw new TypeError('first param must be a canvas element')
     }
@@ -11,11 +14,113 @@ export class BaseCanvas {
       lineWidth: 1,
       strokeStyle: '#333'
     }
+    this.state = {
+      x: 0,
+      y: 0,
+      scalable,
+      spaceDown: false,
+      scaleX: 1,
+      scaleY: 1,
+      waveType,
+      currentData: null
+    }
+    this.bindEvents()
+  }
+
+  // 绑定事件
+  bindEvents() {
+    // 鼠标移动事件
+    this._onmousemove = ev => {
+      this.state.x = ev.offsetX
+      this.state.y = ev.offsetY
+    }
+
+    // 按下按键
+    this._onkeydown = ev => {
+      if(ev.keyCode === 32) {
+        ev.preventDefault()
+        this.state.spaceDown = true
+      }
+    }
+
+    // 松开按键
+    this._onkeyup = ev => {
+      if(ev.keyCode === 32) {
+        ev.preventDefault()
+        this.state.spaceDown = false
+      }
+    }
+
+    // 滚轮事件
+    this._onwheel = ev => {
+      if(this.state.scalable && this.state.spaceDown) {
+        ev.preventDefault()
+        const ds = 0.5
+
+        // 下滚，缩小
+        if(ev.wheelDeltaY < 0) {
+          if(this.state.waveType === 'freq') {
+            if(this.state.scaleX - ds <= 1) {
+              this.state.scaleX = 1
+            } else {
+              this.state.scaleX -= ds
+            }
+          } else if(this.state.waveType === 'time') {
+            if(this.state.scaleY - ds <= 1) {
+              this.state.scaleY = 1
+            } else {
+              this.state.scaleY -= ds
+            }
+          }
+
+        // 放大
+        } else if(ev.wheelDeltaY > 0) {
+          if(this.state.waveType === 'freq') {
+            this.state.scaleX += ds
+          } else if(this.state.waveType === 'time') {
+            this.state.scaleY += ds
+          }
+        }
+        this.state.scaleX = Math.round(this.state.scaleX * 100) / 100
+
+        if(this.state.currentData && this.state.waveType) {
+          if(this.state.waveType === 'time') {
+            this.drawTimeWave(this.state.currentData)
+          } else if(this.state.waveType === 'freq') {
+            this.drawFreqWave(this.state.currentData)
+          }
+        } else {
+          this.drawCoordinateSystem()
+        }
+      }
+    }
+
+    this.canvas.addEventListener('mousemove', this._onmousemove)
+    this.canvas.addEventListener('wheel', this._onwheel)
+    document.addEventListener('keydown', this._onkeydown)
+    document.addEventListener('keyup', this._onkeyup)
+  }
+
+  // 移除事件
+  removeEvents() {
+    this._onmousemove && this.canvas.removeEventListener('mousemove', this._onmousemove)
+    this._onwheel && this.canvas.removeEventListener('wheel', this._onwheel)
+    this._onkeydown && document.removeEventListener('keydown', this._onkeydown)
+    this._onkeyup && document.removeEventListener('keyup', this._onkeyup)
+  }
+
+  // 重置缩放
+  resetScale() {
+    if(this.state.scaleX !== 1) {
+      this.state.scaleX = 1
+     this.drawCoordinateSystem()
+    }
   }
 
   // 绘制波形图
   drawTimeWave(data) {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    // this.state.waveType = 'time'
+    this.state.currentData = data
     this.drawCoordinateSystem()
     this.ctx.save()
     this.ctx.beginPath()
@@ -40,8 +145,11 @@ export class BaseCanvas {
   }
 
   // 绘制频谱图
-  drawFreqWave(data, max = -30, min = -100) {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+  drawFreqWave(data) {
+    const min = this.yParams.min || -100
+    const max = this.yParams.max || -30
+    // this.state.waveType = 'freq'
+    this.state.currentData = data
     this.drawCoordinateSystem()
     this.ctx.save()
     this.ctx.beginPath()
@@ -52,7 +160,7 @@ export class BaseCanvas {
     const yoffset = this.yParams.offset || 0
     const xoffset = this.xParams.offset || 0
     const length = data.length
-    const dx = (this.canvas.width - xoffset) / length // x轴间隔
+    const dx = (this.canvas.width - xoffset) / length * this.state.scaleX // x轴间隔
     const dy = (this.canvas.height - yoffset) / (max - min) // y轴间隔
     for (let i = 0; i < length; i++) {
       if (i === 0) {
@@ -75,6 +183,7 @@ export class BaseCanvas {
 
   // 绘制坐标系
   drawCoordinateSystem() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     const { min: ymin, max: ymax, offset: yoffset = 0, div: ydiv = 10, showText: yText = false } = this.yParams || {}
     const { min: xmin, max: xmax, offset: xoffset = 0, div: xdiv = 10, showText: xText = false } = this.xParams || {}
     const yTextOffsetX = 1
@@ -102,9 +211,9 @@ export class BaseCanvas {
           this.ctx.strokeStyle = '#333'
           this.ctx.setLineDash([])
           if (i === 0) {
-            this.ctx.strokeText(Math.floor((ymax - dVal * i) * 10) / 10, yTextOffsetX, i * dy + 10)
+            this.ctx.strokeText(Math.round((ymax - dVal * i) * 10) / 10, yTextOffsetX, i * dy + 10)
           } else {
-            this.ctx.strokeText(Math.floor((ymax - dVal * i) * 10) / 10, yTextOffsetX, i * dy - yTextOffsetY)
+            this.ctx.strokeText(Math.round((ymax - dVal * i) * 10) / 10, yTextOffsetX, i * dy - yTextOffsetY)
           }
         }
 
@@ -128,7 +237,7 @@ export class BaseCanvas {
     // 绘制 x 轴
     if (this.xParams) {
       const dx = (this.canvas.width - xoffset) / xdiv
-      const dVal = (xmax - xmin) / xdiv
+      const dVal = (xmax / this.state.scaleX - xmin) / xdiv
 
       for (let i = 0; i <= xdiv; i++) {
         this.ctx.beginPath()
@@ -139,7 +248,9 @@ export class BaseCanvas {
           this.ctx.strokeStyle = '#333'
           this.ctx.setLineDash([])
           if (i === xdiv) {
-            this.ctx.strokeText(Math.floor((xmin + dVal * i) * 10) / 10, xoffset + i * dx + xTextOffsetX - 30, this.canvas.height - xTextOffsetY)
+            const text = Math.floor((xmin + dVal * i) * 10) / 10
+            const offsetLast = this.ctx.measureText(text).width
+            this.ctx.strokeText(text, xoffset + i * dx - offsetLast - xTextOffsetX, this.canvas.height - xTextOffsetY)
           } else {
             this.ctx.strokeText(Math.floor((xmin + dVal * i) * 10) / 10, xoffset + i * dx + xTextOffsetX, this.canvas.height - xTextOffsetY)
           }
@@ -290,14 +401,15 @@ export class AudioAnalyser {
       isDrawFreq: true,
       drawFreqType: 'byte',
       maxDecibels: 50,
-      minDecibels: -100
+      minDecibels: -100,
+      sampleRate: 48000
     }
   }
 
   // 初始化
   initCharts({ freqCanvas, timeCanvas }) {
-    timeCanvas ? this.createTimeChart(timeCanvas) : null
-    freqCanvas ? this.createFreqChart(freqCanvas) : null
+    timeCanvas ? this.createTimeChart(timeCanvas, { scalable: true, waveType: 'time' }) : null
+    freqCanvas ? this.createFreqChart(freqCanvas, { scalable: true, waveType: 'freq' }) : null
   }
 
   // 绑定音频播放器实例
@@ -307,32 +419,38 @@ export class AudioAnalyser {
         this.running = false
       },
       analyser: {
-        maxDecibels: 20,
-        minDecibels: -80
+        maxDecibels: this.options.maxDecibels,
+        minDecibels: this.options.minDecibels,
+        fftSize: 2048 * 2
       } // 分析器参数
     })
     this.runnable = true
   }
 
   // 绑定频谱图图表
-  createFreqChart(canvasEle) {
-    this.freqChart = new BaseCanvas(canvasEle)
+  createFreqChart(canvasEle, params) {
+    this.freqChart = new BaseCanvas(canvasEle, params)
     this.freqChart.saveCoordinateParams(
       { min: this.options.minDecibels, max: this.options.maxDecibels, showText: true },
-      { min: 0, max: 100, offset: 30 }
+      { min: 0, max: this.options.sampleRate / 2, offset: 30, showText: true }
     )
   }
 
   // 绑定时域波形分析图图表
-  createTimeChart(canvasEle) {
-    this.timeChart = new BaseCanvas(canvasEle)
-    this.timeChart.saveCoordinateParams({ min: 0, max: 1, showText: true }, { min: 0, max: 100, offset: 30 })
+  createTimeChart(canvasEle, params) {
+    this.timeChart = new BaseCanvas(canvasEle, params)
+    this.timeChart.saveCoordinateParams(
+      { min: 0, max: 1, showText: true },
+      { min: 0, max: 100, offset: 30 }
+    )
   }
 
   // 播放
   start() {
     if (this.runnable) {
       this.running = true
+      this.timeData = null
+      this.freqData = null
       this.player.start()
       this.tick()
     }
@@ -352,13 +470,16 @@ export class AudioAnalyser {
       // 获取时域数据
       if (this.options.isDrawTime) {
         const timeData = this.player.getAnalyserData('time', this.options.drawTimeType)
-        this.timeChart.drawTimeWave(timeData)
+        const backup = timeData.constructor === Uint8Array ? new Uint8Array(timeData) : new Float32Array(timeData)
+        this.timeChart.drawTimeWave(backup)
       }
 
       // 获取频域数据
       if (this.options.isDrawFreq) {
         const freqData = this.player.getAnalyserData('freq', this.options.drawFreqType)
-        this.freqChart.drawFreqWave(freqData, this.player.analyser.maxDecibels, this.player.analyser.minDecibels)
+        const backup = freqData.constructor === Uint8Array ? new Uint8Array(freqData) : new Float32Array(freqData)
+        this.freqChart.drawFreqWave(backup, this.player.analyser.maxDecibels, this.player.analyser.minDecibels)
+        // this.freqData = freqData
       }
 
       if (this.running && this.runnable) {
