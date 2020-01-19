@@ -23,6 +23,7 @@ export class BaseCanvas {
       scaleY: 0, // 时域纵坐标，表示幅值缩放，加法，0~0.4
       waveType,
       currentData: null,
+      peakValley: null,
       running: false
     }
 
@@ -37,6 +38,9 @@ export class BaseCanvas {
   // 结束绘制
   stop() {
     this.running = false
+    if(this.state.waveType === 'freq') {
+      this.calcPeakValue(this.state.currentData)
+    }
   }
 
   // 创建提示框和提示线
@@ -54,15 +58,43 @@ export class BaseCanvas {
   // 清除数据
   clearData() {
     this.running = false
-    this.currentData = null
+    this.state.currentData = null
+    this.state.peakValley = null
+  }
+
+  // 计算峰谷值
+  calcPeakValue(data) {
+    const arr = []
+    const dy = (this.yParams.max - this.yParams.min) / 255
+    const fn = i => ({
+      index: i,
+      value: data[i],
+      db: dy * data[i] + this.yParams.min,
+      freq: i / data.length * (this.xParams.max * this.state.scaleX)
+    })
+    for(let i = 0, len = data.length; i < len - 1; i++) {
+      if(i === 0) {
+        arr.push(fn(i))
+      } else if(
+        (data[i - 1] <= data[i] && data[i] > data[i + 1]) ||
+        (data[i - 1] < data[i] && data[i] >= data[i + 1]) ||
+        (data[i - 1] >= data[i] && data[i] < data[i + 1]) ||
+        (data[i - 1] > data[i] && data[i] <= data[i + 1])
+      ) {
+        arr.push(fn(i))
+      }
+    }
+    this.state.peakValley = arr
   }
 
   // 绑定事件
   bindEvents() {
     // 鼠标移入事件
     this._onmouseenter = ev => {
-      this.tooltip.classList.remove('none')
-      this.toolline.classList.remove('none')
+      if(this.state.currentData) {
+        this.tooltip.classList.remove('none')
+        this.toolline.classList.remove('none')
+      }
     }
 
     // 鼠标移出事件
@@ -88,11 +120,21 @@ export class BaseCanvas {
       this.state.x = ev.offsetX
       this.state.y = ev.offsetY
 
+      if(!this.state.currentData) {
+        return this.tooltip.classList.add('none')
+      } else {
+        this.tooltip.classList.remove('none')
+      }
+
       const tipOffsetX = 20
       const tipOffsetY = -30
 
       this.toolline.style.top = '0px'
-      this.toolline.style.left = ev.offsetX + 'px'
+      if(ev.offsetX <= this.xParams.offset) {
+        this.toolline.style.left = this.xParams.offset + 'px'
+      } else {
+        this.toolline.style.left = ev.offsetX + 'px'
+      }
 
       // 计算提示框的 y 轴坐标
       if (ev.offsetY + tipOffsetY > 10) {
@@ -107,7 +149,18 @@ export class BaseCanvas {
       } else {
         this.tooltip.style.left = this.tooltip.parentNode.offsetWidth - this.tooltip.offsetWidth - 10 + 'px'
       }
-      this.tooltip.innerHTML = `${ev.offsetX}, ${ev.offsetY}`
+
+
+      // 计算值
+      if(this.state.waveType === 'time') {
+
+      } else if(this.state.waveType === 'freq') {
+          // const fn = (db, freq) =>
+          // `
+          //   <div><span>db: </span>${db}</div>
+          //   <div><span>freq: </span>${freq}</div>
+          // `
+      }
     }
 
     // 按下按键
@@ -198,11 +251,11 @@ export class BaseCanvas {
     if (this.state.waveType === 'time') {
       this.state.scaleY = 0
       this.drawCoordinateSystem()
-      this.drawTimeWave(this.state.currentData)
+      this.state.currentData && this.drawTimeWave(this.state.currentData)
     } else if (this.state.waveType === 'freq') {
       this.state.scaleX = 1
       this.drawCoordinateSystem()
-      this.drawFreqWave(this.state.currentData)
+      this.state.currentData && this.drawFreqWave(this.state.currentData)
     }
   }
 
@@ -220,7 +273,7 @@ export class BaseCanvas {
     const yoffset = this.yParams.offset || 0
     const xoffset = this.xParams.offset || 0
     const length = data.length
-    const byteMax = 256
+    const byteMax = 255
     const dx = (this.canvas.width - xoffset) / length // x轴间隔
     const dy = (this.canvas.height - yoffset) / (1 - 2 * this.state.scaleY) // y轴间隔
     for (let i = 0; i < length; i++) {
@@ -236,8 +289,8 @@ export class BaseCanvas {
 
   // 绘制频谱图
   drawFreqWave(data) {
-    const min = this.yParams.min || -100
-    const max = this.yParams.max || -30
+    const min = this.yParams.min
+    const max = this.yParams.max
     // this.state.waveType = 'freq'
     this.state.currentData = data
     this.drawCoordinateSystem()
@@ -251,7 +304,8 @@ export class BaseCanvas {
     const xoffset = this.xParams.offset || 0
     const length = data.length
     const dx = (this.canvas.width - xoffset) / length * this.state.scaleX // x轴间隔
-    const dy = (this.canvas.height - yoffset) / (max - min) // y轴间隔
+    const dy = (this.canvas.height - yoffset) / 255 // y轴间隔
+
     for (let i = 0; i < length; i++) {
       if (i === 0) {
         this.ctx.moveTo(xoffset + i * dx, this.canvas.height - yoffset - data[i] * dy)
@@ -477,6 +531,7 @@ export class AudioPlayer {
   stop() {
     if (this.source) {
       this.source.stop()
+      this.source.onended = null
       this.source.disconnect()
       this.source = null
     }
@@ -496,7 +551,7 @@ export class AudioAnalyser {
       isDrawFreq: true,
       drawFreqType: 'byte',
       fftSize: 2048 * 2,
-      maxDecibels: 50,
+      maxDecibels: -20,
       minDecibels: -100,
       sampleRate: 48000,
       ...options
@@ -561,8 +616,6 @@ export class AudioAnalyser {
     if (this.runnable) {
       this.running = false
       this.player.stop()
-      this.timeChart && this.timeChart.stop()
-      this.freqChart && this.freqChart.stop()
     }
   }
 
@@ -570,14 +623,14 @@ export class AudioAnalyser {
   tick() {
     requestAnimationFrame(() => {
       // 获取时域数据
-      if (this.options.isDrawTime) {
+      if (this.options.isDrawTime &&  this.player.analyser) {
         const timeData = this.player.getAnalyserData('time', this.options.drawTimeType)
         const backup = timeData.constructor === Uint8Array ? new Uint8Array(timeData) : new Float32Array(timeData)
         this.timeChart.drawTimeWave(backup)
       }
 
       // 获取频域数据
-      if (this.options.isDrawFreq) {
+      if (this.options.isDrawFreq &&  this.player.analyser) {
         const freqData = this.player.getAnalyserData('freq', this.options.drawFreqType)
         const backup = freqData.constructor === Uint8Array ? new Uint8Array(freqData) : new Float32Array(freqData)
         this.freqChart.drawFreqWave(backup, this.player.analyser.maxDecibels, this.player.analyser.minDecibels)
@@ -586,6 +639,9 @@ export class AudioAnalyser {
 
       if (this.running && this.runnable) {
         return this.tick()
+      } else {
+        this.timeChart && this.timeChart.stop()
+        this.freqChart && this.freqChart.stop()
       }
     })
   }

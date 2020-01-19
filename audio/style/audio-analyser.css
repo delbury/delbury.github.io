@@ -39,12 +39,13 @@ html {
 }
 
 .canvas-box .canvas .canvas-tip {
+  padding: 3px 5px;
   position: absolute;
   display: flex;
+  flex-direction: column;
   justify-content: center;
-  align-items: center;
-  width: 60px;
-  height: 30px;
+  width: 80px;
+  /* height: 30px; */
   background-color: #0050b3;
   transition: all 0.1s;
   pointer-events: none;

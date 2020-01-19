@@ -59,6 +59,9 @@
         fileNameEle.classList.remove('none')
         fileNameEle.querySelector('.text').innerHTML = file.name
 
+        if(audioAnalyser.player) {
+          audioAnalyser.stop()
+        }
         audioAnalyser.createAudioPlayer(file)
       } 
     }
@@ -75,6 +78,7 @@
       if(audioAnalyser.runnable) {
         if(audioAnalyser.running) {
           audioAnalyser.stop()
+          this.innerHTML = '播放'
         } else {
           audioAnalyser.start()
           this.innerHTML = '停止'
