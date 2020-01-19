@@ -27,14 +27,42 @@ html {
 }
 
 .canvas-box .canvas {
+  position: relative;
   margin-bottom: 10px;
   display: block;
-  border: 1px dashed skyblue;
+  /* border: 1px dashed skyblue; */
+  font-size: 0;
 }
 
 .canvas-box .canvas:last-of-type {
   margin-bottom: 0;
 }
+
+.canvas-box .canvas .canvas-tip {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 60px;
+  height: 30px;
+  background-color: #0050b3;
+  transition: all 0.1s;
+  pointer-events: none;
+  font-size: 12px;
+  color: #fff;
+  border-radius: 3px;
+  box-shadow: 1px 1px 3px #002766;
+}
+
+.canvas-box .canvas .canvas-line {
+  position: absolute;
+  /* top: 0; */
+  width: 0;
+  border-left: 1px solid #003a8c;
+  /* height: 100%; */
+  pointer-events: none;
+}
+
 
 button {
   height: 28px;
