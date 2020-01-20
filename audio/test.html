@@ -23,7 +23,7 @@
   <button id="stop">stop</button>
   <canvas id="canvas" width="800" height="600"></canvas>
   <script>
-    const VOL = 261 || 1047
+    const VOL = (261 || 1047) / 1
     const handleClick = () => {
       const actx = new AudioContext()
       const osc = actx.createOscillator()
@@ -66,8 +66,8 @@
     let source = actx.createOscillator()
     source.frequency.value = VOL
     const dbs = [
-      -54, -52, -58, -60, -58, -60, -56.5, -63,
-      -64.5, -63, -74.5, -67, -74.5, -76
+      -39.45, -37.88, -48.55, -55.14, -47.92, -54.51,
+      -51.06, -57.96, -62.04, -62.04, -82.75, -68.31
     ]
     const amps = []
     for(let i = dbs.length - 1; i >= 0; i--) {
@@ -202,8 +202,9 @@
       // audio.play()
       source.start()
       gain.gain.linearRampToValueAtTime(1, actx.currentTime + 0.01)
-      gain.gain.exponentialRampToValueAtTime(0.01, actx.currentTime + 1)
-      gain.gain.linearRampToValueAtTime(0, actx.currentTime + 1.5)
+      gain.gain.setTargetAtTime(0, actx.currentTime + 0.01, 0.2)
+      // gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 2)
+      // gain.gain.linearRampToValueAtTime(0, actx.currentTime + 1.5)
 
       source.stop(actx.currentTime + 1.5)
       source.onended = () => {

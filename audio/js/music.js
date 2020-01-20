@@ -9,7 +9,7 @@ import IRBase64 from '../resource/IR.js'
 export class Tools {
   // 创建自定义钢琴音色波形
   static createPianoWave(actx) {
-    const dbs = [-54, -52, -58, -60, -58, -60, -56.5, -63, -64.5, -63, -74.5, -67, -74.5, -76]
+    const dbs = [-39.45, -37.88, -48.55, -55.14, -47.92, -54.51, -51.06, -57.96, -62.04, -62.04, -82.75, -68.31]
     const amps = []
     for(let i = dbs.length - 1; i >= 0; i--) {
       const ddb = dbs[i] - dbs[dbs.length - 1]

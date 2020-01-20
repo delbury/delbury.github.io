@@ -25,11 +25,11 @@
         </span>
       </div>
       <div class="control-box" data-title="振荡器">
-        <button>开始</button>
-        <button>停止</button>
+        <button id="osc-play">开始</button>
       </div>
     </div>
 
+    <!-- <div class="scroll-box"> -->
     <div class="canvas-box">
       <div class="canvas">
         <canvas id="freq-domain"></canvas>
@@ -37,17 +37,25 @@
       <div class="canvas">
         <canvas id="time-domain"></canvas>
       </div>
+      <div class="canvas">
+        <canvas id="over-time"></canvas>
+      </div>
     </div>
+    <!-- </div> -->
   </div>
 
   <script type="module">
     import { AudioAnalyser } from './js/analyser.js'
     const fileNameEle = document.getElementById('fileName') // 展示文件名元素
     const fileEle = document.getElementById('file') // 选择文件元素
-    const audioAnalyser = new AudioAnalyser({ onendedCallback: () => document.getElementById('file-play').innerHTML = '播放' }) // 音频分析器实例
+    const audioAnalyser = new AudioAnalyser({
+      onendedCallback: () => document.getElementById('file-play').innerHTML = '播放',
+      onendedOscCallback: () => document.getElementById('osc-play').innerHTML = '开始'
+    }) // 音频分析器实例
     audioAnalyser.initCharts({
       freqCanvas: document.getElementById('freq-domain'), // 绑定频谱图
-      timeCanvas: document.getElementById('time-domain') // 绑定波形图
+      timeCanvas: document.getElementById('time-domain'), // 绑定波形图
+      overtimeCanvas: document.getElementById('over-time'), // 
     })
 
     window.audioAnalyser = audioAnalyser
@@ -62,7 +70,7 @@
         if(audioAnalyser.player) {
           audioAnalyser.stop()
         }
-        audioAnalyser.createAudioPlayer(file)
+        audioAnalyser.setAudioBuffer(file)
       } 
     }
 
@@ -75,12 +83,13 @@
 
     // 播放文件
     document.getElementById('file-play').onclick = function() {
-      if(audioAnalyser.runnable) {
+      if(audioAnalyser.fileRunnable) {
         if(audioAnalyser.running) {
           audioAnalyser.stop()
           this.innerHTML = '播放'
         } else {
-          audioAnalyser.start()
+          audioAnalyser.setGain(2)
+          audioAnalyser.start('file')
           this.innerHTML = '停止'
         }
       }
@@ -88,7 +97,7 @@
 
     // 停止播放
     document.getElementById('file-stop').onclick = () => {
-      if(audioAnalyser.runnable) {
+      if(audioAnalyser.fileRunnable) {
         audioAnalyser.stop()
       }
     }
@@ -99,8 +108,17 @@
       audioAnalyser.timeChart.resetScale()
     }
 
-    // 测试代码
-    // 测试代码结束
+    // 开启振荡器
+    document.getElementById('osc-play').onclick = function() {
+      if(audioAnalyser.running) {
+        audioAnalyser.stop()
+        this.innerHTML = '开始'
+      } else {
+        audioAnalyser.setGain(0.5)
+        audioAnalyser.start('osc')
+        this.innerHTML = '停止'
+      }
+    }
   </script>
 </body>
 
