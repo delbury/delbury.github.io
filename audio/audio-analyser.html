@@ -88,7 +88,7 @@
           audioAnalyser.stop()
           this.innerHTML = '播放'
         } else {
-          audioAnalyser.setGain(2)
+          audioAnalyser.player.setGain(7)
           audioAnalyser.start('file')
           this.innerHTML = '停止'
         }
@@ -114,8 +114,18 @@
         audioAnalyser.stop()
         this.innerHTML = '开始'
       } else {
-        audioAnalyser.setGain(0.5)
-        audioAnalyser.start('osc')
+        audioAnalyser.player.setGain(0.5)
+        audioAnalyser.start('osc', {
+          type: 'custom',
+          frequency: 261 / 2,
+          dbs: [
+            -28.24, -26.67, -37.25, -43.14,
+            -36.86, -43.53, -39.61, -46.67,
+            -50.20, -49.80, -73.33, -56.47,
+            -73.33, -81.96, -72.55
+          ]
+          // dbs: Array(20).fill(1)
+        })
         this.innerHTML = '停止'
       }
     }

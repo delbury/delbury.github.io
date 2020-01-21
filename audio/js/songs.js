@@ -1,11 +1,11 @@
 // 天空之城，天空の城
 const city_of_sky = {
-  tempo: 60,
+  tempo: 90,
   tone: 'D',
   isNumber: false,
   notes: [
     // '- q', '- q', '- q', 
-    'A4 e', 'B4 e',
+    '- q', 'A4 e', 'B4 e',
     'C5 qe', 'B4 e', 'C5 q', 'E5, q',
     'B4 hq', 'E4 e', 'E4 e',
     'A4 qe', 'G4 e', 'A4 q', 'C5 q',

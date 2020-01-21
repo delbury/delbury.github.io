@@ -9,7 +9,12 @@ import IRBase64 from '../resource/IR.js'
 export class Tools {
   // 创建自定义钢琴音色波形
   static createPianoWave(actx) {
-    const dbs = [-39.45, -37.88, -48.55, -55.14, -47.92, -54.51, -51.06, -57.96, -62.04, -62.04, -82.75, -68.31]
+    const dbs = [
+      -28.24, -26.67, -37.25, -43.14,
+      -36.86, -43.53, -39.61, -46.67,
+      -50.20, -49.80, -73.33, -56.47,
+      -73.33, -81.96, -72.55
+    ]
     const amps = []
     for(let i = dbs.length - 1; i >= 0; i--) {
       const ddb = dbs[i] - dbs[dbs.length - 1]
@@ -276,6 +281,7 @@ export class Sequence {
     this.staccato = staccato
     this.loop = loop
     this.tone = tone
+    this.gainValue = 0.25
 
     this.middles = this.createTone()
     this.notes = this.createNotes(notes, isNumber)
@@ -325,17 +331,28 @@ export class Sequence {
     // 是否和弦
     if(this.notes[index].frequency.constructor === Array) {
       this.notes[index].frequency.forEach((fre, index) => {
+        this.filterNode[index].frequency.setValueAtTime(fre * 15, when)
+        this.filterNode[index].frequency.setTargetAtTime(fre * 3, when + 0.01, 0.5)
+
         this.osc[index].frequency.setValueAtTime(fre, when) // 设置频率
-        this.gainNode[index].gain.linearRampToValueAtTime(1, when + 0.01) // 设置增益
         this.osc[index].frequency.setValueAtTime(0, when + cutoff)
-        this.gainNode[index].gain.exponentialRampToValueAtTime(0.01, when + cutoff) // 音符淡出
+
+        this.gainNode[index].gain.linearRampToValueAtTime(this.gainValue, when + 0.001) // 设置增益
+        this.gainNode[index].gain.setTargetAtTime(0, when + 0.05, 0.25)
+        this.gainNode[index].gain.setTargetAtTime(0, when + cutoff, 0)
+        // this.gainNode[index].gain.exponentialRampToValueAtTime(0.01, when + cutoff) // 音符淡出
       })
     } else {
-      this.osc[0].frequency.setValueAtTime(this.notes[index].frequency, when) // 设置频率
-      this.gainNode[0].gain.linearRampToValueAtTime(1, when + 0.01) // 设置增益
+      this.filterNode[0].frequency.setValueAtTime(this.notes[index].frequency * 15, when)
+      this.filterNode[0].frequency.setTargetAtTime(this.notes[index].frequency * 3, when + 0.01, 0.5)
 
+      this.osc[0].frequency.setValueAtTime(this.notes[index].frequency, when) // 设置频率
       this.osc[0].frequency.setValueAtTime(0, when + cutoff)
-      this.gainNode[0].gain.exponentialRampToValueAtTime(0.01, when + cutoff) // 音符淡出
+
+      this.gainNode[0].gain.linearRampToValueAtTime(this.gainValue, when + 0.001) // 设置增益
+      this.gainNode[0].gain.setTargetAtTime(0, when + 0.05, 0.25)
+      this.gainNode[0].gain.setTargetAtTime(0, when + cutoff, 0)
+      // this.gainNode[0].gain.exponentialRampToValueAtTime(0.01, when + cutoff) // 音符淡出
     }
 
     return when + duration // TODO 计算下一个时间
@@ -349,8 +366,16 @@ export class Sequence {
       this.actx.createGain(),
       this.actx.createGain()
     ]
-    this.gainNode.forEach(gain => {
-      gain.connect(this.actx.destination)
+    this.filterNode = [
+      this.actx.createBiquadFilter(),
+      this.actx.createBiquadFilter(),
+      this.actx.createBiquadFilter(),
+      this.actx.createBiquadFilter()
+    ]
+    this.gainNode.forEach((gain, index) => {
+      this.filterNode[index].type = 'lowpass'
+      this.filterNode[index].Q.value = 0.707
+      gain.connect(this.filterNode[index]).connect(this.actx.destination)
     })
 
     return this.gainNode

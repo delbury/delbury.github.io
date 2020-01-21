@@ -341,8 +341,8 @@ export class BaseCanvas {
     const yoffset = this.yParams.offset || 0
     const length = data.length
     const byteMax = 128
-    const div = 200
-    const di = 200
+    const div = 150
+    const di = 1
     const dx = (this.canvas.width - this.xParams.offset) / length / div // x轴间隔
     const max = this.yParams.max - this.state.scaleY
     const min = this.yParams.min - this.state.scaleY
@@ -552,9 +552,11 @@ export class AudioPlayer {
     this.source = null
     this.gain = this.createGain()
     this.analyser = this.createAnalyser(this.options.analyser)
-    this.gain.connect(this.analyser).connect(this.actx.destination)
+    this.filter = this.createFilter()
+    this.gain.connect(this.filter).connect(this.analyser).connect(this.actx.destination)
   }
 
+  // 传入音频文件
   async setAudioBuffer(file) {
     if (!(/^audio/).test(file.type)) {
       throw new Error('传入必须为音频文件')
@@ -583,11 +585,50 @@ export class AudioPlayer {
   }
 
   // 创建振荡器
-  createOsc() {
+  createOsc({ type = 'sine', frequency = 440, dbs } = {}) {
     const source = this.actx.createOscillator()
-    source.type = 'sine'
-    source.frequency.value = 440
+    if(type === 'custom' && dbs && dbs.length) {
+      const wave = this.actx.createPeriodicWave(...this.calcRealAndImag(dbs))
+      source.setPeriodicWave(wave)
+    } else {
+      source.type = type
+    }
+    source.frequency.value = frequency
     return source
+  }
+
+  // 将 db 数组计算为自定义波形的实部和虚部
+  calcRealAndImag(dbs) {
+    const amps = []
+    for(let i = dbs.length - 1; i >= 0; i--) {
+      const ddb = dbs[i] - dbs[dbs.length - 1]
+      // amps.unshift(Math.pow(10, ddb / 10))
+      amps.unshift(Math.pow(10, ddb / 20))
+    }
+    const LEN = dbs.length + 1
+    let real = new Float32Array(LEN)
+    let imag = new Float32Array(LEN)
+    for (let i in real) {
+      real[i] = 0
+    }
+    for (let i in imag) {
+      if(i == 0) {
+        imag[0] = 0
+      } else {
+        imag[i] = amps[i - 1]
+        // real[i] = amps[i - 1]
+      }
+    }
+    return [real, imag]
+    // return [imag, real]
+  }
+
+  // 创建滤波节点
+  createFilter() {
+    const filter = this.actx.createBiquadFilter()
+    filter.frequency.value = 24000
+    filter.type = 'lowpass'
+    return filter
   }
 
   // 创建增益节点
@@ -595,6 +636,12 @@ export class AudioPlayer {
     const gainNode = this.actx.createGain()
     gainNode.gain.value = val
     return gainNode
+  }
+
+  // 设置增益
+  setGain(val) {
+    this._gainValue = val
+    this.gain.gain.linearRampToValueAtTime(val, this.actx.currentTime + 0.01)
   }
 
   // 创建分析节点
@@ -607,6 +654,7 @@ export class AudioPlayer {
     return analyser
   }
 
+  // 获取分析数据
   getAnalyserData(domain = 'freq', type = 'byte') {
     if (!this.analyser) {
       return false
@@ -636,7 +684,7 @@ export class AudioPlayer {
   }
 
   // 播放
-  start(type) {
+  start(type, params) {
     this.stop()
     if(type === 'file' && !this.audioBuffer) {
       return
@@ -649,7 +697,7 @@ export class AudioPlayer {
         this.options.onended && this.options.onended()
       }
     } else if(type === 'osc') {
-      this.source = this.createOsc()
+      this.source = this.createOsc(params)
       this.source.onended = () => {
         this.source.disconnect()
         this.source = null
@@ -660,7 +708,25 @@ export class AudioPlayer {
     this.source.start()
 
     if(type === 'osc' && this.source) {
-      this.source.stop(this.actx.currentTime + 1)
+      this.filter.type = 'lowpass'
+      this.filter.frequency.setValueAtTime(
+        this.source.frequency.value * 15,
+        this.actx.currentTime
+      )
+      this.filter.frequency.setTargetAtTime(
+        this.source.frequency.value * 3,
+        this.actx.currentTime + 0.2,
+        0.5
+      )
+      this.filter.Q.value = 1
+
+      // this.filter.gain.value = 10
+      this.gain.gain.value = 0
+      this.gain.gain.linearRampToValueAtTime(this._gainValue, this.actx.currentTime + 0.001)
+      this.gain.gain.setTargetAtTime(0, this.actx.currentTime + 0.01, 0.5)
+      this.gain.gain.setTargetAtTime(0, this.actx.currentTime + 0.1, 0.1)
+
+      this.source.stop(this.actx.currentTime + 2)
     }
   }
 
@@ -706,8 +772,8 @@ export class AudioAnalyser {
     this.player = new AudioPlayer({
       onended: () => {
         this.running = false
-        this.timeChart && this.timeChart.clearData()
-        this.freqChart && this.freqChart.clearData()
+        // this.timeChart && this.timeChart.clearData()
+        // this.freqChart && this.freqChart.clearData()
         this.options.onendedCallback && this.options.onendedCallback() // 播放结束回调
       },
       onendedOsc: () => {
@@ -724,7 +790,7 @@ export class AudioAnalyser {
 
   // 绑定波形时间累计图
   createOvertimeChart(canvasEle, params) {
-    const thek = 1
+    const thek = 0.6
     this.overtimeChart = new BaseCanvas(canvasEle, params)
     this.overtimeChart.saveCoordinateParams(
       { min: -thek, max: thek, showText: true, offset: 28 },
@@ -743,18 +809,19 @@ export class AudioAnalyser {
 
   // 绑定时域波形分析图图表
   createTimeChart(canvasEle, params) {
+    const thek = 1
     this.timeChart = new BaseCanvas(canvasEle, params)
     this.timeChart.saveCoordinateParams(
-      { min: -1, max: 1, showText: true, offset: 10 },
+      { min: -thek, max: thek, showText: true, offset: 10 },
       { min: 0, max: 100, offset: 28 }
     )
   }
 
   // 播放
-  start(type) {
+  start(type, params) {
     if ((this.fileRunnable && type === 'file') || type === 'osc') {
       this.running = true
-      this.player.start(type)
+      this.player.start(type, params)
       this.timeChart && this.timeChart.start()
       this.freqChart && this.freqChart.start()
       this.overtimeChart && this.overtimeChart.start(), this.overtimeChart.setStartTime(this.player.actx.currentTime)
@@ -766,11 +833,6 @@ export class AudioAnalyser {
   stop() {
     this.running = false
     this.player && this.player.stop()
-  }
-
-  // 设置增益
-  setGain(val) {
-    this.player.gain.gain.linearRampToValueAtTime(val, this.player.actx.currentTime + 0.01)
   }
 
   // 传入文件
