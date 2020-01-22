@@ -588,8 +588,13 @@ export class AudioPlayer {
   createOsc({ type = 'sine', frequency = 440, dbs } = {}) {
     const source = this.actx.createOscillator()
     if(type === 'custom' && dbs && dbs.length) {
-      const wave = this.actx.createPeriodicWave(...this.calcRealAndImag(dbs))
-      source.setPeriodicWave(wave)
+      this.customWaves = dbs.map(item => {
+        return {
+          freq: item.freq,
+          wave: this.actx.createPeriodicWave(...this.calcRealAndImag(item.db))
+        }
+      })
+      source.setPeriodicWave(this.customWaves[0].wave)
     } else {
       source.type = type
     }
@@ -708,6 +713,13 @@ export class AudioPlayer {
     this.source.start()
 
     if(type === 'osc' && this.source) {
+      for(let i = this.customWaves.length - 1; i >= 0; i--) {
+        if(this.source.frequency.value >= this.customWaves[i].freq) {
+          this.source.setPeriodicWave(this.customWaves[i].wave)
+          break
+        }
+      }
+
       this.filter.type = 'lowpass'
       this.filter.frequency.setValueAtTime(
         this.source.frequency.value * 15,
@@ -723,8 +735,8 @@ export class AudioPlayer {
       // this.filter.gain.value = 10
       this.gain.gain.value = 0
       this.gain.gain.linearRampToValueAtTime(this._gainValue, this.actx.currentTime + 0.001)
-      this.gain.gain.setTargetAtTime(0, this.actx.currentTime + 0.01, 0.5)
-      this.gain.gain.setTargetAtTime(0, this.actx.currentTime + 0.1, 0.1)
+      this.gain.gain.setTargetAtTime(0, this.actx.currentTime + 0.01, 0.2)
+      this.gain.gain.setTargetAtTime(0, this.actx.currentTime + 0.2, 0.3)
 
       this.source.stop(this.actx.currentTime + 2)
     }
@@ -790,7 +802,7 @@ export class AudioAnalyser {
 
   // 绑定波形时间累计图
   createOvertimeChart(canvasEle, params) {
-    const thek = 0.6
+    const thek = 1
     this.overtimeChart = new BaseCanvas(canvasEle, params)
     this.overtimeChart.saveCoordinateParams(
       { min: -thek, max: thek, showText: true, offset: 28 },

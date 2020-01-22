@@ -8,13 +8,7 @@ import IRBase64 from '../resource/IR.js'
 // 工具类
 export class Tools {
   // 创建自定义钢琴音色波形
-  static createPianoWave(actx) {
-    const dbs = [
-      -28.24, -26.67, -37.25, -43.14,
-      -36.86, -43.53, -39.61, -46.67,
-      -50.20, -49.80, -73.33, -56.47,
-      -73.33, -81.96, -72.55
-    ]
+  static createPianoWave(actx, dbs) {
     const amps = []
     for(let i = dbs.length - 1; i >= 0; i--) {
       const ddb = dbs[i] - dbs[dbs.length - 1]
@@ -34,6 +28,36 @@ export class Tools {
       }
     }
     return actx.createPeriodicWave(real, imag)
+  }
+
+  // 创建不同音高的钢琴音色波形
+  static createPianoWaves(actx) {
+    const options = [
+      {
+        freq: 0,
+        db: [
+          -28.24, -26.67, -37.25, -43.14,
+          -36.86, -43.53, -39.61, -46.67,
+          -50.20, -49.80, -73.33, -56.47,
+          -73.33, -81.96, -72.55
+        ]
+      },
+      {
+        freq: 500,
+        db: [-22.75, -30.20, -35.69, -50.59, -49.02, -60.39, -67.06, -91.37]
+      },
+      {
+        freq: 1000,
+        db: [-25.49, -55.29, -69.02, -93.33]
+      }
+    ]
+
+    return options.map(item => {
+      return {
+        freq: item.freq,
+        wave: Tools.createPianoWave(actx, item.db)
+      }
+    })
   }
 }
 
@@ -248,7 +272,8 @@ export class NotePlay extends Note {
 
 
     // this.oscNode.type = 'sine'
-    this.oscNode.setPeriodicWave(Tools.createPianoWave(this.actx))
+    this.customWaves = Tools.createPianoWaves(this.actx)
+    this.oscNode.setPeriodicWave(this.customWaves[0].wave)
     this.oscNode.frequency.value = this.frequency
     // this.oscNode.detune.value = 1200
     // this.gainNode.gain.value = 3.4
@@ -285,6 +310,7 @@ export class Sequence {
 
     this.middles = this.createTone()
     this.notes = this.createNotes(notes, isNumber)
+    this.customWaves = Tools.createPianoWaves(this.actx)
   }
 
   // 变换歌曲
@@ -331,8 +357,8 @@ export class Sequence {
     // 是否和弦
     if(this.notes[index].frequency.constructor === Array) {
       this.notes[index].frequency.forEach((fre, index) => {
-        this.filterNode[index].frequency.setValueAtTime(fre * 15, when)
-        this.filterNode[index].frequency.setTargetAtTime(fre * 3, when + 0.01, 0.5)
+        this.filterNode[index].frequency.setValueAtTime(Math.min(fre * 15, 24000), when)
+        this.filterNode[index].frequency.setTargetAtTime(Math.min(fre * 3, 24000), when + 0.01, 0.5)
 
         this.osc[index].frequency.setValueAtTime(fre, when) // 设置频率
         this.osc[index].frequency.setValueAtTime(0, when + cutoff)
@@ -343,8 +369,8 @@ export class Sequence {
         // this.gainNode[index].gain.exponentialRampToValueAtTime(0.01, when + cutoff) // 音符淡出
       })
     } else {
-      this.filterNode[0].frequency.setValueAtTime(this.notes[index].frequency * 15, when)
-      this.filterNode[0].frequency.setTargetAtTime(this.notes[index].frequency * 3, when + 0.01, 0.5)
+      this.filterNode[0].frequency.setValueAtTime(Math.min(this.notes[index].frequency * 15, 24000), when)
+      this.filterNode[0].frequency.setTargetAtTime(Math.min(this.notes[index].frequency * 3, 24000), when + 0.01, 0.5)
 
       this.osc[0].frequency.setValueAtTime(this.notes[index].frequency, when) // 设置频率
       this.osc[0].frequency.setValueAtTime(0, when + cutoff)
@@ -394,7 +420,7 @@ export class Sequence {
     ]
     this.osc.forEach((osc, index) => {
       if(this.waveType === 'custom') {
-        osc.setPeriodicWave(Tools.createPianoWave(this.actx))
+        osc.setPeriodicWave(this.customWaves[1].wave)
       } else {
         osc.type = this.waveType
       }
