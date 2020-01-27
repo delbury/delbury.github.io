@@ -16,6 +16,12 @@ html {
   display: none !important;
 }
 
+/* 禁用 */
+.disabled {
+  background-color: #999 !important;
+  cursor: not-allowed;
+}
+
 .container {
   height: 100%;
   padding: 20px;

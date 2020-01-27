@@ -61,7 +61,7 @@
     window.audioAnalyser = audioAnalyser
 
     // 选择文件
-    fileEle.onchange = ev => {
+    fileEle.onchange = async ev => {
       const file = ev.target.files[0]
       if(file) {
         fileNameEle.classList.remove('none')
@@ -70,7 +70,12 @@
         if(audioAnalyser.player) {
           audioAnalyser.stop()
         }
-        audioAnalyser.setAudioBuffer(file)
+        const btn = document.getElementById('file-play')
+        btn.disabled = true
+        btn.classList.add('disabled')
+        await audioAnalyser.setAudioBuffer(file)
+        btn.disabled = false
+        btn.classList.remove('disabled')
       } 
     }
 
@@ -88,7 +93,7 @@
           audioAnalyser.stop()
           this.innerHTML = '播放'
         } else {
-          audioAnalyser.player.setGain(7)
+          audioAnalyser.player.setGain(1)
           audioAnalyser.start('file')
           this.innerHTML = '停止'
         }

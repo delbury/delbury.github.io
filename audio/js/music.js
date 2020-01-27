@@ -131,7 +131,7 @@ async function getIR() {
  * new Note('A4 q') === 440Hz, 四分音符 --> 1
  * new Note('- e') === 0Hz, 休止符，八分音符 --> 0.5
  * new Note('A4 es') === 440Hz, 附点八分音符，即 0.5 + 0.25
- * new Note('A4 0.125') 任意数字，4 / N(分音符)
+ * new Note('A4 0.125') 任意数字，4 / N(分音符).
  * new Note('#1+- q') 简谱字符串，数字表示
  */
 export class Note {
@@ -161,14 +161,21 @@ export class Note {
       freParams.shift()
       this.frequency = this.calcNumberFre(freParams)
     } else {
-      this.frequency = []
+      this.frequency = {
+        freqs: [],
+        isOrder: false
+      }
+      
+      if(freStrs[0] === '~') {
+        this.frequency.isOrder = true
+        freStrs.shift()
+      }
       freStrs.forEach(str => {
         const freParams = str.split(regs.simple)
         freParams.shift()
-        this.frequency.push(this.calcNumberFre(freParams))
+        this.frequency.freqs.push(this.calcNumberFre(freParams))
       })
     }
-
     this.setDuration(params[1])
   }
 
@@ -298,7 +305,7 @@ export class NotePlay extends Note {
 
 export class Sequence {
   constructor(actx, notes, {
-    tempo = 120, loop = false, staccato = 0, waveType = 'sine', tone = 'C', isNumber = false
+    tempo = 120, loop = false, staccato = 0, waveType = 'sine', tone = 'C', isNumber = false, gain = 0.5
   } = {}) {
     this.actx = actx || new AudioContext()
     this.tempo = tempo
@@ -306,7 +313,7 @@ export class Sequence {
     this.staccato = staccato
     this.loop = loop
     this.tone = tone
-    this.gainValue = 0.25
+    this.gainValue = gain
 
     this.middles = this.createTone()
     this.notes = this.createNotes(notes, isNumber)
@@ -354,31 +361,42 @@ export class Sequence {
     const duration = 60 / this.tempo * this.notes[index].duration
     const cutoff = duration * (1 - this.staccato || 0)
 
+    let osc, filterNode, gainNode
+    if(index % 2 === 0) {
+      osc = this.osc
+      filterNode = this.filterNode
+      gainNode = this.gainNode
+    } else {
+      osc = this.oscSub
+      filterNode = this.filterNodeSub
+      gainNode = this.gainNodeSub
+    }
+
+    const fn = (fre, i = 0 , dt = 0) => {
+      filterNode.frequency.setValueAtTime(Math.min(fre * 15, 20000), when)
+      filterNode.frequency.setTargetAtTime(Math.min(fre * 3, 20000), when + 0.01, 0.5)
+
+      osc[i].frequency.setValueAtTime(fre, when + dt) // 设置频率
+      osc[i].frequency.setValueAtTime(0, when + dt + cutoff)
+
+      // gainNode.gain.linearRampToValueAtTime(this.gainValue, when + dt + 0.001) // 设置增益
+      gainNode.gain.setTargetAtTime(this.gainValue, when + 0.0001, 0.001)
+      gainNode.gain.setTargetAtTime(0, when + dt + 0.01, 0.2)
+      gainNode.gain.setTargetAtTime(0, when + dt + 0.2, 0.3)
+      // gainNode.gain.setTargetAtTime(0, when + cutoff - 0.001, 0.001)
+
+    }
+
     // 是否和弦
-    if(this.notes[index].frequency.constructor === Array) {
-      this.notes[index].frequency.forEach((fre, index) => {
-        this.filterNode[index].frequency.setValueAtTime(Math.min(fre * 15, 24000), when)
-        this.filterNode[index].frequency.setTargetAtTime(Math.min(fre * 3, 24000), when + 0.01, 0.5)
+    if(this.notes[index].frequency.constructor === Object) {
+      const flag = this.notes[index].frequency.isOrder
+      this.notes[index].frequency.freqs.forEach((fre, index) => {
+        const dt = flag ? 0.075 * index : 0
 
-        this.osc[index].frequency.setValueAtTime(fre, when) // 设置频率
-        this.osc[index].frequency.setValueAtTime(0, when + cutoff)
-
-        this.gainNode[index].gain.linearRampToValueAtTime(this.gainValue, when + 0.001) // 设置增益
-        this.gainNode[index].gain.setTargetAtTime(0, when + 0.05, 0.25)
-        this.gainNode[index].gain.setTargetAtTime(0, when + cutoff, 0)
-        // this.gainNode[index].gain.exponentialRampToValueAtTime(0.01, when + cutoff) // 音符淡出
+        fn(fre, index, dt)
       })
     } else {
-      this.filterNode[0].frequency.setValueAtTime(Math.min(this.notes[index].frequency * 15, 24000), when)
-      this.filterNode[0].frequency.setTargetAtTime(Math.min(this.notes[index].frequency * 3, 24000), when + 0.01, 0.5)
-
-      this.osc[0].frequency.setValueAtTime(this.notes[index].frequency, when) // 设置频率
-      this.osc[0].frequency.setValueAtTime(0, when + cutoff)
-
-      this.gainNode[0].gain.linearRampToValueAtTime(this.gainValue, when + 0.001) // 设置增益
-      this.gainNode[0].gain.setTargetAtTime(0, when + 0.05, 0.25)
-      this.gainNode[0].gain.setTargetAtTime(0, when + cutoff, 0)
-      // this.gainNode[0].gain.exponentialRampToValueAtTime(0.01, when + cutoff) // 音符淡出
+      fn(this.notes[index].frequency)
     }
 
     return when + duration // TODO 计算下一个时间
@@ -386,30 +404,20 @@ export class Sequence {
 
   // 创建效果节点
   createEffectNodes() {
-    this.gainNode = [
-      this.actx.createGain(),
-      this.actx.createGain(),
-      this.actx.createGain(),
-      this.actx.createGain()
-    ]
-    this.filterNode = [
-      this.actx.createBiquadFilter(),
-      this.actx.createBiquadFilter(),
-      this.actx.createBiquadFilter(),
-      this.actx.createBiquadFilter()
-    ]
-    this.gainNode.forEach((gain, index) => {
-      this.filterNode[index].type = 'lowpass'
-      this.filterNode[index].Q.value = 0.707
-      gain.connect(this.filterNode[index]).connect(this.actx.destination)
-    })
+    const gainNode = this.actx.createGain()
+    const filterNode = this.actx.createBiquadFilter()
+    gainNode.gain.value = 0
+    filterNode.type = 'lowpass'
+    filterNode.Q.value = 0.707
 
-    return this.gainNode
+    gainNode.connect(filterNode).connect(this.actx.destination)
+
+    return [gainNode, filterNode]
   }
 
   // 创建音源节点
-  createSourceNode() {
-    this.osc = [
+  createSourceNode(effectNode) {
+    const oscNode = [
       // 主振源
       this.actx.createOscillator(),
 
@@ -418,15 +426,17 @@ export class Sequence {
       this.actx.createOscillator(),
       this.actx.createOscillator()
     ]
-    this.osc.forEach((osc, index) => {
+    oscNode.forEach((osc, index) => {
       if(this.waveType === 'custom') {
         osc.setPeriodicWave(this.customWaves[1].wave)
       } else {
         osc.type = this.waveType
       }
-      osc.frequency.setValueAtTime(0, this.actx.currentTime) // 设置频率
-      osc.connect(this.effectNode[index])
+      osc.frequency.value = 0 // 设置频率
+      osc.connect(effectNode)
     })
+
+    return oscNode
   }
 
   // 停止播放
@@ -438,28 +448,95 @@ export class Sequence {
         osc.disconnect(this.effectNode)
       })
       this.osc = null
-      this.effectNode.forEach(gain => {
-        gain.disconnect()
-      })
+      this.effectNode.disconnect()
       this.effectNode = null
+    }
+
+    if(this.oscSub) {
+      this.oscSub.forEach(osc => {
+        osc.onended = null
+        osc.stop()
+        osc.disconnect(this.effectNodeSub)
+      })
+      this.oscSub = null
+      this.effectNodeSub.disconnect()
+      this.effectNodeSub = null
     }
   }
 
   // 开始播放
   play(when) {
     this.stop() // 关闭
-    when = when || this.actx.currentTime
 
-    this.effectNode = this.createEffectNodes()
-    this.createSourceNode()
+    this.initNodes()
 
-    this.osc.forEach(osc => osc.start())
+    const startTime = (when || this.actx.currentTime) + 0
+    this.osc.forEach(osc => osc.start(startTime))
+    this.oscSub.forEach(osc => osc.start(startTime))
+
+    when = startTime
     this.notes.forEach((note, index) => {
       when = this.scheduleNote(index, when)
     })
     this.osc.forEach(osc => osc.stop(when))
+    this.oscSub.forEach(osc => osc.stop(when))
     this.osc[0].onended = () => {
       this.loop ? this.play() : null
     }
   }
+
+  initNodes() {
+    ;([this.effectNode, this.filterNode] = this.createEffectNodes())
+    this.gainNode = this.effectNode
+    ;([this.effectNodeSub, this.filterNodeSub] = this.createEffectNodes())
+    this.gainNodeSub = this.effectNodeSub
+
+    this.osc = this.createSourceNode(this.effectNode)
+    this.oscSub = this.createSourceNode(this.effectNodeSub)
+  }
 }
+
+// 歌曲
+export class Song {
+  constructor(song) {
+    this.song = song
+    this.actx = new AudioContext()
+
+    this.main = new Sequence(this.actx, song.notes, {
+      gain: 0.75,
+      loop: false,
+      waveType: 'custom', // sine | square | sawtooth | triangle | custom
+      ...song
+    })
+
+    if(song.accompanyOff) {
+      this.sub = new Sequence(this.actx, song.accompany || [], {
+        gain: 0.75,
+        loop: false,
+        waveType: 'custom', // sine | square | sawtooth | triangle | custom
+        ...song
+      })
+    }
+  }
+
+  play() {
+    this.main && this.main.play()
+    this.sub && this.song.accompanyOff && this.sub.play()
+  }
+
+  stop() {
+    this.main && this.main.stop()
+    this.sub && this.song.accompanyOff && this.sub.stop()
+  }
+
+  setWaveType(type) {
+    this.main && (this.main.waveType = type)
+    this.sub && this.song.accompanyOff && (this.sub.waveType = type)
+  }
+
+  // 切歌
+  changeNotes(params) {
+    this.main && this.main.changeNotes(params)
+    this.sub && this.song.accompanyOff && this.sub.changeNotes({ ...params, notes: params.accompany || [] })
+  }
+} 

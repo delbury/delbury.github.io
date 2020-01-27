@@ -19,7 +19,7 @@ export class BaseCanvas {
       y: 0,
       scalable,
       spaceDown: false,
-      scaleX: 4, // 频域横坐标，表示频率缩放，乘法，1~Infinity
+      scaleX: 1, // 频域横坐标，表示频率缩放，乘法，1~Infinity
       scaleY: 0, // 时域纵坐标，表示幅值缩放，加法，0~0.4
       waveType,
       currentData: null,
@@ -386,7 +386,7 @@ export class BaseCanvas {
     const byteMax = 128
     const dx = (this.canvas.width - xoffset) / length // x轴间隔
     const max = this.yParams.max - this.state.scaleY
-    const min = this.yParams.min - this.state.scaleY
+    const min = this.yParams.min + this.state.scaleY
     for (let i = 0; i < length; i++) {
       const sy = (max - (data[i] / byteMax - 1)) / (max - min) * (this.canvas.height - yoffset)
       if (i === 0) {
@@ -766,6 +766,7 @@ export class AudioAnalyser {
       maxDecibels: 0,
       minDecibels: -100,
       sampleRate: 48000,
+      drawOverTimeChart: false,
       ...options
     }
   }
@@ -832,6 +833,11 @@ export class AudioAnalyser {
   // 播放
   start(type, params) {
     if ((this.fileRunnable && type === 'file') || type === 'osc') {
+      if(type === 'file') {
+        this.options.drawOverTimeChart = false
+      } else {
+        this.options.drawOverTimeChart = true
+      }
       this.running = true
       this.player.start(type, params)
       this.timeChart && this.timeChart.start()
@@ -849,6 +855,7 @@ export class AudioAnalyser {
 
   // 传入文件
   async setAudioBuffer(file) {
+    this.fileRunnable = false
     await this.player.setAudioBuffer(file)
     this.fileRunnable = true
   }
@@ -863,7 +870,7 @@ export class AudioAnalyser {
         this.timeChart.drawTimeWave(backup)
 
         // 累积图
-        this.overtimeChart.drawTimeWaveOverTime(backup, this.player.actx.currentTime)
+        this.options.drawOverTimeChart && this.overtimeChart.drawTimeWaveOverTime(backup, this.player.actx.currentTime)
       }
 
       // 获取频域数据

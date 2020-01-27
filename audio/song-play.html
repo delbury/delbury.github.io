@@ -28,26 +28,20 @@
   </div>
   
   <script type="module">
-    import { NotePlay, Sequence } from './js/music.js'
+    import { NotePlay, Song } from './js/music.js'
     import songs from './js/songs.js'
-
-    const actx = new AudioContext()
-    const seq = new Sequence(actx, songs.default.notes, {
-      loop: true,
-      waveType: 'custom', // sine | square | sawtooth | triangle | custom
-      ...songs.default
-    })
-    window.seq = seq
+    const song = new Song(songs.default)
+    window.song = song
 
     // 音色控制
     document.getElementById('waveType').onclick = ev => {
       if(ev.target.tagName === 'BUTTON') {
         const type = ev.target.dataset.type
         if(type === 'stop') {
-          seq.stop()
+          song.stop()
         } else {
-          seq.waveType = ev.target.dataset.type
-          seq.play()
+          song.setWaveType(ev.target.dataset.type)
+          song.play()
         }
       }
     }
@@ -57,11 +51,11 @@
       if(ev.target.tagName === 'BUTTON') {
         const type = ev.target.dataset.type
         if(type === 'stop') {
-          seq.stop()
+          song.stop()
         } else {
-          seq.stop()
-          seq.changeNotes(songs[ev.target.dataset.type])
-          seq.play()
+          // song.stop()
+          song.changeNotes(songs[ev.target.dataset.type])
+          song.play()
         }
       }
     }
