@@ -3,7 +3,7 @@
  * 音名：C / #C,bD / D / #D,bE / E / F / #F,bG / G / #G,bA / A / #A,bB / B
  * 简谱：1 /       / 2 /       / 3 / 4 /       / 5 /       / 6 /       / 7
  */
-import { NotePlay } from './music.js'
+import { NotePlay } from './music/NotePlay.js'
 
 // 按键音符名map
 const keyToName = [
