@@ -1,7 +1,8 @@
 export class BaseCanvas {
   constructor(
     canvas,
-    { width, height = 280, scalable = false, waveType = '' } = {}
+    { width, height = 280, scalable = false, waveType = '' } = {},
+    state = {}
   ) {
     if (!canvas || canvas.tagName !== 'CANVAS') {
       throw new TypeError('first param must be a canvas element')
@@ -24,7 +25,8 @@ export class BaseCanvas {
       waveType,
       currentData: null,
       peakValley: null,
-      running: false
+      running: false,
+      ...state
     }
 
     this.bindEvents()
@@ -69,8 +71,23 @@ export class BaseCanvas {
     this.state.currentData = null
     this.state.peakValley = null
   }
+  
+  // 筛选基波、谐波频率功率
+  filterFreqDb(baseFreq) {
+    const pv = this.state.peakValley
+    if(!pv) {
+      return
+    }
+    const temp = []
+    let count = 1
+    for(let i = 0, len = pv.length; i < len - 1; i++) {
+      // 筛选最接近的频率峰
+      const freq = count * baseFreq
+      if(freq >= pv[i].freq && freq < pv[i + 1].freq) {}
+    }
+  }
 
-  // 计算峰谷值
+  // 计算峰值
   calcPeakValue(data) {
     const arr = []
     const dy = (this.yParams.max - this.yParams.min) / 255
@@ -89,9 +106,9 @@ export class BaseCanvas {
         arr.push(fn(i))
       } else if(
         (data[i - 1] <= data[i] && data[i] > data[i + 1]) ||
-        (data[i - 1] < data[i] && data[i] >= data[i + 1]) ||
-        (data[i - 1] >= data[i] && data[i] < data[i + 1]) ||
-        (data[i - 1] > data[i] && data[i] <= data[i + 1])
+        (data[i - 1] < data[i] && data[i] >= data[i + 1])
+        // (data[i - 1] >= data[i] && data[i] < data[i + 1]) ||
+        // (data[i - 1] > data[i] && data[i] <= data[i + 1])
       ) {
         arr.push(fn(i))
       }

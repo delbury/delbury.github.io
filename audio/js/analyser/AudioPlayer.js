@@ -47,6 +47,71 @@ class OSCs {
   }
 }
 
+// 泛音列
+const deltaK = Math.pow(2, 1 / 24)
+const DBs = [
+  // 1.A2
+  {
+    maxFreq: 27.5 * deltaK,
+    db: [
+      -34.90, -36.08, -34.90, -49.80, -38.82, -39.22, -47.06,
+      -56.08, -41.57, -50.98, -37.65, -47.84, -48.63, -43.92,
+      -43.53, -47.06, -61.57, -51.76, -60.78, -58.04,
+      // -62.35, // 577.15,581.54 
+      -45.88,
+      // -72.55, // 604.98,610.84 
+      -56.08,
+      // -75.29, // 632.81,638.67 
+      -62.75,
+      // -53.73, // 660.64,666.50 
+      -53.33,
+      // -76.86, // 688.48,695.80 
+      -68.63,
+      // -70.20, // 714.84,723.63 
+      -58.82,
+      // -85.49, // 742.68,752.93 
+      -67.45,
+      // -72.16, // 771.97,782.23 
+      -62.35,
+      // -85.10, // 799.80,810.06 
+      -58.04,
+      // -83.53, // 823.24,839.36 
+      -58.04,
+      // -76.08, // 852.54,867.19 
+      -59.61,
+      // -76.86, // 881.84,897.95 -48.24,
+
+      // -74.12, // 911.13,927.25 
+      -69.80,
+      -100, -100, -100
+      // -82.35, // 1015.14,1029.79 -63.14,
+
+      // -84.71, // 1044.43,1059.08 
+      -72.55,
+      // -92.94, // 1073.73,1088.38 
+      -78.04,
+    ]
+  },
+  {
+    maxFreq: 0,
+    db: [
+      -28.24, -26.67, -37.25, -43.14,
+      -36.86, -43.53, -39.61, -46.67,
+      -50.20, -49.80, -73.33, -56.47,
+      -73.33, -81.96, -72.55
+    ]
+  },
+  {
+    maxFreq: 500,
+    db: [-22.75, -30.20, -35.69, -50.59, -49.02, -60.39, -67.06, -91.37]
+  },
+  {
+    maxFreq: 1000,
+    db: [-25.49, -55.29, -69.02, -93.33]
+  }
+]
+
+
 export class AudioPlayer {
   constructor(options = {}) {
     this.options = options
@@ -60,7 +125,13 @@ export class AudioPlayer {
     this.gain = this.createGain()
     this.analyser = this.createAnalyser(this.options.analyser)
     this.filter = this.createFilter()
-    this.gain.connect(this.filter).connect(this.analyser).connect(this.actx.destination)
+    this.shaper = this.createShaper()
+    this.gain
+      // .connect(this.shaper)
+      .connect(this.filter)
+      .connect(this.analyser)
+      .connect(this.actx.destination)
+    this.createCustomWaves(DBs)
   }
 
   // 传入音频文件
@@ -91,16 +162,20 @@ export class AudioPlayer {
     return source
   }
 
+  // 创建自定义波形
+  createCustomWaves(dbs) {
+    this.customWaves = dbs.map(item => {
+      return {
+        maxFreq: item.maxFreq,
+        wave: this.actx.createPeriodicWave(...this.calcRealAndImag(item.db))
+      }
+    })
+  }
+
   // 创建振荡器
-  createOsc({ type = 'sine', frequency = 440, dbs } = {}) {
+  createOsc({ type = 'sine', frequency = 440 } = {}) {
     const source = this.actx.createOscillator()
-    if(type === 'custom' && dbs && dbs.length) {
-      this.customWaves = dbs.map(item => {
-        return {
-          freq: item.freq,
-          wave: this.actx.createPeriodicWave(...this.calcRealAndImag(item.db))
-        }
-      })
+    if(type === 'custom') {
       source.setPeriodicWave(this.customWaves[0].wave)
     } else {
       source.type = type
@@ -119,8 +194,26 @@ export class AudioPlayer {
     // return new OSCs(this.actx, { type, frequency, wave: this.customWaves[0].wave })
   }
 
+
+  calcRealAndImag() {
+    const arr = [
+      [0, 0],
+      [0, 1],
+      // [0, 1],
+      // [0, 1]
+    ]
+    const len = arr.length
+    const real = new Float32Array(len)
+    const imag = new Float32Array(len)
+    for(let i = 0; i < len; i++) {
+      real[i] = arr[i][0]
+      imag[i] = arr[i][1]
+    }
+    return [real, imag]
+  }
+
   // 将 db 数组计算为自定义波形的实部和虚部
-  calcRealAndImag(dbs) {
+  _calcRealAndImag(dbs) {
     const amps = []
     for(let i = dbs.length - 1; i >= 0; i--) {
       const ddb = dbs[i] - dbs[dbs.length - 1]
@@ -128,21 +221,38 @@ export class AudioPlayer {
       amps.unshift(Math.pow(10, ddb / 20))
     }
     const LEN = dbs.length + 1
-    let real = new Float32Array(LEN)
-    let imag = new Float32Array(LEN)
-    for (let i in real) {
-      real[i] = 0
-    }
-    for (let i in imag) {
+    const real = new Float32Array(LEN)
+    const imag = new Float32Array(LEN)
+
+    for (let i = 0; i < LEN; i++) {
       if(i == 0) {
         imag[0] = 0
+        real[i] = 0
       } else {
         imag[i] = amps[i - 1]
-        // real[i] = amps[i - 1]
+        real[i] = 0
       }
     }
+
     return [real, imag]
     // return [imag, real]
+  }
+
+  // 创建畸变器
+  createShaper(k = 15) {
+    const shaper = this.actx.createWaveShaper()
+    shaper.oversample = 'none'
+
+    const rate = this.options.sampleRate || 48000
+    const curve = new Float32Array(rate)
+    const deg = Math.PI / 180
+    for(let i = 0; i < rate; i++) {
+      const x = i * 2 / rate - 1
+      curve[i] = ( 3 + k ) * x * 20 * deg / ( Math.PI + k * Math.abs(x) )
+    }
+    shaper.curve = curve
+
+    return shaper
   }
 
   // 创建滤波节点
@@ -242,13 +352,28 @@ export class AudioPlayer {
       // )
       // this.filter.Q.value = 1
 
-      // this.filter.gain.value = 10
-      this.gain.gain.value = 0
-      this.gain.gain.linearRampToValueAtTime(this._gainValue, this.actx.currentTime + 0.001)
-      this.gain.gain.setTargetAtTime(0, this.actx.currentTime + 0.01, 0.2)
-      this.gain.gain.setTargetAtTime(0, this.actx.currentTime + 0.2, 0.3)
+      if(false) {
+        this.gain.gain.setValueAtTime(0, this.actx.currentTime)
+        this.gain.gain.setTargetAtTime(this._gainValue, this.actx.currentTime, 0.001)
+        this.gain.gain.setTargetAtTime(0, this.actx.currentTime + 0.1, 2)
+        this.gain.gain.setTargetAtTime(0, this.actx.currentTime + 0.6, 0.3)
+      }
 
-      this.source.stop(this.actx.currentTime + 2)
+      const dt = 0.5
+      const f1 = 220, f2 = 0
+
+      // this.gain.gain.setValueAtTime(this._gainValue, this.actx.currentTime)
+      for(let i = 0; i < 6; i++) {
+        // this.gain.gain.linearRampToValueAtTime(this._gainValue, this.actx.currentTime + i * dt + 0.01)
+        this.gain.gain.setValueCurveAtTime([0, this._gainValue], this.actx.currentTime + i * dt, 0.01)
+        this.source.frequency.setValueAtTime(f1, this.actx.currentTime + i * dt)
+
+        this.source.frequency.setValueAtTime(f2, this.actx.currentTime + (i + 0.5) * dt)
+        this.gain.gain.setValueCurveAtTime([this._gainValue, 0],  this.actx.currentTime + (i + 0.5) * dt - 0.01, 0.01)
+        // this.gain.gain.setValueAtTime(0, this.actx.currentTime + (i + 0.5) * dt)
+      }
+
+      this.source.stop(this.actx.currentTime + 8 * dt)
     }
   }
 

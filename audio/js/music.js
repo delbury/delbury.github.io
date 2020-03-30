@@ -8,14 +8,14 @@ export class Song {
     this.actx = new AudioContext()
 
     this.main = new Sequence(this.actx, song.notes, {
-      gain: 0.75,
+      gain: 1,
       loop: false,
       waveType: 'custom', // sine | square | sawtooth | triangle | custom
       ...song
     })
 
     this.sub = new Sequence(this.actx, song.accompany || [], {
-      gain: 0.75,
+      gain: 1,
       loop: false,
       waveType: 'custom', // sine | square | sawtooth | triangle | custom
       ...song

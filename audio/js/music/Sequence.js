@@ -10,7 +10,7 @@ import { CP, Tools } from './Tools.js'
 
 export class Sequence {
   constructor(actx, notes, {
-    tempo = 120, loop = false, staccato = 0, waveType = 'sine', tone = 'C', isNumber = false, gain = 0.5
+    tempo = 120, loop = false, staccato = 0, waveType = 'sine', tone = 'C', isNumber = false, gain = 1
   } = {}) {
     this.actx = actx || new AudioContext()
     this.tempo = tempo
@@ -78,17 +78,24 @@ export class Sequence {
     }
 
     const fn = (fre, i = 0 , dt = 0) => {
-      filterNode.frequency.setValueAtTime(Math.min(fre * 15, 20000), when)
-      filterNode.frequency.setTargetAtTime(Math.min(fre * 3, 20000), when + 0.01, 0.5)
+      // filterNode.frequency.setValueAtTime(Math.min(fre * 15, 20000), when)
+      // filterNode.frequency.setTargetAtTime(Math.min(fre * 3, 20000), when + 0.01, 0.5)
+      // filterNode.frequency.setValueAtTime(Math.min(fre * 15, 20000), when)
 
       osc[i].frequency.setValueAtTime(fre, when + dt) // 设置频率
       osc[i].frequency.setValueAtTime(0, when + dt + cutoff)
 
-      // gainNode.gain.linearRampToValueAtTime(this.gainValue, when + dt + 0.001) // 设置增益
-      gainNode.gain.setTargetAtTime(this.gainValue, when + 0.0001, 0.001)
-      gainNode.gain.setTargetAtTime(0, when + dt + 0.01, 0.2)
-      gainNode.gain.setTargetAtTime(0, when + dt + 0.2, 0.3)
+
+      // gainNode.gain.linearRampToValueAtTime(this.gainValue, when + dt) // 设置增益
+      // gainNode.gain.linearRampToValueAtTime(0, when + dt + cutoff) // 设置增益
+
+      // gainNode.gain.setTargetAtTime(this.gainValue, when + 0.0001, 0.001)
+      // gainNode.gain.setTargetAtTime(0, when + dt + 0.01, 0.2)
+      // gainNode.gain.setTargetAtTime(0, when + dt + 0.2, 0.2)
+
       // gainNode.gain.setTargetAtTime(0, when + cutoff - 0.001, 0.001)
+
+      // gainNode.gain.setValueCurveAtTime([this.gainValue, 0], when + dt + cutoff - 0.001, 0.001)
 
     }
 
@@ -107,15 +114,31 @@ export class Sequence {
     return when + duration // TODO 计算下一个时间
   }
 
+  // 压缩效果器
+  createCompressorNode() {
+    const compressor = this.actx.createDynamicsCompressor()
+    compressor.threshold.setValueAtTime(-50, this.actx.currentTime)
+    compressor.knee.setValueAtTime(40, this.actx.currentTime)
+    compressor.ratio.setValueAtTime(12, this.actx.currentTime)
+    compressor.attack.setValueAtTime(0, this.actx.currentTime)
+    compressor.release.setValueAtTime(0.25, this.actx.currentTime)
+
+    compressor.connect(this.actx.destination)
+    return compressor
+  }
+
   // 创建效果节点
   createEffectNodes() {
     const gainNode = this.actx.createGain()
     const filterNode = this.actx.createBiquadFilter()
-    gainNode.gain.value = 0
+    gainNode.gain.value = this.gainValue || 0
     filterNode.type = 'lowpass'
     filterNode.Q.value = 0.707
 
-    gainNode.connect(filterNode).connect(this.actx.destination)
+    filterNode.frequency.setValueAtTime(20000, this.actx.currentTime)
+
+    gainNode.connect(filterNode).connect(this.compressor)
+    // gainNode.connect(filterNode).connect(this.actx.destination)
 
     return [gainNode, filterNode]
   }
@@ -191,6 +214,7 @@ export class Sequence {
   }
 
   initNodes() {
+    this.compressor = this.createCompressorNode()
     ;([this.effectNode, this.filterNode] = this.createEffectNodes())
     this.gainNode = this.effectNode
     ;([this.effectNodeSub, this.filterNodeSub] = this.createEffectNodes())

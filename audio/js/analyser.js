@@ -13,11 +13,13 @@ export class AudioAnalyser {
       drawTimeType: 'byte',
       isDrawFreq: true,
       drawFreqType: 'byte',
-      fftSize: 2048 * 2,
+      fftSize: 2048 * 16,
       maxDecibels: 0,
       minDecibels: -100,
+      smoothingTimeConstant: 0.8,
       sampleRate: 48000,
       drawOverTimeChart: false,
+      scaleX: 20,
       ...options
     }
   }
@@ -25,7 +27,7 @@ export class AudioAnalyser {
   // 初始化
   initCharts({ freqCanvas, timeCanvas, overtimeCanvas } = {}) {
     timeCanvas ? this.createTimeChart(timeCanvas, { scalable: true, waveType: 'time' }) : null
-    freqCanvas ? this.createFreqChart(freqCanvas, { scalable: true, waveType: 'freq' }) : null
+    freqCanvas ? this.createFreqChart(freqCanvas, { scalable: true, waveType: 'freq' }, { scaleX: this.options.scaleX }) : null
     overtimeCanvas ? this.createOvertimeChart(overtimeCanvas, { waveType: 'over-time' }) : null
 
     this.createAudioPlayer()
@@ -47,15 +49,17 @@ export class AudioAnalyser {
       analyser: {
         maxDecibels: this.options.maxDecibels,
         minDecibels: this.options.minDecibels,
-        fftSize: this.options.fftSize
-      } // 分析器参数
+        fftSize: this.options.fftSize,
+        smoothingTimeConstant: this.options.smoothingTimeConstant
+      }, // 分析器参数
+      sampleRate: this.options.sampleRate,
     })
   }
 
   // 绑定波形时间累计图
-  createOvertimeChart(canvasEle, params) {
+  createOvertimeChart(canvasEle, params, state) {
     const thek = 1
-    this.overtimeChart = new BaseCanvas(canvasEle, params)
+    this.overtimeChart = new BaseCanvas(canvasEle, params, state)
     this.overtimeChart.saveCoordinateParams(
       { min: -thek, max: thek, showText: true, offset: 28 },
       { min: 0, max: 100, offset: 30 }
@@ -63,8 +67,8 @@ export class AudioAnalyser {
   }
 
   // 绑定频谱图图表
-  createFreqChart(canvasEle, params) {
-    this.freqChart = new BaseCanvas(canvasEle, params)
+  createFreqChart(canvasEle, params, state) {
+    this.freqChart = new BaseCanvas(canvasEle, params, state)
     this.freqChart.saveCoordinateParams(
       { min: this.options.minDecibels, max: this.options.maxDecibels, offset: 15, showText: true },
       { min: 0, max: this.options.sampleRate / 2, offset: 28, showText: true }
@@ -84,11 +88,11 @@ export class AudioAnalyser {
   // 播放
   start(type, params) {
     if ((this.fileRunnable && type === 'file') || type === 'osc') {
-      if(type === 'file') {
-        this.options.drawOverTimeChart = false
-      } else {
-        this.options.drawOverTimeChart = true
-      }
+      // if(type === 'file') {
+      //   this.options.drawOverTimeChart = false
+      // } else {
+      //   this.options.drawOverTimeChart = true
+      // }
       this.running = true
       this.player.start(type, params)
       this.timeChart && this.timeChart.start()
