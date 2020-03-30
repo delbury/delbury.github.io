@@ -27,6 +27,7 @@
   position: relative;
   padding: 10px;
   height: calc(216px + 20px);
+  overflow: hidden;
 }
 
 .canvas-box > canvas {

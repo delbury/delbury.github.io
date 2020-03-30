@@ -1,3 +1,5 @@
+const fragmentWH = [40, 40];
+
 (async function() {
   const canvasBg = document.getElementById('canvas-background');
   const canvasFg = document.getElementById('canvas-fragment');
@@ -14,14 +16,16 @@
   const offCanvas = new OffscreenCanvas(canvasBg.width, canvasBg.height);
   const offCtx = offCanvas.getContext('2d');
 
-  fillImage(ctxb, ctxf, offCtx, img_tall); // 绘图
+  const rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 绘图
 
   // 绑定滑块事件
   const inputSlider = document.getElementById('input-slider');
   inputSlider.onmousedown = ev => {
     inputSlider.onmouseup = ev => {
       inputSlider.onmouseup = null;
-      sliderbar.value = 0;
+      const value = sliderbar.value / 100 * (canvasBg.width - fragmentWH[0]) / canvasBg.width;
+      sliderbar.value = '0';
+      canvasFg.style.left = 10 + 'px';
       sliderbar.style.background = `linear-gradient(
         to right,
         rgba(82, 196, 26, 0.2) 0%,
@@ -31,10 +35,17 @@
       )`;
 
       // 在此校验是否成功
+      if(Math.abs(value - rightScale) < 0.01) {
+        console.log(true)
+      } else {
+        console.log(false)
+      }
     }
   };
   inputSlider.oninput = ev => {
     const percent = (+ev.target.value).toFixed(2);
+    const left = +ev.target.value / 100 * (canvasBg.width - fragmentWH[0]);
+    canvasFg.style.left = left + 10 + 'px';
     const string = `linear-gradient(
       to right,
       rgba(82, 196, 26, 0.2) 0%,
@@ -71,14 +82,13 @@ function fillImage(ctxb, ctxf, offCtx, img) {
   // 裁剪
   if(diff > Number.EPSILON) {
     // 宽度裁剪
-    canvasW / canvasH * imgH
+    sWidth = canvasW / canvasH * imgH
     sx = (imgW - sWidth) / 2;
   } else if(diff < -Number.EPSILON) {
     // 高度裁剪
     sHeight = canvasH / canvasW * imgW
     sy = (imgH - sHeight) / 2;
   }
-  const fragmentWH = [40, 40];
   const fragment = createFragment(canvasW, canvasH); // 拼图的随机位置
   const path = createPath(fragment, fragmentWH); // 创建图形路径
   const bgPath = createPath(fragment, fragmentWH, [canvasW, canvasH]);
@@ -124,15 +134,17 @@ function fillImage(ctxb, ctxf, offCtx, img) {
   ctxf.drawImage(offCtx.canvas, -fragment[0], 0);
   // ctxf.drawImage(offCtx.canvas, 0, 0);
   ctxf.restore();
+
+  return fragment[2];
 }
 
 // 随机生成拼图
 function createFragment(canvasW, canvasH) {
   const fn = (s, e) => Math.random() * (e - s) + s;
-  const randomY = fn(0.4, 0.6) * canvasH;// 限制y轴范围 0.4~0.6
-  const randomX = fn(0.5, 0.8) * canvasW; // 限制x轴范围 0.5~0.8
+  const scaleY = fn(0.4, 0.6);// 限制y轴范围 0.4~0.6
+  const scaleX = fn(0.5, 0.8); // 限制x轴范围 0.5~0.8
 
-  return [randomX, randomY];
+  return [scaleX * canvasW, scaleY * canvasH, scaleX, scaleY];
 }
 
 // 创建路径
