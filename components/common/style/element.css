@@ -1,0 +1,32 @@
+
+* {
+  box-sizing: border-box;
+}
+button {
+  background-color: #1d39c4;
+  color: #fff;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  box-shadow: 3px 3px 5px #999;
+}
+button:hover {
+  background-color: #10239e;
+}
+button:active {
+  box-shadow: 1px 1px 5px #999;
+}
+
+.none {
+  display: none !important;
+  opacity: 0;
+}
+
+.fade-show {
+  opacity: 1 !important;
+}
+.fade-hidden {
+  opacity: 0 !important;
+}

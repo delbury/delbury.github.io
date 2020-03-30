@@ -1,0 +1,118 @@
+.container {
+  position: relative;
+  margin: auto;
+  height: 480px;
+  width: 600px;
+}
+
+.dialog {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  width: calc(384px + 20px);
+  border: 1px solid #d9d9d9;
+  border-radius: 3px;
+  box-shadow: 3px 3px 20px #bfbfbf;
+  background-color: #fff;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+
+  transition: opacity 200ms;
+  opacity: 1;
+}
+
+/* canvas 样式 */
+.canvas-box {
+  position: relative;
+  padding: 10px;
+  height: calc(216px + 20px);
+}
+
+.canvas-box > canvas {
+  position: absolute;
+}
+
+
+/* 滑动条样式 */
+.slider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  height: 80px;
+}
+
+.slider input[type="range"] {
+  -webkit-appearance: none;
+  margin: 0;
+  height: 40px;
+  width: 100%;
+  /* background-color: rgba(89, 89, 89, 0.2); */
+  background: linear-gradient(
+    to right,
+    rgba(82, 196, 26, 0.2) 0%,
+    rgba(82, 196, 26, 0.2) 0%,
+    rgb(89, 89, 89, 0.2) 0%,
+    rgb(89, 89, 89, 0.2) 100%
+  );
+  border-radius: 20px;
+  box-shadow: inset 1px 1px 5px #bfbfbf;
+  outline: none;
+  z-index: 0;
+}
+
+.slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 60px;
+  width: 60px;
+  background-color: #fff;
+  background-image: url("../common/icons/double-arro-right-grey.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 40px;
+  border: 1px solid #d9d9d9;
+  border-radius: 50%;
+  box-shadow: 1px 1px 6px #bfbfbf;
+  cursor: pointer;
+}
+.slider input[type="range"]::-webkit-slider-thumb:hover {
+  background-image: url("../common/icons/double-arro-right-green.svg");
+  box-shadow: 1px 1px 5px #bfbfbf;
+}
+.slider input[type="range"]::-webkit-slider-thumb::before {
+  content: "12123";
+}
+/* .slider input[type="range"]::-webkit-slider-runnable-track {
+  height: 40px;
+  border-radius: 20px;
+} */
+
+.slider > .label {
+  position: absolute;
+  white-space: nowrap;
+  user-select: none;
+  color: #bfbfbf;
+  z-index: -1;
+}
+
+/* 按钮操作栏 */
+.btn-box {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  height: 40px;
+  border-top: 1px solid #d9d9d9;
+}
+.btn-box > i {
+  font-size: 24px;
+  cursor: pointer;
+  color: #d9d9d9;
+}
+.btn-box > i:hover {
+  color: #8c8c8c;
+}
+.btn-box > i:not(:last-of-type) {
+  margin-right: 5px;
+}

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jigsaw Verification Demo</title>
+  <link rel="stylesheet" href="../common/style/element.css">
+  <link rel="stylesheet" href="./index.css">
+  <link rel="stylesheet" href="../common/fonts/iconfont.css">
+</head>
+<body>
+  <div class="container">
+    <button id="dialog-toggle">open dialog</button>
+    <div id="dialog" class="dialog">
+      <div class="canvas-box">
+        <canvas id="canvas-background" width="384" height="216"></canvas>
+        <canvas id="canvas-fragment" width="384" height="216"></canvas>
+      </div>
+      <div class="slider">
+        <input id="input-slider" type="range" min="0" max="100" step="0.01" value="0">
+        <span class="label">拖动滑块完成拼图</span>
+      </div>
+      <div class="btn-box">
+        <i class="iconfont icon-close"></i>
+        <i class="iconfont icon-exchangerate"></i>
+      </div>
+    </div>
+  </div>
+
+  <script src="./index.js"></script>
+  <script>
+    const dialog = document.getElementById('dialog');
+    let showDialog = true;
+    document.getElementById('dialog-toggle').onclick = () => {
+      !showDialog ? dialog.classList.remove('none') : null;
+      setTimeout(() => {
+        dialog.classList.toggle('fade-hidden');
+        showDialog = !showDialog;
+      }, 0);
+      
+      dialog.ontransitionend = () => {
+        !showDialog ? dialog.classList.add('none') : null;
+      };
+    };
+  </script>
+</body>
+</html>
