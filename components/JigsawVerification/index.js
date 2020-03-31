@@ -11,6 +11,7 @@ let timer = null;
   const img_fat = await createImage('./imgs/fat.jpg');
   const img_tall = await createImage('./imgs/tall.jpg');
   const sliderbar = document.querySelector('.slider input[type="range"]');
+  const dialog = document.getElementById('dialog');
 
   const ctxb = canvasBg.getContext('2d');
   const ctxf = canvasFg.getContext('2d');
@@ -31,8 +32,11 @@ let timer = null;
 
   // 绑定滑块事件
   const inputSlider = document.getElementById('input-slider');
+  // 鼠标按下
   inputSlider.onmousedown = ev => {
+    // 鼠标松开
     inputSlider.onmouseup = ev => {
+      
       canvasFg.classList.add('transition');
       canvasFg.ontransitionend = ev => {
         canvasFg.ontransitionend = null;
@@ -56,6 +60,11 @@ let timer = null;
         createNotice(true);
       } else {
         // 失败
+        dialog.classList.add('shake');
+        dialog.onanimationend = ev => {
+          dialog.onanimationend = null;
+          dialog.classList.remove('shake');
+        };
         createNotice(false);
       }
     }
