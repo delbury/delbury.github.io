@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas Effects</title>
+  <style>
+    canvas {
+      border: 1px dashed skyblue;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <canvas id="canvas" width="600" height="360"></canvas>
+  </div>
+
+  <script type="module">
+    import { CanvasEffect } from './js/effects.js';
+    const ce = new CanvasEffect(document.getElementById('canvas'));
+  </script>
+</body>
+</html>
