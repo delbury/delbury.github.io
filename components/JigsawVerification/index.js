@@ -1,4 +1,6 @@
 const fragmentWH = [40, 40];
+let notice = null;
+let timer = null;
 
 (async function() {
   const canvasBg = document.getElementById('canvas-background');
@@ -16,12 +18,17 @@ const fragmentWH = [40, 40];
   const offCanvas = new OffscreenCanvas(canvasBg.width, canvasBg.height);
   const offCtx = offCanvas.getContext('2d');
 
-  const rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 绘图
+  let rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 绘图
 
   // 绑定滑块事件
   const inputSlider = document.getElementById('input-slider');
   inputSlider.onmousedown = ev => {
     inputSlider.onmouseup = ev => {
+      canvasFg.classList.add('transition');
+      canvasFg.ontransitionend = ev => {
+        canvasFg.ontransitionend = null;
+        canvasFg.classList.remove('transition');
+      }
       inputSlider.onmouseup = null;
       const value = sliderbar.value / 100 * (canvasBg.width - fragmentWH[0]) / canvasBg.width;
       sliderbar.value = '0';
@@ -36,9 +43,11 @@ const fragmentWH = [40, 40];
 
       // 在此校验是否成功
       if(Math.abs(value - rightScale) < 0.01) {
-        console.log(true)
+        // 成功
+        createNotice(true);
       } else {
-        console.log(false)
+        // 失败
+        createNotice(false);
       }
     }
   };
@@ -54,7 +63,12 @@ const fragmentWH = [40, 40];
       rgb(89, 89, 89, 0.2) 100%
     )`;
     sliderbar.style.background = string;
-  }
+  };
+
+  // 按钮事件
+  document.getElementById('btn-refresh').onclick = ev => {
+    rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 绘图
+  };
 })();
 
 // 获取图片
@@ -96,11 +110,13 @@ function fillImage(ctxb, ctxf, offCtx, img) {
   const params = [img, sx, sy, sWidth, sHeight, 0, 0, canvasW, canvasH];
 
   // 绘制背景
+  ctxb.clearRect(0, 0, canvasW, canvasH);
   ctxb.save();
   ctxb.filter = 'brightness(50%)';
   ctxb.clip(path);
   ctxb.drawImage(...params);
   ctxb.restore();
+  offCtx.clearRect(0, 0, canvasW, canvasH);
   offCtx.save();
   // offCtx.fillStyle = 'transparent';
   // offCtx.fillRect(0, 0, canvasW, canvasH);
@@ -117,8 +133,8 @@ function fillImage(ctxb, ctxf, offCtx, img) {
   ctxb.restore();
 
   // 绘制拼图
-  offCtx.save();
   offCtx.clearRect(0, 0, canvasW, canvasH);
+  offCtx.save();
   offCtx.clip(path);
   offCtx.drawImage(...params);
   offCtx.lineWidth = 2;
@@ -126,6 +142,8 @@ function fillImage(ctxb, ctxf, offCtx, img) {
   offCtx.stroke(path);
   offCtx.restore();
 
+
+  ctxf.clearRect(0, 0, canvasW, canvasH);
   ctxf.save();
   ctxf.shadowColor = '#000';
   ctxf.shadowOffsetX = 2;
@@ -184,4 +202,36 @@ function createPath([x, y], [w = 40, h = 40] = [], outer) {
   path.closePath();
 
   return path;
+}
+
+// 创建提示文字
+function createNotice(flag = false) {
+  if(notice) {
+    notice.remove();
+    notice = null;
+
+    if(timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  }
+  notice = document.createElement('div');
+  notice.className = flag ? 'notice-successed' : 'notice-failed';
+  notice.innerHTML = flag ? '验证通过' : '验证失败';
+  document.getElementById('canvas-box').appendChild(notice);
+  setTimeout(() => {
+    notice.classList.add('raise-up');
+  }, 0);
+
+  timer = setTimeout(() => {
+    if(notice) {
+      notice.classList.remove('raise-up');
+      notice.ontransitionend = ev => {
+        notice.remove();
+        notice.ontransitionend = null;
+        notice = null;
+      }
+      timer = null;
+    }
+  }, 800);
 }
