@@ -15,7 +15,16 @@ let timer = null;
   const ctxb = canvasBg.getContext('2d');
   const ctxf = canvasFg.getContext('2d');
 
-  const offCanvas = new OffscreenCanvas(canvasBg.width, canvasBg.height);
+  const offCanvas = (function () {
+    if(window.OffscreenCanvas) {
+      return new OffscreenCanvas(canvasBg.width, canvasBg.height)
+    } else {
+      const can = document.createElement('canvas');
+      can.width = canvasBg.width;
+      can.height = canvasBg.height;
+      return can;
+    }
+  })();
   const offCtx = offCanvas.getContext('2d');
 
   let rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 绘图
