@@ -40,9 +40,10 @@ export class ParticleText {
 
   // 创建粒子文本
   createEffect() {
-    const imageData = this.paintText('你好啊');
+    const imageData = this.paintText('你好啊', 300, 200);
     // this.ctx.drawImage(this.offCtx.canvas, 0, 0);
     // this.ctx.putImageData(imageData, 0, 0);
+    this.imageData = imageData
     this.createParticles(imageData);
   }
 
@@ -55,6 +56,7 @@ export class ParticleText {
     this.offCtx.scale(this.scale, this.scale);
     this.offCtx.translate(xAxis / this.scale, yAxis / this.scale);
     this.offCtx.fillText(text, 0, 0);
+    // this.offCtx.fillText(text, xAxis, yAxis);
     this.offCtx.restore();
 
     return this.offCtx.getImageData(0, 0, this.offCtx.canvas.width, this.offCtx.canvas.height);
@@ -64,21 +66,23 @@ export class ParticleText {
   createParticles({ width, height, data }) {
     const uint32 = new Uint32Array(data.buffer);
     this.particles = [];
+    const temp = [];
     // 列
     for(let j = 0; j < height; j += this.gridY) {
       //行
       for(let i = 0; i < width; i += this.gridX) {
         // 判断该对应一维坐标的像素上是否有值
-        const index = j * height + i; // 
+        const index = j * width + i; // 
         if(uint32[index] > 0) {
+          temp.push([i, j])
           this.particles.push(new CircleParticle(
             this.ctx,
             {
               x: i,
               y: j,
-              radius: ParticleCreater.randomValue(1, 5),
-              maxRadius: 5,
-              minRadius: 1,
+              radius: ParticleCreater.randomValue(1, 2.5),
+              maxRadius: 2.5,
+              minRadius: 0.5,
               growSpeed: ParticleCreater.randomValue(0.2, 0.3)
             },
             {

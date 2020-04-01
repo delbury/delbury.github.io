@@ -70,6 +70,8 @@ export class CanvasEffectParticleText extends _Base {
   }
   draw() {
     this.ctx.clearRect(0, 0, this.width, this.height);
+
+    this.instance.ctx.putImageData(this.instance.imageData, 0, 0);
     this.instance.particles.forEach(part => {
       part.tick();
     });
