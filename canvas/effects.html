@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Canvas Effects</title>
   <style>
+    .canvas {
+      margin: auto;
+      width: fit-content;
+    }
     canvas {
       border: 1px dashed skyblue;
     }
@@ -12,12 +16,12 @@
 </head>
 <body>
   <div class="canvas">
-    <canvas id="canvas" width="600" height="360"></canvas>
+    <canvas id="canvas" width="800" height="480"></canvas>
   </div>
 
   <script type="module">
-    import { CanvasEffect } from './js/effects.js';
-    const ce = new CanvasEffect(document.getElementById('canvas'));
+    import { CanvasEffectController } from './js/effects.js';
+    const ce = new CanvasEffectController(document.getElementById('canvas'));
   </script>
 </body>
 </html>
