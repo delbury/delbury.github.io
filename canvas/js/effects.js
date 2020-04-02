@@ -44,7 +44,7 @@ export class CanvasEffectParticles extends _Base {
 
   // 初始化
   init() {
-    this.instance = new ParticleCreater(this.ctx);
+    this.instance = new ParticleCreater(this.ctx, { count: 1, maxRadius: 40 });
     this.tick();
   }
 
@@ -64,23 +64,23 @@ export class CanvasEffectParticleText extends _Base {
     this.init();
   }
   init() {
-    this.instance = new ParticleText(this.ctx);
-    this.instance.createEffect();
+    this.instance = new ParticleText(this.ctx, { gridX: 5, gridY: 5 });
+    this.instance.createEffect('ABCD');
     this.tick();
   }
   draw() {
     this.ctx.clearRect(0, 0, this.width, this.height);
 
-    this.instance.ctx.putImageData(this.instance.imageData, 0, 0);
+    // this.instance.ctx.putImageData(this.instance.imageData, 0, 0);
     this.instance.particles.forEach(part => {
-      part.tick();
+      part.shapeParticle.tick();
     });
   }
 }
 
 export class CanvasEffectController {
   constructor(ele) {
-    // this.instance = new CanvasEffectParticles(ele);
-    this.instance = new CanvasEffectParticleText(ele);
+    this.instance = new CanvasEffectParticles(ele);
+    // this.instance = new CanvasEffectParticleText(ele);
   }
 }

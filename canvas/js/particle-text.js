@@ -1,4 +1,4 @@
-import { CircleParticle, ParticleCreater } from './particle.js'
+import { ShapeParticle, Methods } from './particle.js'
 
 export class ParticleText {
   constructor(
@@ -39,8 +39,8 @@ export class ParticleText {
   }
 
   // 创建粒子文本
-  createEffect() {
-    const imageData = this.paintText('你好啊', 300, 200);
+  createEffect(text, x, y) {
+    const imageData = this.paintText(text, x, y);
     // this.ctx.drawImage(this.offCtx.canvas, 0, 0);
     // this.ctx.putImageData(imageData, 0, 0);
     this.imageData = imageData
@@ -62,11 +62,14 @@ export class ParticleText {
     return this.offCtx.getImageData(0, 0, this.offCtx.canvas.width, this.offCtx.canvas.height);
   }
 
+  createShapeParticle(shape = 'circle', i, j) {
+
+  }
+
   // 创建粒子
   createParticles({ width, height, data }) {
     const uint32 = new Uint32Array(data.buffer);
     this.particles = [];
-    const temp = [];
     // 列
     for(let j = 0; j < height; j += this.gridY) {
       //行
@@ -74,19 +77,41 @@ export class ParticleText {
         // 判断该对应一维坐标的像素上是否有值
         const index = j * width + i; // 
         if(uint32[index] > 0) {
-          temp.push([i, j])
-          this.particles.push(new CircleParticle(
+          // 圆形
+          const circle = {
+            shape: 'circle',
+            x: i,
+            y: j,
+            radius: Methods.randomValue(2, 3),
+            maxRadius: 4.5,
+            minRadius: 0.5,
+            growSpeed: Methods.randomPlusMinus(0.11, 0.17)
+          };
+
+          // 方形
+          const wh = Methods.randomValue(2, 3);
+          const speed = Methods.randomPlusMinus(0.11, 0.17);
+          const rect = {
+            shape: 'rectangle',
+            x: i,
+            y: j,
+            width: wh,
+            minWidth: 1,
+            maxWidth: 5,
+            height: wh,
+            minHeight: 1,
+            maxHeight: 5,
+            growSpeedWidth: speed,
+            growSpeedHeight: speed
+          };
+          this.particles.push(new ShapeParticle(
             this.ctx,
             {
-              x: i,
-              y: j,
-              radius: ParticleCreater.randomValue(1, 2.5),
-              maxRadius: 2.5,
-              minRadius: 0.5,
-              growSpeed: ParticleCreater.randomValue(0.2, 0.3)
+              // ...circle,
+              ...rect,
             },
             {
-              fillStyle: ParticleCreater.randomColor()
+              fillStyle: Methods.randomColor()
             }
           ));
         }
