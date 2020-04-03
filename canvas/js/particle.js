@@ -110,7 +110,7 @@ export class CircleParticle extends Particle {
       radius: 5,
       minRadius: 0,
       maxRadius: 0,
-      growSpeed: 0.1
+      growSpeed: 0
     };
     Methods.setParams(this, params, kv);
   }
@@ -153,8 +153,151 @@ export class CircleParticle extends Particle {
   }
 }
 
-// 外接圆三角型
-export class CircumcenterTriangleParticle extends CircleParticle { }
+// 外接圆多边形型
+export class CircumcenterPolygonParticle extends CircleParticle {
+  constructor(ctx, params, options) {
+    super(ctx, params, options);
+
+    const kv = {
+      degrees: [0, 120, 240],
+      rotateSpeed: 0,
+      transitDuration: 20
+    };
+    Methods.setParams(this, params, kv);
+
+    this.init();
+  }
+
+  init() {
+    this.createRegular(10);
+    // this.degrees = this.randomDegrees(6, { minGap: 30 });
+    setTimeout(() => {
+      this.changeTo(3);
+    }, 1000);
+  }
+
+  tick() {
+    this.transition();
+    this.rotate();
+    this.flicker();
+    this.ctx.save();
+    this.ctx.fillStyle = this.fillStyle;
+    // this.ctx.strokeStyle = this.StrokeStyle;
+    this.ctx.beginPath();
+    this.degrees.forEach(deg => {
+      const rad = deg / 180 * Math.PI;
+      this.ctx.arc(this.x, this.y, this.radius, rad, rad, false);
+    });
+    this.ctx.fill();
+    this.ctx.restore();
+  }
+
+  // 过渡到n边形
+  changeTo(n) {
+    if (this.isRegular) {
+      const from = this.degrees.length;
+      const fromGap = 360 / from;
+      const dn = n - from;
+      this._changeState = {
+        from,
+        to: n,
+        dn,
+        fromGap,
+        toGap: 360 / n,
+        gapPerTick: Math.abs((fromGap - 360 / n) / (this.transitDuration))
+      };
+      this.toDegrees = Array.from({ length: n }, (it, index) => index * 360 / n);
+
+      if (dn > 0) {
+        this.degrees.push(...Array(dn).fill(this.degrees[0]));
+        this._transiting = true;
+      } else if (dn < 0) {
+        this._transiting = true;
+      }
+    }
+  }
+
+  // 形状改变过渡效果
+  transition() {
+    if (this.isRegular && this._transiting) {
+      let stop = false;
+      if (this._changeState.dn > 0) {
+        // 增加边
+        this.degrees = this.degrees.map((deg, index, arr) => {
+          let offGap = 0;
+          if (index > this._changeState.from) {
+            offGap = (index - this._changeState.from) * this._changeState.fromGap / this.transitDuration;
+          }
+          const gapPerTick = this._changeState.gapPerTick * index - offGap;
+
+          deg = (deg - gapPerTick + 360) % 360;
+
+          if (index === 1 && Math.abs(Math.abs(deg - arr[0]) - this._changeState.toGap) < 1e-5) {
+            stop = true;
+          }
+          return deg;
+        });
+      } else if (this._changeState.dn < 0) {
+        // 减少边
+        this.degrees = this.degrees.map((deg, index, arr) => {
+          deg = (deg + this._changeState.gapPerTick * index) % 360;
+
+          console.log(deg - arr[0], this._changeState.toGap)
+          if (index === 1 && Math.abs(Math.abs(deg - arr[0]) - this._changeState.toGap) < 1e-5) {
+            stop = true;
+          }
+          return deg;
+        });
+      }
+
+      // console.log(this.degrees)
+      if (stop) {
+        this._transiting = false;
+        this._changeState = null;
+      }
+    }
+  }
+
+  // 旋转
+  rotate() {
+    if (this.degrees) {
+      this.degrees = this.degrees.map(deg => {
+        deg = (deg - this.rotateSpeed + 360) % 360;
+        return deg;
+      });
+    }
+  }
+
+  // 创建正多边形
+  createRegular(count = 3) {
+    this.degrees = this.randomDegrees(count, { isRegular: true });
+  }
+
+  // 随机获取多边形顶点
+  randomDegrees(count = 3, { minDeg = 0, maxDeg = 360, minGap = 10, isRegular = false } = {}) {
+    this.isRegular = isRegular; // 是否正多边形
+
+    count = count < 3 ? 3 : count;
+
+    if (isRegular) {
+      // 正多边形
+      const gap = 360 / count;
+      return Array.from({ length: count }, (it, index) => index * gap);
+    } else {
+      const degrees = [];
+      const trueMinGap = 180 / (count - 1);
+      minGap = trueMinGap < minGap ? trueMinGap : minGap;
+      for (let i = 0; i < count; i++) {
+        let random;
+        do {
+          random = Methods.randomValue(minDeg, maxDeg);
+        } while (degrees.some(deg => Math.abs(deg - random) < minGap));
+        degrees.push(random);
+      }
+      return degrees.sort((a, b) => a - b);
+    }
+  }
+}
 
 // 矩形粒子
 export class RectangleParticle extends Particle {
@@ -256,6 +399,7 @@ export class ParticleCreater {
       const radius = Methods.randomValue(this.minRadius, this.maxRadius);
       const speed = Methods.randomPlusMinus(0.11, 0.17);
       this.particles.push(
+        /*
         // 圆形粒子
         new CircleParticle(
           this.ctx,
@@ -285,6 +429,21 @@ export class ParticleCreater {
             maxHeight: this.maxRadius * 2,
             growSpeedWidth: speed,
             growSpeedHeight: speed
+          },
+          {
+            fillStyle: Methods.randomColor()
+          }
+        ),
+        */
+        // 多边形粒子
+        new CircumcenterPolygonParticle(
+          this.ctx,
+          {
+            x: this.ctx.canvas.width / 2,
+            y: this.ctx.canvas.height / 2,
+            radius: 100,
+            growSpeed: 0,
+            rotateSpeed: 1
           },
           {
             fillStyle: Methods.randomColor()
