@@ -169,11 +169,13 @@ export class CircumcenterPolygonParticle extends CircleParticle {
   }
 
   init() {
-    this.createRegular(10);
+    let random = Math.floor(Methods.randomValue(3, 10));
+    this.createRegular(random);
     // this.degrees = this.randomDegrees(6, { minGap: 30 });
     setTimeout(() => {
-      this.changeTo(3);
-    }, 1000);
+      random = Math.floor(Methods.randomValue(3, 10));
+      this.changeTo(random);
+    }, 500);
   }
 
   tick() {
@@ -193,7 +195,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
   }
 
   // 过渡到n边形
-  changeTo(n) {
+  changeTo(n, cb) {
     if (this.isRegular) {
       const from = this.degrees.length;
       const fromGap = 360 / from;
@@ -211,8 +213,10 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       if (dn > 0) {
         this.degrees.push(...Array(dn).fill(this.degrees[0]));
         this._transiting = true;
+        this._transitionCallback = cb;
       } else if (dn < 0) {
         this._transiting = true;
+        this._transitionCallback = cb;
       }
     }
   }
@@ -232,8 +236,11 @@ export class CircumcenterPolygonParticle extends CircleParticle {
 
           deg = (deg - gapPerTick + 360) % 360;
 
-          if (index === 1 && Math.abs(Math.abs(deg - arr[0]) - this._changeState.toGap) < 1e-5) {
-            stop = true;
+          if (index === 1) {
+            const dg = deg - arr[0] < 0 ? deg - arr[0] + 360 : deg - arr[0];
+            if(Math.abs(dg - this._changeState.toGap) < 1e-5) {
+              stop = true;
+            }
           }
           return deg;
         });
@@ -242,18 +249,40 @@ export class CircumcenterPolygonParticle extends CircleParticle {
         this.degrees = this.degrees.map((deg, index, arr) => {
           deg = (deg + this._changeState.gapPerTick * index) % 360;
 
-          console.log(deg - arr[0], this._changeState.toGap)
-          if (index === 1 && Math.abs(Math.abs(deg - arr[0]) - this._changeState.toGap) < 1e-5) {
-            stop = true;
+          if (index === 1) {
+            const dg = deg - arr[0] < 0 ? deg - arr[0] + 360 : deg - arr[0];
+            if(Math.abs(dg - this._changeState.toGap) < 1e-5) {
+              stop = true;
+            }
           }
           return deg;
         });
-      }
+        const len = this.degrees.length;
+        if(len > this._changeState.to) {
+          if(
+            this._prevl !== undefined &&
+            this._prevl !== null &&
+            (
+              this._prevl > this.degrees[len - 1] ||
+              (this._prevf >= this._prevl && this.degrees[0] <= this.degrees[len - 1]) ||
+              (this._prevf <= this._prevl && this.degrees[0] >= this.degrees[len - 1])
+            )
+          ) {
+            this.degrees.pop();
+            this._prevl = null;
+            this._
+          } else {
+            this._prevl = this.degrees[len - 1];
+            this._prevf = this.degrees[0];
+          }
+        }
 
+      }
       // console.log(this.degrees)
       if (stop) {
         this._transiting = false;
         this._changeState = null;
+        this._transitionCallback && this._transitionCallback();
       }
     }
   }
