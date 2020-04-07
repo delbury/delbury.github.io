@@ -48,6 +48,7 @@ class Particle {
       x = 0,
       y = 0,
       target = null,
+      acceleration = 0,
     } = {},
     {
       fillStyle = '#000',
@@ -59,12 +60,19 @@ class Particle {
     this.vy = vy;
     this.x = x;
     this.y = y;
+    this.acceleration = acceleration;
     this.fillStyle = fillStyle;
     this.StrokeStyle = StrokeStyle;
 
     if (target) {
       this.moveTo(target)
     }
+  }
+
+  // 加速运动
+  speedUp() {
+    this.vx = this.vx >= 0 ? this.vx + this.acceleration : this.vx - this.acceleration;
+    this.vy = this.vy >= 0 ? this.vy + Math.abs(this.vy / this.vx * this.acceleration) : this.vy - Math.abs(this.vy / this.vx * this.acceleration)
   }
 
   // 移动到目标点
@@ -88,7 +96,7 @@ class Particle {
     if (this._baseMoving) {
       this.x += this.vx;
       this.y += this.vy;
-
+      this.speedUp();
       // 接近中
       const dx = Math.abs(this.x - this.target[0])
       if (dx > this._prevClosingDx) {
