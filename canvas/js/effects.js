@@ -3,7 +3,7 @@ import { ParticleText } from './particle-text.js';
 
 class _Base {
   constructor(ele) {
-    if(!ele || ele.tagName != 'CANVAS') {
+    if (!ele || ele.tagName != 'CANVAS') {
       throw new TypeError('错误的canvas元素');
     }
 
@@ -15,17 +15,17 @@ class _Base {
   }
 
   // 初始化
-  init() {}
+  init() { }
 
   // 每一帧的操作
-  draw() {}
+  draw() { }
 
   // 每一帧
   tick() {
-    if(!this.instance) {
+    if (!this.instance) {
       return;
     }
-    
+
     this.draw();
 
     return requestAnimationFrame(() => {
@@ -65,11 +65,16 @@ export class CanvasEffectParticleText extends _Base {
   }
   init() {
     this.instance = new ParticleText(this.ctx, { gridX: 5, gridY: 5 });
-    this.instance.createEffect('ABCD');
+    this.instance.createEffect('A');
     this.tick();
   }
   draw() {
-    this.ctx.clearRect(0, 0, this.width, this.height);
+    // 清除画板
+    // this.ctx.clearRect(0, 0, this.width, this.height);
+    this.ctx.save();
+    this.ctx.fillStyle = '#000';
+    this.ctx.fillRect(0, 0, this.width, this.height);
+    this.ctx.restore();
 
     // this.instance.ctx.putImageData(this.instance.imageData, 0, 0);
     this.instance.particles.forEach(part => {
@@ -80,7 +85,22 @@ export class CanvasEffectParticleText extends _Base {
 
 export class CanvasEffectController {
   constructor(ele) {
-    this.instance = new CanvasEffectParticles(ele);
-    // this.instance = new CanvasEffectParticleText(ele);
+    // this.instance = new CanvasEffectParticles(ele);
+    this.instance = new CanvasEffectParticleText(ele);
+  }
+
+  // 改变文本
+  changeText(text) {
+    this.instance.instance.createEffect(text);
+  }
+
+  // 粒子聚焦
+  focus() {
+    this.instance.instance.focus();
+  }
+
+  // 粒子发散
+  blur() {
+    this.instance.instance.blur();
   }
 }

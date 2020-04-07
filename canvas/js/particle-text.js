@@ -41,6 +41,7 @@ export class ParticleText {
   // 创建粒子文本
   createEffect(text, x, y) {
     const imageData = this.paintText(text, x, y);
+    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     // this.ctx.drawImage(this.offCtx.canvas, 0, 0);
     // this.ctx.putImageData(imageData, 0, 0);
     this.imageData = imageData
@@ -50,6 +51,7 @@ export class ParticleText {
   // 绘制文字
   paintText(text, xAxis = this.ctx.canvas.width / 2, yAxis = this.ctx.canvas.height / 2) {
     this.offCtx.save();
+    this.offCtx.clearRect(0, 0, this.offCtx.canvas.width, this.offCtx.canvas.height);
     this.offCtx.font = this.font;
     this.offCtx.textBaseline = this.textBaseline;
     this.offCtx.textAlign = this.textAlign;
@@ -62,60 +64,81 @@ export class ParticleText {
     return this.offCtx.getImageData(0, 0, this.offCtx.canvas.width, this.offCtx.canvas.height);
   }
 
-  createShapeParticle(shape = 'circle', i, j) {
+  // 创建粒子
+  createShapeParticle(currentIndex, i, j, shape = 'circle') {
+    // 圆形
+    const circle = {
+      shape: 'circle',
+      ...Methods.randomPosition(0, this.ctx.canvas.width, 0, this.ctx.canvas.height),
+      target: [i, j],
+      radius: Methods.randomValue(1.5, 2),
+      maxRadius: 2.3,
+      minRadius: 0.8,
+      growSpeed: Methods.randomPlusMinus(0.07, 0.11)
+    };
 
+    // 方形
+    const wh = Methods.randomValue(2, 3);
+    const speed = Methods.randomPlusMinus(0.07, 0.17);
+    const rect = {
+      shape: 'rectangle',
+      // x: i,
+      // y: j,
+      ...Methods.randomPosition(0, this.ctx.canvas.width, 0, this.ctx.canvas.height),
+      target: [i, j],
+      width: wh,
+      minWidth: 1,
+      maxWidth: 5,
+      height: wh,
+      minHeight: 1,
+      maxHeight: 5,
+      growSpeedWidth: speed,
+      growSpeedHeight: speed
+    };
+    // if (this.particles[currentIndex]) {
+    // this.particles[currentIndex].shapeParticle.moveTo([i, j]);
+    // } else {
+    this.particles[currentIndex] = new ShapeParticle(
+      this.ctx,
+      {
+        ...circle,
+        // ...rect,
+      },
+      {
+        fillStyle: Methods.randomColor()
+      }
+    );
+    // }
   }
 
-  // 创建粒子
+  // 创建像素粒子集合
   createParticles({ width, height, data }) {
     const uint32 = new Uint32Array(data.buffer);
-    this.particles = [];
     // 列
-    for(let j = 0; j < height; j += this.gridY) {
+    let currentIndex = 0;
+    this.particles = [];
+    for (let j = 0; j < height; j += this.gridY) {
       //行
-      for(let i = 0; i < width; i += this.gridX) {
+      for (let i = 0; i < width; i += this.gridX) {
         // 判断该对应一维坐标的像素上是否有值
         const index = j * width + i; // 
-        if(uint32[index] > 0) {
-          // 圆形
-          const circle = {
-            shape: 'circle',
-            x: i,
-            y: j,
-            radius: Methods.randomValue(2, 3),
-            maxRadius: 4.5,
-            minRadius: 0.5,
-            growSpeed: Methods.randomPlusMinus(0.11, 0.17)
-          };
-
-          // 方形
-          const wh = Methods.randomValue(2, 3);
-          const speed = Methods.randomPlusMinus(0.11, 0.17);
-          const rect = {
-            shape: 'rectangle',
-            x: i,
-            y: j,
-            width: wh,
-            minWidth: 1,
-            maxWidth: 5,
-            height: wh,
-            minHeight: 1,
-            maxHeight: 5,
-            growSpeedWidth: speed,
-            growSpeedHeight: speed
-          };
-          this.particles.push(new ShapeParticle(
-            this.ctx,
-            {
-              // ...circle,
-              ...rect,
-            },
-            {
-              fillStyle: Methods.randomColor()
-            }
-          ));
+        if (uint32[index] > 0) {
+          this.createShapeParticle(currentIndex, i, j);
+          currentIndex++;
         }
       }
     }
+    this.particles.length = currentIndex;
+  }
+
+  focus() {
+    this.particles.forEach(item => {
+      item.shapeParticle.startRandomMove(Methods.randomSpeed(2.19, 0.37));
+    });
+  }
+  blur() {
+    this.particles.forEach(item => {
+      item.shapeParticle.stopRandomMove();
+    });
   }
 }

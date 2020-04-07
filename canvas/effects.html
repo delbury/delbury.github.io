@@ -1,27 +1,59 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Canvas Effects</title>
   <style>
     .canvas {
+      display: flex;
+      align-items: center;
       margin: auto;
       width: fit-content;
     }
+
     canvas {
+      margin-left: 20px;
       border: 1px dashed skyblue;
     }
   </style>
 </head>
+
 <body>
   <div class="canvas">
-    <canvas id="canvas" width="800" height="480"></canvas>
+    <div class="control">
+      <input id="input-text" type="text" placeholder="输入文本" value="ABCD">
+      <button id="btn-change">改变</button>
+    </div>
+    <canvas id="canvas" width="800" height="480">
+      <p>your browser do not support canvas</p>
+    </canvas>
   </div>
+
 
   <script type="module">
     import { CanvasEffectController } from './js/effects.js';
     const ce = new CanvasEffectController(document.getElementById('canvas'));
+    window.ce = ce;
+    const inputText = document.getElementById('input-text');
+    const canvas = document.getElementById('canvas');
+
+    document.getElementById('btn-change').onclick = ev => {
+      ce.changeText(inputText.value.trim());
+    };
+    inputText.onkeydown = ev => {
+      if(ev.keyCode === 13) {
+        ce.changeText(inputText.value.trim());
+      }
+    };
+    canvas.onmouseenter = ev => {
+      ce.focus();
+    };
+    canvas.onmouseleave = ev => {
+      ce.blur();
+    }
   </script>
 </body>
+
 </html>

@@ -47,6 +47,7 @@ class Particle {
       vy = 0,
       x = 0,
       y = 0,
+      target = null,
     } = {},
     {
       fillStyle = '#000',
@@ -60,6 +61,77 @@ class Particle {
     this.y = y;
     this.fillStyle = fillStyle;
     this.StrokeStyle = StrokeStyle;
+
+    if (target) {
+      this.moveTo(target)
+    }
+  }
+
+  // 移动到目标点
+  moveTo(target, duration = 80, step = 2) {
+    if (!target || target.length < 2) {
+      return
+    }
+    if (!this._baseMoving) {
+      this.target = target;
+      this._baseMoving = true;
+      this._prevClosingDx = Math.abs(this.x - this.target[0]);
+      // this.vx = (this.target[0] - this.x) / duration;
+      // this.vy = (this.target[1] - this.y) / duration;
+      this.vx = (this.target[0] - this.x) >= 0 ? step : -step;
+      this.vy = (this.target[1] - this.y) / Math.abs(this.target[0] - this.x) * step;
+    }
+  }
+
+  // 向目标移动
+  baseMove() {
+    if (this._baseMoving) {
+      this.x += this.vx;
+      this.y += this.vy;
+
+      // 接近中
+      const dx = Math.abs(this.x - this.target[0])
+      if (dx > this._prevClosingDx) {
+        this.x = this.target[0];
+        this.y = this.target[1];
+        this._baseMoving = false;
+        // this.target = null;
+      } else {
+        this._prevClosingDx = dx
+      }
+    }
+  }
+
+  // 开始随机移动
+  startRandomMove({ vx, vy }) {
+    this._baseMoving = false;
+    this._randomMoving = true;
+    this.vx = vx;
+    this.vy = vy;
+  }
+
+  // 停止随机移动
+  stopRandomMove() {
+    this._randomMoving = false;
+    if (this.target) {
+      this.moveTo(this.target);
+    }
+  }
+
+  // 随机移动
+  randomMove() {
+    if (this._randomMoving) {
+      if (this.x + this.vx > this.ctx.canvas.width || this.x + this.vx < 0) {
+        this.vx = -this.vx;
+      }
+
+      if (this.y + this.vy > this.ctx.canvas.height || this.y + this.vy < 0) {
+        this.vy = -this.vy;
+      }
+
+      this.x += this.vx;
+      this.y += this.vy;
+    }
   }
 
   // 更新状态
@@ -116,6 +188,8 @@ export class CircleParticle extends Particle {
   }
 
   tick() {
+    this.randomMove();
+    this.baseMove();
     this.flicker();
     this.ctx.save();
     this.ctx.fillStyle = this.fillStyle;
@@ -169,16 +243,26 @@ export class CircumcenterPolygonParticle extends CircleParticle {
   }
 
   init() {
-    let random = Math.floor(Methods.randomValue(3, 10));
-    this.createRegular(random);
-    // this.degrees = this.randomDegrees(6, { minGap: 30 });
+    this.randomChange();
+    this.moveTo([0, 0]);
+  }
+
+  // 随机变形
+  randomChange() {
+    this.createRegular(3);
+    const randomDuration = Math.floor(Methods.randomValue(500, 1500));
     setTimeout(() => {
-      random = Math.floor(Methods.randomValue(3, 10));
+      let random;
+      do {
+        random = Math.floor(Methods.randomValue(3, 10));
+      } while (random === this.degrees.length);
       this.changeTo(random);
-    }, 500);
+    }, randomDuration);
   }
 
   tick() {
+    // this.randomMove();
+    this.baseMove();
     this.transition();
     this.rotate();
     this.flicker();
@@ -238,7 +322,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
 
           if (index === 1) {
             const dg = deg - arr[0] < 0 ? deg - arr[0] + 360 : deg - arr[0];
-            if(Math.abs(dg - this._changeState.toGap) < 1e-5) {
+            if (Math.abs(dg - this._changeState.toGap) < 1e-5) {
               stop = true;
             }
           }
@@ -251,15 +335,15 @@ export class CircumcenterPolygonParticle extends CircleParticle {
 
           if (index === 1) {
             const dg = deg - arr[0] < 0 ? deg - arr[0] + 360 : deg - arr[0];
-            if(Math.abs(dg - this._changeState.toGap) < 1e-5) {
+            if (Math.abs(dg - this._changeState.toGap) < 1e-5) {
               stop = true;
             }
           }
           return deg;
         });
         const len = this.degrees.length;
-        if(len > this._changeState.to) {
-          if(
+        if (len > this._changeState.to) {
+          if (
             this._prevl !== undefined &&
             this._prevl !== null &&
             (
@@ -347,6 +431,8 @@ export class RectangleParticle extends Particle {
   }
 
   tick() {
+    this.randomMove();
+    this.baseMove();
     this.flicker();
 
     this.ctx.save();
