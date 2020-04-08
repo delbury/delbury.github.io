@@ -13,9 +13,18 @@
       width: fit-content;
     }
 
-    canvas {
+    .border {
       margin-left: 20px;
       border: 1px dashed skyblue;
+      font-size: 0;
+    }
+
+    .grab {
+      cursor: grab;
+    }
+
+    .grabbing {
+      cursor: grabbing;
     }
   </style>
 </head>
@@ -26,9 +35,11 @@
       <input id="input-text" type="text" placeholder="输入文本" value="ABCD">
       <button id="btn-change">改变</button>
     </div>
-    <canvas id="canvas" width="800" height="480">
-      <p>your browser do not support canvas</p>
-    </canvas>
+    <div class="border">
+      <canvas id="canvas" width="800" height="480">
+        <p>your browser do not support canvas</p>
+      </canvas>
+    </div>
   </div>
 
 
@@ -53,6 +64,38 @@
     canvas.onmouseleave = ev => {
       ce.blur();
     }
+    // canvas.onmousemove = ev => {
+    //   const { offsetX, offsetY } = ev;
+    //   if(ce.isMouseMoveIn(offsetX, offsetY)) {
+    //     // 鼠标移入
+    //     canvas.classList.add('grab');
+    //   } else {
+    //     // 鼠标移出
+    //     canvas.classList.remove('grab');
+    //   }
+    // }
+    document.addEventListener('mousedown', ev => {
+      const { offsetX, offsetY } = ev;
+      if(ce.isMouseMoveIn(offsetX, offsetY)) {
+        // 鼠标移入
+        canvas.classList.add('grabbing');
+        ce.stopFreeFall();
+        canvas.onmousemove = ev => {
+          const { offsetX, offsetY } = ev;
+          ce.moveTo(offsetX, offsetY);
+        };
+        canvas.onmouseup = ev => {
+          canvas.onmousemove = null;
+          canvas.onmouseup = null;
+
+          ce.startFreeFall();
+        };
+      }
+    });
+    document.addEventListener('mouseup', ev => {
+      const { offsetX, offsetY } = ev;
+      canvas.classList.remove('grabbing');
+    });
   </script>
 </body>
 

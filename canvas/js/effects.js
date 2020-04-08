@@ -1,4 +1,4 @@
-import { ParticleCreater } from './particle.js';
+import { ParticleCreater, CircleParticle } from './particle.js';
 import { ParticleText } from './particle-text.js';
 
 class _Base {
@@ -83,24 +83,86 @@ export class CanvasEffectParticleText extends _Base {
   }
 }
 
+// 测试粒子
+class TestController extends _Base {
+  constructor(ele) {
+    super(ele);
+
+    this.instance = new CircleParticle(
+      this.ctx,
+      {
+        x: this.ctx.canvas.width / 2,
+        y: 0,
+        radius: 40
+      },
+      {
+        fillStyle: 'skyblue'
+      }
+    );
+    // this.instance.startFreeFall({
+    //   vy0: 3,
+    //   gravity: 0.4,
+    //   rebound: true,
+    //   reduction: 0.75,
+    //   stopY: this.ctx.canvas.height - 40
+    // });
+
+    this.tick();
+  }
+  draw() {
+    this.ctx.clearRect(0, 0, this.width, this.height);
+    this.instance.tick();
+  }
+}
+
 export class CanvasEffectController {
   constructor(ele) {
     // this.instance = new CanvasEffectParticles(ele);
-    this.instance = new CanvasEffectParticleText(ele);
+    // this.instance = new CanvasEffectParticleText(ele);
+    this.instance = new TestController(ele);
   }
 
   // 改变文本
   changeText(text) {
-    this.instance.instance.createEffect(text);
+    if (!this.instance) return;
+    this.instance.instance.createEffect && this.instance.instance.createEffect(text);
   }
 
   // 粒子聚焦
   focus() {
-    this.instance.instance.focus();
+    if (!this.instance) return;
+    this.instance.instance.focus && this.instance.instance.focus();
   }
 
   // 粒子发散
   blur() {
-    this.instance.instance.blur();
+    if (!this.instance) return;
+    this.instance.instance.blur && this.instance.instance.blur();
+  }
+
+  // 鼠标移入
+  isMouseMoveIn(x, y) {
+    return this.instance.instance.isInside(x, y);
+  }
+
+  // 移动
+  moveTo(x, y) {
+    return this.instance.instance.directMoveTo(x, y);
+  }
+
+  // 开始自由落体
+  startFreeFall() {
+    this.instance.instance.startFreeFall({
+      vy0: 0,
+      gravity: 0.4,
+      rebound: true,
+      reduction: 0.75,
+      stopY: this.instance.instance.ctx.canvas.height - 40
+    });
+  }
+
+  // 结束
+  stopFreeFall() {
+    this.instance.instance.stopFreeFall();
   }
 }

@@ -47,8 +47,10 @@ class Particle {
       vy = 0,
       x = 0,
       y = 0,
-      target = null,
-      acceleration = 0,
+      target = null, // 移动的目的地坐标
+      acceleration = 0, // 直线运动的加速度
+      gravity = 0, // 重力加速度
+      reduction = 1 // 反弹衰减
     } = {},
     {
       fillStyle = '#000',
@@ -61,6 +63,8 @@ class Particle {
     this.x = x;
     this.y = y;
     this.acceleration = acceleration;
+    this.gravity = gravity;
+    this.reduction = reduction;
     this.fillStyle = fillStyle;
     this.StrokeStyle = StrokeStyle;
 
@@ -69,13 +73,13 @@ class Particle {
     }
   }
 
-  // 加速运动
-  speedUp() {
+  // 加速运动帧
+  speedUpTick() {
     this.vx = this.vx >= 0 ? this.vx + this.acceleration : this.vx - this.acceleration;
     this.vy = this.vy >= 0 ? this.vy + Math.abs(this.vy / this.vx * this.acceleration) : this.vy - Math.abs(this.vy / this.vx * this.acceleration)
   }
 
-  // 移动到目标点
+  // 开始移动到目标点
   moveTo(target, duration = 80, step = 2) {
     if (!target || target.length < 2) {
       return
@@ -91,12 +95,12 @@ class Particle {
     }
   }
 
-  // 向目标移动
-  baseMove() {
+  // 向目标移动帧
+  baseMoveTick() {
     if (this._baseMoving) {
       this.x += this.vx;
       this.y += this.vy;
-      this.speedUp();
+      this.speedUpTick();
       // 接近中
       const dx = Math.abs(this.x - this.target[0])
       if (dx > this._prevClosingDx) {
@@ -126,8 +130,8 @@ class Particle {
     }
   }
 
-  // 随机移动
-  randomMove() {
+  // 随机移动帧
+  randomMoveTick() {
     if (this._randomMoving) {
       if (this.x + this.vx > this.ctx.canvas.width || this.x + this.vx < 0) {
         this.vx = -this.vx;
@@ -139,51 +143,98 @@ class Particle {
 
       this.x += this.vx;
       this.y += this.vy;
+
+      this.vx += Methods.randomValue(0, 0.2) * (Math.random() > 0.5 ? 1 : -1);
+      this.vy += Methods.randomValue(0, 0.2) * (Math.random() > 0.5 ? 1 : -1);
     }
   }
 
-  // 更新状态
-  change() { }
+  // 开始自由落体运动
+  startFreeFall({ vy0, gravity, reduction, stopY, rebound = true } = {}) {
+    this.reduction = reduction || this.reduction;
+    this.gravity = gravity || this.gravity;
+    this._freeFallState = {
+      stopY,
+      rebound,
+      startPosition: [this.x, this.y]
+    };
+    this.vy = vy0;
+    this._freeFalling = true;
+  }
+
+  // 停止自由落体运动
+  stopFreeFall() {
+    this.vy = 0;
+    this._freeFalling = false;
+  }
+
+  // 自由落体运动帧
+  freeFallTick() {
+    if (this._freeFalling) {
+      if (this.y + this.vy >= this._freeFallState.stopY) {
+        this.y = this._freeFallState.stopY;
+
+        // 是否反弹
+        if (this._freeFallState.rebound && Math.abs(this.vy) >= 1) {
+          this.vy *= -this.reduction;
+
+        } else {
+          this.vy = 0;
+          this._freeFalling = false;
+        }
+      } else {
+        this.y += this.vy;
+        this.vy += this.gravity;
+      }
+    }
+  }
+
+  // 无动画移动
+  directMoveTo(x, y) {
+    this.x = x;
+    this.y = y;
+  }
 
   // 每一帧
   tick() {
-    change();
   }
 
-  // get x() {
-  //   if(!Number.isNaN(+this.width)) {
-  //     return this._x + this.width / 2;
-  //   } else {
-  //     return this._x;
-  //   }
-  // }
-  // set x(val) {
-  //   if(!Number.isNaN(+this.width)) {
-  //     this._x = val - this.width / 2;
-  //   } else {
-  //     this._x = val;
-  //   }
-  // }
+  /**
+    get x() {
+      if(!Number.isNaN(+this.width)) {
+        return this._x + this.width / 2;
+      } else {
+        return this._x;
+      }
+    }
+    set x(val) {
+      if(!Number.isNaN(+this.width)) {
+        this._x = val - this.width / 2;
+      } else {
+        this._x = val;
+      }
+    }
 
-  // get y() {
-  //   if(!Number.isNaN(+this.height)) {
-  //     return this._y + this.height / 2;
-  //   } else {
-  //     return this._y;
-  //   }
-  // }
-  // set y(val) {
-  //   if(!Number.isNaN(+this.height)) {
-  //     this._y = val - this.height / 2;
-  //   } else {
-  //     this._y = val;
-  //   }
-  // }
+    get y() {
+      if(!Number.isNaN(+this.height)) {
+        return this._y + this.height / 2;
+      } else {
+        return this._y;
+      }
+    }
+    set y(val) {
+      if(!Number.isNaN(+this.height)) {
+        this._y = val - this.height / 2;
+      } else {
+        this._y = val;
+      }
+    }
+  */
 }
 
 // 圆形粒子
 export class CircleParticle extends Particle {
-  constructor(ctx, params, options) {
+  constructor(ctx, params = {}, options) {
     super(ctx, params, options);
 
     const kv = {
@@ -196,8 +247,9 @@ export class CircleParticle extends Particle {
   }
 
   tick() {
-    this.randomMove();
-    this.baseMove();
+    this.freeFallTick();
+    this.randomMoveTick();
+    this.baseMoveTick();
     this.flicker();
     this.ctx.save();
     this.ctx.fillStyle = this.fillStyle;
@@ -232,6 +284,10 @@ export class CircleParticle extends Particle {
     if (this.radius <= this.minRadius || this.radius >= this.maxRadius) {
       this.growSpeed = -this.growSpeed;
     }
+  }
+
+  isInside(x, y) {
+    return (this.x - x) ** 2 + (this.y - y) ** 2 < this.radius ** 2;
   }
 }
 
@@ -269,8 +325,8 @@ export class CircumcenterPolygonParticle extends CircleParticle {
   }
 
   tick() {
-    // this.randomMove();
-    this.baseMove();
+    // this.randomMoveTick();
+    this.baseMoveTick();
     this.transition();
     this.rotate();
     this.flicker();
@@ -439,8 +495,8 @@ export class RectangleParticle extends Particle {
   }
 
   tick() {
-    this.randomMove();
-    this.baseMove();
+    this.randomMoveTick();
+    this.baseMoveTick();
     this.flicker();
 
     this.ctx.save();
