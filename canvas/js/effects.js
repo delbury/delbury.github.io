@@ -1,4 +1,4 @@
-import { ParticleCreater, CircleParticle } from './particle.js';
+import { ParticleCreater, CircleParticle, CircumcenterPolygonParticle } from './particle.js';
 import { ParticleText } from './particle-text.js';
 
 class _Base {
@@ -88,17 +88,17 @@ class TestController extends _Base {
   constructor(ele) {
     super(ele);
 
-    this.instance = new CircleParticle(
-      this.ctx,
-      {
-        x: this.ctx.canvas.width / 2,
-        y: 0,
-        radius: 40
-      },
-      {
-        fillStyle: 'skyblue'
-      }
-    );
+    // this.instance = new CircleParticle(
+    //   this.ctx,
+    //   {
+    //     x: this.ctx.canvas.width / 2,
+    //     y: 0,
+    //     radius: 40
+    //   },
+    //   {
+    //     fillStyle: 'skyblue'
+    //   }
+    // );
     // this.instance.startFreeFall({
     //   vy0: 3,
     //   gravity: 0.4,
@@ -106,12 +106,37 @@ class TestController extends _Base {
     //   reduction: 0.75,
     //   stopY: this.ctx.canvas.height - 40
     // });
+    this.instance = [
+      new CircumcenterPolygonParticle(
+        this.ctx,
+        {
+          x: this.ctx.canvas.width / 3 * 1,
+          y: this.ctx.canvas.height / 2,
+          radius: 80,
+          degrees: [30, 135, 290]
+        },
+        {
+          fillStyle: 'yellowgreen'
+        }),
+      new CircumcenterPolygonParticle(
+        this.ctx,
+        {
+          x: this.ctx.canvas.width / 3 * 2,
+          y: this.ctx.canvas.height / 2,
+          radius: 80,
+          degrees: [20, 130, 230, 310]
+        },
+        {
+          fillStyle: 'skyblue'
+        }),
+    ]
 
+    this.instance[0].collideWith(this.instance[1]);
     this.tick();
   }
   draw() {
     this.ctx.clearRect(0, 0, this.width, this.height);
-    this.instance.tick();
+    this.instance.forEach(item => item.tick());
   }
 }
 
@@ -142,17 +167,17 @@ export class CanvasEffectController {
 
   // 鼠标移入
   isMouseMoveIn(x, y) {
-    return this.instance.instance.isInside(x, y);
+    return this.instance.instance.isInside && this.instance.instance.isInside(x, y);
   }
 
   // 移动
   moveTo(x, y) {
-    return this.instance.instance.directMoveTo(x, y);
+    this.instance.instance.directMoveTo && this.instance.instance.directMoveTo(x, y);
   }
 
   // 开始自由落体
   startFreeFall() {
-    this.instance.instance.startFreeFall({
+    this.instance.instance.startFreeFall && this.instance.instance.startFreeFall({
       vy0: 0,
       gravity: 0.4,
       rebound: true,
@@ -163,6 +188,6 @@ export class CanvasEffectController {
 
   // 结束
   stopFreeFall() {
-    this.instance.instance.stopFreeFall();
+    this.instance.instance.stopFreeFall && this.instance.instance.stopFreeFall();
   }
 }

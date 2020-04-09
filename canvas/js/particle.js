@@ -1,3 +1,4 @@
+import { Vector, Projection } from './math.js';
 
 // 工具类
 export class Methods {
@@ -276,13 +277,15 @@ export class CircleParticle extends Particle {
 
   // 闪烁
   flicker() {
-    this.radius += this.growSpeed;
-    if (this.radius < 0) {
-      this.radius = 0;
-    }
+    if (this._flickering) {
+      this.radius += this.growSpeed;
+      if (this.radius < 0) {
+        this.radius = 0;
+      }
 
-    if (this.radius <= this.minRadius || this.radius >= this.maxRadius) {
-      this.growSpeed = -this.growSpeed;
+      if (this.radius <= this.minRadius || this.radius >= this.maxRadius) {
+        this.growSpeed = -this.growSpeed;
+      }
     }
   }
 
@@ -307,8 +310,43 @@ export class CircumcenterPolygonParticle extends CircleParticle {
   }
 
   init() {
-    this.randomChange();
-    this.moveTo([0, 0]);
+    // this.randomChange();
+    // this.moveTo([0, 0]);
+  }
+
+  // 检测碰撞
+  collideWith(cpp) {
+    const thisVectors = this.getVertexVector();
+    const anotherVectors = cpp.getVertexVector();
+    const axises = this.getVertexAxis([...thisVectors, ...anotherVectors]);
+
+    let isCollided = true;
+    // 循环判断各轴
+    for (let i = 0, len = axises.length; i < len; i++) {
+      const thisProjection = new Projection(thisVectors.map(vector => vector.dotProduct(axises[i])));
+      const anotherProjection = new Projection(anotherVectors.map(vector => vector.dotProduct(axises[i])));
+
+      if (!thisProjection.isOverlapWith(anotherProjection)) {
+        isCollided = false;
+        break;
+      }
+    }
+
+    console.log(isCollided);
+    return isCollided;
+  }
+
+  // 获取顶点向量
+  getVertexVector() {
+    return this.degrees.map(deg => new Vector(
+      this.x + this.radius * Math.cos(deg / 180 * Math.PI),
+      this.y + this.radius * Math.sin(deg / 180 * Math.PI)
+    ));
+  }
+
+  // 获取投影轴
+  getVertexAxis(vectors) {
+    return vectors.map(((vc, index) => vc.edgeVector(vectors[(index + 1) % vectors.length]).verticalUnitVector()));
   }
 
   // 随机变形
@@ -508,13 +546,15 @@ export class RectangleParticle extends Particle {
 
   // 闪烁
   flicker() {
-    this.width += this.growSpeedWidth;
-    this.height += this.growSpeedHeight;
-    if (this.width <= this.minWidth || this.width >= this.maxHeight) {
-      this.growSpeedWidth = -this.growSpeedWidth;
-    }
-    if (this.height <= this.minHeight || this.height >= this.maxHeight) {
-      this.growSpeedHeight = -this.growSpeedHeight;
+    if (this._flickering) {
+      this.width += this.growSpeedWidth;
+      this.height += this.growSpeedHeight;
+      if (this.width <= this.minWidth || this.width >= this.maxHeight) {
+        this.growSpeedWidth = -this.growSpeedWidth;
+      }
+      if (this.height <= this.minHeight || this.height >= this.maxHeight) {
+        this.growSpeedHeight = -this.growSpeedHeight;
+      }
     }
   }
 }
