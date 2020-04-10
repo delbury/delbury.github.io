@@ -64,7 +64,7 @@ export class CanvasEffectParticleText extends _Base {
     this.init();
   }
   init() {
-    this.instance = new ParticleText(this.ctx, { gridX: 5, gridY: 5 });
+    this.instance = new ParticleText(this.ctx, { gridX: 5, gridY: 5 }, { textSize: 100 });
     this.instance.createEffect('A');
     this.tick();
   }
@@ -88,57 +88,56 @@ class TestController extends _Base {
   constructor(ele) {
     super(ele);
 
-    // this.instance = new CircleParticle(
-    //   this.ctx,
-    //   {
-    //     x: this.ctx.canvas.width / 2,
-    //     y: 0,
-    //     radius: 40
-    //   },
-    //   {
-    //     fillStyle: 'skyblue'
-    //   }
-    // );
-
-    this.instance = [
-      new CircumcenterPolygonParticle(
-        this.ctx,
-        {
-          x: this.ctx.canvas.width / 3 * 1,
-          y: this.ctx.canvas.height / 2,
-          radius: 80,
-          degrees: [30, 135, 290],
-          mess: 3
-        },
-        {
-          fillStyle: 'yellowgreen'
-        }),
-      new CircumcenterPolygonParticle(
-        this.ctx,
-        {
-          x: this.ctx.canvas.width / 3 * 2,
-          y: this.ctx.canvas.height / 2,
-          radius: 80,
-          // degrees: [20, 130, 230, 310],
-          mess: 6
-        },
-        {
-          fillStyle: 'skyblue'
-        }),
-    ]
-    console.log(this.instance[0].collideWith(this.instance[1]));
-
-    this.instance[0].startRandomMove(Methods.randomSpeed(1, 3));
-    this.instance[1].startRandomMove(Methods.randomSpeed(1, 3));
-    this.instance[0].collisionDetect = () => {
-      if (this.instance[0].collideWith(this.instance[1])) {
-        this.instance[0].reverseSpeed();
-        this.instance[1].reverseSpeed();
-
-        return true;
+    this.instance = new CircleParticle(
+      this.ctx,
+      {
+        x: this.ctx.canvas.width / 2,
+        y: 0,
+        radius: 40
+      },
+      {
+        fillStyle: 'skyblue'
       }
-      return false;
-    };
+    );
+
+    // this.instance = [
+    //   new CircumcenterPolygonParticle(
+    //     this.ctx,
+    //     {
+    //       x: this.ctx.canvas.width / 3 * 1,
+    //       y: this.ctx.canvas.height / 2,
+    //       radius: 80,
+    //       degrees: [30, 135, 290],
+    //       mess: 3
+    //     },
+    //     {
+    //       fillStyle: 'yellowgreen'
+    //     }),
+    //   new CircumcenterPolygonParticle(
+    //     this.ctx,
+    //     {
+    //       x: this.ctx.canvas.width / 3 * 2,
+    //       y: this.ctx.canvas.height / 2,
+    //       radius: 80,
+    //       degrees: [20, 130, 230, 310],
+    //       mess: 6
+    //     },
+    //     {
+    //       fillStyle: 'skyblue'
+    //     }),
+    // ]
+
+    // this.instance[0].startRandomMove(Methods.randomSpeed(1, 3));
+    // this.instance[1].startRandomMove(Methods.randomSpeed(1, 3));
+    // this.instance[0].collisionDetect = () => {
+    //   if (this.instance[0].collideWith(this.instance[1])) {
+    //     this.instance[0].reverseSpeed();
+    //     this.instance[1].reverseSpeed();
+
+    //     return true;
+    //   }
+    //   return false;
+    // };
     this.tick();
   }
   draw() {
@@ -155,8 +154,8 @@ class TestController extends _Base {
 export class CanvasEffectController {
   constructor(ele) {
     // this.instance = new CanvasEffectParticles(ele);
-    // this.instance = new CanvasEffectParticleText(ele);
-    this.instance = new TestController(ele);
+    this.instance = new CanvasEffectParticleText(ele);
+    // this.instance = new TestController(ele);
   }
 
   // 改变文本

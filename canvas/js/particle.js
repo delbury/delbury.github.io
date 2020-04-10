@@ -146,8 +146,8 @@ class Particle {
       this.x += this.vx;
       this.y += this.vy;
 
-      this.vx += Methods.randomValue(0, 0.2) * (Math.random() > 0.5 ? 1 : -1);
-      this.vy += Methods.randomValue(0, 0.2) * (Math.random() > 0.5 ? 1 : -1);
+      this.vx += Methods.randomValue(0, 0.7) * (Math.random() > 0.5 ? 1 : -1);
+      this.vy += Methods.randomValue(0, 0.11) * (Math.random() > 0.5 ? 1 : -1);
     }
   }
 
