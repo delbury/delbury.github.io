@@ -51,7 +51,8 @@ class Particle {
       target = null, // 移动的目的地坐标
       acceleration = 0, // 直线运动的加速度
       gravity = 0, // 重力加速度
-      reduction = 1 // 反弹衰减
+      reduction = 1, // 反弹衰减
+      mass = 0, // 质量
     } = {},
     {
       fillStyle = '#000',
@@ -176,7 +177,7 @@ class Particle {
         this.y = this._freeFallState.stopY;
 
         // 是否反弹
-        if (this._freeFallState.rebound && Math.abs(this.vy) >= 1) {
+        if (this._freeFallState.rebound && Math.abs(this.vy) >= 2) {
           this.vy *= -this.reduction;
 
         } else {
@@ -194,6 +195,20 @@ class Particle {
   directMoveTo(x, y) {
     this.x = x;
     this.y = y;
+  }
+
+  // 反向速度
+  reverseSpeed() {
+    this.vx = -this.vx;
+    this.vy = -this.vy;
+  }
+
+  // 获取当前位置
+  getPosition() {
+    return {
+      x: this.x,
+      y: this.y
+    };
   }
 
   // 每一帧
@@ -300,7 +315,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     super(ctx, params, options);
 
     const kv = {
-      degrees: [0, 120, 240],
+      degrees: [],
       rotateSpeed: 0,
       transitDuration: 20
     };
@@ -316,24 +331,71 @@ export class CircumcenterPolygonParticle extends CircleParticle {
 
   // 检测碰撞
   collideWith(cpp) {
-    const thisVectors = this.getVertexVector();
-    const anotherVectors = cpp.getVertexVector();
-    const axises = this.getVertexAxis([...thisVectors, ...anotherVectors]);
+    if (this.degrees.length && cpp.degrees.length) {
+      // 两个都是多边形
+      const thisVectors = this.getVertexVector();
+      const anotherVectors = cpp.getVertexVector();
+      const axises = [...this.getVertexAxis(thisVectors), ...this.getVertexAxis(anotherVectors)];
 
-    let isCollided = true;
-    // 循环判断各轴
-    for (let i = 0, len = axises.length; i < len; i++) {
-      const thisProjection = new Projection(thisVectors.map(vector => vector.dotProduct(axises[i])));
-      const anotherProjection = new Projection(anotherVectors.map(vector => vector.dotProduct(axises[i])));
+      let isCollided = true;
+      // 循环判断各轴
+      for (let i = 0, len = axises.length; i < len; i++) {
+        const thisProjection = new Projection(thisVectors.map(vector => vector.dotProduct(axises[i])));
+        const anotherProjection = new Projection(anotherVectors.map(vector => vector.dotProduct(axises[i])));
 
-      if (!thisProjection.isOverlapWith(anotherProjection)) {
-        isCollided = false;
-        break;
+        if (!thisProjection.isOverlapWith(anotherProjection)) {
+          isCollided = false;
+          break;
+        }
       }
-    }
 
-    console.log(isCollided);
-    return isCollided;
+      return isCollided;
+
+    } else if (!this.degrees.length && !cpp.degrees.length) {
+      // 两个都是圆
+      return (this.x - cpp.x) ** 2 + (this.y - cpp.y) ** 2 <= (this.radius + cpp.radius) ** 2
+
+    } else {
+      // 一个是圆，另一个是多边形
+      let circle = null;
+      let polygon = null;
+      if (!this.degrees.length) {
+        circle = this;
+        polygon = cpp;
+      } else {
+        circle = cpp;
+        polygon = this;
+      }
+
+      const polygonVectors = polygon.getVertexVector();
+      let circleAxis = null;
+      polygonVectors.map(vector => {
+        const cv = vector.subtract(new Vector(circle.x, circle.y));
+        if (!circleAxis || cv.length < circleAxis.length) {
+          circleAxis = cv;
+        }
+      });
+      circleAxis = circleAxis.normalize();
+      const circleVector = [
+        (new Vector(circle.x, circle.y)).subtract(circleAxis.antiNormalize(circle.radius)),
+        (new Vector(circle.x, circle.y)).add(circleAxis.antiNormalize(circle.radius))
+      ];
+      const axises = [circleAxis, ...this.getVertexAxis(polygonVectors)];
+
+      let isCollided = true;
+      // 循环判断各轴
+      for (let i = 0, len = axises.length; i < len; i++) {
+        const circleProjection = new Projection(circleVector.map(vector => vector.dotProduct(axises[i])));
+        const polygonProjection = new Projection(polygonVectors.map(vector => vector.dotProduct(axises[i])));
+
+        if (!circleProjection.isOverlapWith(polygonProjection)) {
+          isCollided = false;
+          break;
+        }
+      }
+
+      return isCollided;
+    }
   }
 
   // 获取顶点向量
@@ -363,8 +425,9 @@ export class CircumcenterPolygonParticle extends CircleParticle {
   }
 
   tick() {
-    // this.randomMoveTick();
+    this.randomMoveTick();
     this.baseMoveTick();
+    this.collisionDetect && this.collisionDetect();
     this.transition();
     this.rotate();
     this.flicker();
@@ -372,10 +435,15 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     this.ctx.fillStyle = this.fillStyle;
     // this.ctx.strokeStyle = this.StrokeStyle;
     this.ctx.beginPath();
-    this.degrees.forEach(deg => {
-      const rad = deg / 180 * Math.PI;
-      this.ctx.arc(this.x, this.y, this.radius, rad, rad, false);
-    });
+    if (this.degrees.length) {
+      this.degrees.forEach(deg => {
+        const rad = deg / 180 * Math.PI;
+        this.ctx.arc(this.x, this.y, this.radius, rad, rad, false);
+      });
+    } else {
+      this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+    }
+
     this.ctx.fill();
     this.ctx.restore();
   }

@@ -76,13 +76,16 @@
     // }
     document.addEventListener('mousedown', ev => {
       const { offsetX, offsetY } = ev;
+      const { x, y } = ce.getPosition();
+      const dx = offsetX - x;
+      const dy = offsetY - y;
       if(ce.isMouseMoveIn(offsetX, offsetY)) {
         // 鼠标移入
         canvas.classList.add('grabbing');
         ce.stopFreeFall();
         canvas.onmousemove = ev => {
           const { offsetX, offsetY } = ev;
-          ce.moveTo(offsetX, offsetY);
+          ce.moveTo(offsetX - dx, offsetY - dy);
         };
         canvas.onmouseup = ev => {
           canvas.onmousemove = null;
@@ -93,7 +96,6 @@
       }
     });
     document.addEventListener('mouseup', ev => {
-      const { offsetX, offsetY } = ev;
       canvas.classList.remove('grabbing');
     });
   </script>

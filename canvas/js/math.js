@@ -43,6 +43,11 @@ export class Vector {
     }
   }
 
+  // 反归一化
+  antiNormalize(len) {
+    return new Vector(this.x * len, this.y * len);
+  }
+
   // 获取垂直单位向量
   verticalUnitVector() {
     return this.perpendicular().normalize();

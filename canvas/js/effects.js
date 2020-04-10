@@ -1,4 +1,4 @@
-import { ParticleCreater, CircleParticle, CircumcenterPolygonParticle } from './particle.js';
+import { ParticleCreater, CircleParticle, CircumcenterPolygonParticle, Methods } from './particle.js';
 import { ParticleText } from './particle-text.js';
 
 class _Base {
@@ -99,13 +99,7 @@ class TestController extends _Base {
     //     fillStyle: 'skyblue'
     //   }
     // );
-    // this.instance.startFreeFall({
-    //   vy0: 3,
-    //   gravity: 0.4,
-    //   rebound: true,
-    //   reduction: 0.75,
-    //   stopY: this.ctx.canvas.height - 40
-    // });
+
     this.instance = [
       new CircumcenterPolygonParticle(
         this.ctx,
@@ -113,7 +107,8 @@ class TestController extends _Base {
           x: this.ctx.canvas.width / 3 * 1,
           y: this.ctx.canvas.height / 2,
           radius: 80,
-          degrees: [30, 135, 290]
+          degrees: [30, 135, 290],
+          mess: 3
         },
         {
           fillStyle: 'yellowgreen'
@@ -124,19 +119,36 @@ class TestController extends _Base {
           x: this.ctx.canvas.width / 3 * 2,
           y: this.ctx.canvas.height / 2,
           radius: 80,
-          degrees: [20, 130, 230, 310]
+          // degrees: [20, 130, 230, 310],
+          mess: 6
         },
         {
           fillStyle: 'skyblue'
         }),
     ]
+    console.log(this.instance[0].collideWith(this.instance[1]));
 
-    this.instance[0].collideWith(this.instance[1]);
+    this.instance[0].startRandomMove(Methods.randomSpeed(1, 3));
+    this.instance[1].startRandomMove(Methods.randomSpeed(1, 3));
+    this.instance[0].collisionDetect = () => {
+      if (this.instance[0].collideWith(this.instance[1])) {
+        this.instance[0].reverseSpeed();
+        this.instance[1].reverseSpeed();
+
+        return true;
+      }
+      return false;
+    };
     this.tick();
   }
   draw() {
     this.ctx.clearRect(0, 0, this.width, this.height);
-    this.instance.forEach(item => item.tick());
+
+    if (this.instance.length) {
+      this.instance.forEach(item => item.tick());
+    } else {
+      this.instance.tick();
+    }
   }
 }
 
@@ -173,6 +185,11 @@ export class CanvasEffectController {
   // 移动
   moveTo(x, y) {
     this.instance.instance.directMoveTo && this.instance.instance.directMoveTo(x, y);
+  }
+
+  // 获取当前坐标
+  getPosition() {
+    return this.instance.instance
   }
 
   // 开始自由落体
