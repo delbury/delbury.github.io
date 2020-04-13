@@ -39,6 +39,14 @@ export class Methods {
       target[k] = params[k] || v || 0;
     }
   }
+
+  // 完全弹性碰撞后的速度
+  static perfectlyInelasticCollide(v1, v2, m1, m2) {
+    return [
+      ((m1 - m2) * v1 + 2 * m2 * v2) / (m1 + m2),
+      ((m2 - m1) * v2 + 2 * m1 * v1) / (m1 + m2)
+    ]
+  }
 }
 class Particle {
   constructor(
@@ -67,6 +75,7 @@ class Particle {
     this.acceleration = acceleration;
     this.gravity = gravity;
     this.reduction = reduction;
+    this.mass = mass;
     this.fillStyle = fillStyle;
     this.StrokeStyle = StrokeStyle;
 
@@ -329,15 +338,23 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     // this.moveTo([0, 0]);
   }
 
+  // 完全弹性碰撞
+  perfectlyCollide(cpp) {
+    const vxs = Methods.perfectlyInelasticCollide(this.vx, cpp.vx, this.mass, cpp.mass);
+    const vys = Methods.perfectlyInelasticCollide(this.vy, cpp.vy, this.mass, cpp.mass);
+    [this.vx, this.vy] = [vxs[0], vys[0]];
+    [cpp.vx, cpp.vy] = [vxs[1], vys[1]];
+  }
+
   // 检测碰撞
   collideWith(cpp) {
+    let isCollided = true;
     if (this.degrees.length && cpp.degrees.length) {
       // 两个都是多边形
       const thisVectors = this.getVertexVector();
       const anotherVectors = cpp.getVertexVector();
       const axises = [...this.getVertexAxis(thisVectors), ...this.getVertexAxis(anotherVectors)];
 
-      let isCollided = true;
       // 循环判断各轴
       for (let i = 0, len = axises.length; i < len; i++) {
         const thisProjection = new Projection(thisVectors.map(vector => vector.dotProduct(axises[i])));
@@ -349,11 +366,10 @@ export class CircumcenterPolygonParticle extends CircleParticle {
         }
       }
 
-      return isCollided;
 
     } else if (!this.degrees.length && !cpp.degrees.length) {
       // 两个都是圆
-      return (this.x - cpp.x) ** 2 + (this.y - cpp.y) ** 2 <= (this.radius + cpp.radius) ** 2
+      isCollided = (this.x - cpp.x) ** 2 + (this.y - cpp.y) ** 2 <= (this.radius + cpp.radius) ** 2
 
     } else {
       // 一个是圆，另一个是多边形
@@ -382,7 +398,6 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       ];
       const axises = [circleAxis, ...this.getVertexAxis(polygonVectors)];
 
-      let isCollided = true;
       // 循环判断各轴
       for (let i = 0, len = axises.length; i < len; i++) {
         const circleProjection = new Projection(circleVector.map(vector => vector.dotProduct(axises[i])));
@@ -394,6 +409,13 @@ export class CircumcenterPolygonParticle extends CircleParticle {
         }
       }
 
+    }
+
+    if (this._prevTickCollided && isCollided) {
+      console.log(this._prevTickCollided)
+      return false;
+    } else {
+      this._prevTickCollided = isCollided;
       return isCollided;
     }
   }
@@ -424,9 +446,17 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     }, randomDuration);
   }
 
+  // 移动帧
+  moveTick() {
+    if (!this._baseMoving && !this._randomMoving && !this._freeFalling) {
+      this.move();
+    }
+  }
+
   tick() {
     this.randomMoveTick();
     this.baseMoveTick();
+    this.moveTick();
     this.collisionDetect && this.collisionDetect();
     this.transition();
     this.rotate();

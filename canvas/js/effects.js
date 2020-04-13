@@ -88,6 +88,106 @@ class TestController extends _Base {
   constructor(ele) {
     super(ele);
 
+    this.testGravity();
+    this.testCollide();
+    this.testMomentum();
+
+    this.tick();
+  }
+
+  // 动量守恒，完全弹性碰撞
+  testMomentum() {
+    this.instance = [
+      new CircumcenterPolygonParticle(
+        this.ctx,
+        {
+          x: this.ctx.canvas.width / 3 * 1,
+          y: this.ctx.canvas.height / 2,
+          vx: -2,
+          vy: -3,
+          radius: 30,
+          // degrees: [30, 135, 290],
+          mass: 3
+        },
+        {
+          fillStyle: 'yellowgreen'
+        }
+      ),
+      new CircumcenterPolygonParticle(
+        this.ctx,
+        {
+          x: this.ctx.canvas.width / 3 * 2,
+          y: this.ctx.canvas.height / 2,
+          vx: -6,
+          vy: 4,
+          radius: 60,
+          // degrees: [20, 130, 230, 310],
+          mass: 12
+        },
+        {
+          fillStyle: 'skyblue'
+        }
+      ),
+    ];
+
+    this.instance[0].collisionDetect = () => {
+      if (this.instance[0].collideWith(this.instance[1])) {
+        // this.instance[0].reverseSpeed();
+        // this.instance[1].reverseSpeed();
+
+        this.instance[0].perfectlyCollide(this.instance[1]);
+        return true;
+      }
+      return false;
+    };
+  }
+
+  // 分离轴碰撞检测
+  testCollide() {
+    this.instance = [
+      new CircumcenterPolygonParticle(
+        this.ctx,
+        {
+          x: this.ctx.canvas.width / 3 * 1,
+          y: this.ctx.canvas.height / 2,
+          radius: 30,
+          degrees: [30, 135, 290],
+          mess: 3
+        },
+        {
+          fillStyle: 'yellowgreen'
+        }
+      ),
+      new CircumcenterPolygonParticle(
+        this.ctx,
+        {
+          x: this.ctx.canvas.width / 3 * 2,
+          y: this.ctx.canvas.height / 2,
+          radius: 60,
+          degrees: [20, 130, 230, 310],
+          mess: 12
+        },
+        {
+          fillStyle: 'skyblue'
+        }
+      ),
+    ]
+
+    this.instance[0].startRandomMove(Methods.randomSpeed(1, 3));
+    this.instance[1].startRandomMove(Methods.randomSpeed(1, 3));
+    this.instance[0].collisionDetect = () => {
+      if (this.instance[0].collideWith(this.instance[1])) {
+        this.instance[0].reverseSpeed();
+        this.instance[1].reverseSpeed();
+
+        return true;
+      }
+      return false;
+    };
+  }
+
+  // 重力下落
+  testGravity() {
     this.instance = new CircleParticle(
       this.ctx,
       {
@@ -99,47 +199,8 @@ class TestController extends _Base {
         fillStyle: 'skyblue'
       }
     );
-
-    // this.instance = [
-    //   new CircumcenterPolygonParticle(
-    //     this.ctx,
-    //     {
-    //       x: this.ctx.canvas.width / 3 * 1,
-    //       y: this.ctx.canvas.height / 2,
-    //       radius: 80,
-    //       degrees: [30, 135, 290],
-    //       mess: 3
-    //     },
-    //     {
-    //       fillStyle: 'yellowgreen'
-    //     }),
-    //   new CircumcenterPolygonParticle(
-    //     this.ctx,
-    //     {
-    //       x: this.ctx.canvas.width / 3 * 2,
-    //       y: this.ctx.canvas.height / 2,
-    //       radius: 80,
-    //       degrees: [20, 130, 230, 310],
-    //       mess: 6
-    //     },
-    //     {
-    //       fillStyle: 'skyblue'
-    //     }),
-    // ]
-
-    // this.instance[0].startRandomMove(Methods.randomSpeed(1, 3));
-    // this.instance[1].startRandomMove(Methods.randomSpeed(1, 3));
-    // this.instance[0].collisionDetect = () => {
-    //   if (this.instance[0].collideWith(this.instance[1])) {
-    //     this.instance[0].reverseSpeed();
-    //     this.instance[1].reverseSpeed();
-
-    //     return true;
-    //   }
-    //   return false;
-    // };
-    this.tick();
   }
+
   draw() {
     this.ctx.clearRect(0, 0, this.width, this.height);
 
@@ -153,36 +214,39 @@ class TestController extends _Base {
 
 export class CanvasEffectController {
   constructor(ele) {
+    this.controllerType = 'test'; // test, text, single
     // this.instance = new CanvasEffectParticles(ele);
-    this.instance = new CanvasEffectParticleText(ele);
-    // this.instance = new TestController(ele);
+    // this.instance = new CanvasEffectParticleText(ele);
+    this.instance = new TestController(ele);
   }
 
   // 改变文本
   changeText(text) {
-    if (!this.instance) return;
+    if (!this.instance || this.controllerType !== 'text') return;
     this.instance.instance.createEffect && this.instance.instance.createEffect(text);
   }
 
   // 粒子聚焦
   focus() {
-    if (!this.instance) return;
+    if (!this.instance || this.controllerType !== 'text') return;
     this.instance.instance.focus && this.instance.instance.focus();
   }
 
   // 粒子发散
   blur() {
-    if (!this.instance) return;
+    if (!this.instance || this.controllerType !== 'text') return;
     this.instance.instance.blur && this.instance.instance.blur();
   }
 
   // 鼠标移入
   isMouseMoveIn(x, y) {
+    if (this.controllerType !== 'text') return;
     return this.instance.instance.isInside && this.instance.instance.isInside(x, y);
   }
 
   // 移动
   moveTo(x, y) {
+    if (this.controllerType !== 'text') return;
     this.instance.instance.directMoveTo && this.instance.instance.directMoveTo(x, y);
   }
 

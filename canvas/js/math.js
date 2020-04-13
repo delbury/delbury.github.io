@@ -70,6 +70,12 @@ export class Projection {
 
   // 是否重叠
   isOverlapWith(projection) {
-    return !(this.min > projection.max || this.max < projection.min);
+    const flag = !(this.min > projection.max || this.max < projection.min);
+    if (flag) {
+      const arr = [this.min, this.max, projection.min, projection.max].sort((a, b) => a - b);
+      const overlapLength = arr[2] - arr[1];
+      return overlapLength;
+    }
+    return null;
   }
 }
