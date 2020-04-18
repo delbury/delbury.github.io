@@ -7,13 +7,25 @@
   <title>Loading Rainbow</title>
   <link rel="stylesheet" href="./style.css">
   <style>
+    :root {
+      --pi: 3.1415926;
+    }
+
+    .svg {
+      transform: scale(2);
+    }
+
     .svg>circle {
-      fill: transparent;
-      stroke-width: 4px;
       animation: rotate 2000ms;
       animation-timing-function: cubic-bezier(0.5, -0.25, 0.5, 1.25);
       animation-iteration-count: infinite;
+
+      fill: transparent;
+      stroke-width: 4px;
       transform-origin: center;
+      stroke-linecap: round;
+      stroke-dashoffset: -50;
+      /* clip-path: url(#cut-off); */
     }
 
     /* .svg>circle:hover,
@@ -23,26 +35,37 @@
 
     .svg>circle:nth-of-type(7n + 1) {
       animation-delay: 300ms;
+      stroke-dasharray: calc(var(--pi) * 48);
     }
 
     .svg>circle:nth-of-type(7n + 2) {
       animation-delay: 250ms;
+      stroke-dasharray: calc(var(--pi) * 42);
     }
 
     .svg>circle:nth-of-type(7n + 3) {
       animation-delay: 200ms;
+      stroke-dasharray: calc(var(--pi) * 36);
     }
 
     .svg>circle:nth-of-type(7n + 4) {
       animation-delay: 150ms;
+      stroke-dasharray: calc(var(--pi) * 30);
     }
 
     .svg>circle:nth-of-type(7n + 5) {
       animation-delay: 100ms;
+      stroke-dasharray: calc(var(--pi) * 24);
     }
 
     .svg>circle:nth-of-type(7n + 6) {
       animation-delay: 50ms;
+      stroke-dasharray: calc(var(--pi) * 18);
+    }
+
+    .svg>circle:nth-of-type(7n + 7) {
+      animation-delay: 0ms;
+      stroke-dasharray: calc(var(--pi) * 12);
     }
 
     @keyframes rotate {
@@ -79,19 +102,19 @@
           <polygon points="0,52 100,52 100,100 0,100"></polygon>
         </clipPath>
       </defs>
-      <circle cx="50" cy="50" r="48" stroke="#a8071a" clip-path="url(#cut-off)">
+      <circle cx="50" cy="50" r="48" stroke="#a8071a">
       </circle>
-      <circle cx="50" cy="50" r="42" stroke="#fa541c" clip-path="url(#cut-off)">
+      <circle cx="50" cy="50" r="42" stroke="#fa541c">
       </circle>
-      <circle cx="50" cy="50" r="36" stroke="#faad14" clip-path="url(#cut-off)">
+      <circle cx="50" cy="50" r="36" stroke="#faad14">
       </circle>
-      <circle cx="50" cy="50" r="30" stroke="#237804" clip-path="url(#cut-off)">
+      <circle cx="50" cy="50" r="30" stroke="#237804">
       </circle>
-      <circle cx="50" cy="50" r="24" stroke="#08979c" clip-path="url(#cut-off)">
+      <circle cx="50" cy="50" r="24" stroke="#08979c">
       </circle>
-      <circle cx="50" cy="50" r="18" stroke="#003a8c" clip-path="url(#cut-off)">
+      <circle cx="50" cy="50" r="18" stroke="#003a8c">
       </circle>
-      <circle cx="50" cy="50" r="12" stroke="#391085" clip-path="url(#cut-off)">
+      <circle cx="50" cy="50" r="12" stroke="#391085">
       </circle>
 
       <!-- <circle cx="50" cy="50" r="48" stroke="#a8071a" clip-path="url(#cut-half)">
