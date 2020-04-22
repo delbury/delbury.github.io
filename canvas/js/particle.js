@@ -42,10 +42,16 @@ export class Methods {
 
   // 完全弹性碰撞后的速度
   static perfectlyInelasticCollide(v1, v2, m1, m2) {
-    return [
-      ((m1 - m2) * v1 + 2 * m2 * v2) / (m1 + m2),
-      ((m2 - m1) * v2 + 2 * m1 * v1) / (m1 + m2)
-    ]
+    if (m1 === Infinity) {
+      return [v1, -v2];
+    } else if (m2 === Infinity) {
+      return [-v1, v2];
+    } else {
+      return [
+        ((m1 - m2) * v1 + 2 * m2 * v2) / (m1 + m2),
+        ((m2 - m1) * v2 + 2 * m1 * v1) / (m1 + m2)
+      ];
+    }
   }
 }
 class Particle {
@@ -61,6 +67,7 @@ class Particle {
       gravity = 0, // 重力加速度
       reduction = 1, // 反弹衰减
       mass = 0, // 质量
+      friction = 0, // 摩擦力系数
     } = {},
     {
       fillStyle = '#000',
@@ -76,6 +83,7 @@ class Particle {
     this.gravity = gravity;
     this.reduction = reduction;
     this.mass = mass;
+    this.friction = friction;
     this.fillStyle = fillStyle;
     this.StrokeStyle = StrokeStyle;
 
@@ -220,6 +228,12 @@ class Particle {
     };
   }
 
+  // 设置速度
+  setSpeed(vx, vy) {
+    this.vx = vx;
+    this.vy = vy;
+  }
+
   // 每一帧
   tick() {
   }
@@ -297,6 +311,25 @@ export class CircleParticle extends Particle {
 
     this.x += this.vx;
     this.y += this.vy;
+
+    if (this.vx !== 0 && this.vy !== 0) {
+      const rad = Math.atan2(Math.abs(this.vy), Math.abs(this.vx));
+
+      const dvx = this.friction * this.mass * Math.cos(rad);
+      const dvy = this.friction * this.mass * Math.sin(rad);
+
+      const tvx = this.vx > 0 ? this.vx - dvx : this.vx + dvx;
+      const tvy = this.vy > 0 ? this.vy - dvy : this.vy + dvy;
+
+      if ((tvx > 0 && this.vx < 0) || tvx < 0 && this.vx > 0) {
+        this.vx = 0;
+        this.vy = 0;
+      } else {
+        this.vx = tvx;
+        this.vy = tvy;
+      }
+    }
+
   }
 
   // 闪烁
@@ -330,6 +363,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     };
     Methods.setParams(this, params, kv);
 
+    this.pauseMove = false;
     this.init();
   }
 
@@ -340,8 +374,10 @@ export class CircumcenterPolygonParticle extends CircleParticle {
 
   // 完全弹性碰撞
   perfectlyCollide(cpp) {
-    const vxs = Methods.perfectlyInelasticCollide(this.vx, cpp.vx, this.mass, cpp.mass);
-    const vys = Methods.perfectlyInelasticCollide(this.vy, cpp.vy, this.mass, cpp.mass);
+    const thisMass = this.pauseMove ? Infinity : this.mass;
+    const cppMass = cpp.pauseMove ? Infinity : cpp.mass;
+    const vxs = Methods.perfectlyInelasticCollide(this.vx, cpp.vx, thisMass, cppMass);
+    const vys = Methods.perfectlyInelasticCollide(this.vy, cpp.vy, thisMass, cppMass);
     [this.vx, this.vy] = [vxs[0], vys[0]];
     [cpp.vx, cpp.vy] = [vxs[1], vys[1]];
   }
@@ -412,7 +448,6 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     }
 
     if (this._prevTickCollided && isCollided) {
-      console.log(this._prevTickCollided)
       return false;
     } else {
       this._prevTickCollided = isCollided;
@@ -453,10 +488,26 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     }
   }
 
+  // 暂停
+  pause() {
+    this.vx = 0;
+    this.vy = 0;
+    this.pauseMove = true;
+  }
+
+  // 恢复
+  resume() {
+    if (this.pauseMove === true) {
+      this.pauseMove = false;
+    }
+  }
+
   tick() {
-    this.randomMoveTick();
-    this.baseMoveTick();
-    this.moveTick();
+    if (!this.pauseMove) {
+      this.randomMoveTick();
+      this.baseMoveTick();
+      this.moveTick();
+    }
     this.collisionDetect && this.collisionDetect();
     this.transition();
     this.rotate();
