@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Four Dots</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    :root {
+      --color1: #096dd9;
+      --color2: #1890ff;
+      --color3: #40a9ff;
+      --color4: #69c0ff;
+      --color5: #91d5ff;
+    }
+
+    .loader {
+      position: relative;
+      /* display: flex; */
+      /* align-items: center; */
+      /* justify-content: space-around; */
+      width: 14em;
+      height: 2em;
+      font-size: 20px;
+    }
+
+    .loader>span {
+      position: absolute;
+      display: inline-block;
+      width: 2em;
+      height: 2em;
+      border-radius: 0.35em;
+      animation-duration: 5s;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+      /* animation-timing-function: cubic-bezier(0.5, 0, 0.5, 1); */
+    }
+
+    .loader>span:not(:first-of-type) {
+      transform-origin: -0.5em center;
+      animation-timing-function: ease-out, ease-in-out, ease-in;
+    }
+
+    .loader>span:nth-of-type(1) {
+      background-color: var(--color1);
+      animation-name: first, first-color;
+      animation-timing-function: ease-in-out;
+    }
+
+    .loader>span:nth-of-type(2) {
+      background-color: var(--color2);
+      animation-name: second;
+    }
+
+    .loader>span:nth-of-type(3) {
+      background-color: var(--color3);
+      animation-name: third;
+    }
+
+    .loader>span:nth-of-type(4) {
+      background-color: var(--color4);
+      animation-name: fourth;
+    }
+
+    .loader>span:nth-of-type(5) {
+      background-color: var(--color5);
+      animation-name: fifth;
+    }
+
+    @keyframes first {
+
+      from,
+      10% {
+        left: 0;
+      }
+
+      90%,
+      to {
+        left: 12em;
+      }
+    }
+
+    @keyframes first-color {
+
+      from,
+      10% {
+        background-color: var(--color1);
+      }
+
+      30% {
+        background-color: var(--color2);
+      }
+
+      50% {
+        background-color: var(--color3);
+      }
+
+      70% {
+        background-color: var(--color4);
+      }
+
+      90%,
+      to {
+        background-color: var(--color5);
+      }
+    }
+
+    @keyframes second {
+
+      from,
+      10% {
+        left: 3em;
+        background-color: var(--color2);
+        transform: translateY(0) rotate(0deg);
+      }
+
+      20% {
+        transform: translateY(-1.5em) rotate(0deg);
+      }
+
+      30% {
+        transform: translateY(-2em) rotate(-90deg);
+      }
+
+      40% {
+        transform: translateY(-1.5em) rotate(-180deg);
+      }
+
+      50% {
+        left: 3em;
+        background-color: var(--color1);
+        transform: translateY(0) rotate(-180deg) scale(1.2, 0.8);
+      }
+
+      52%,
+      to {
+        left: 3em;
+        background-color: var(--color1);
+        transform: translateY(0) rotate(-180deg);
+      }
+    }
+
+    @keyframes third {
+
+      from,
+      35% {
+        left: 6em;
+        background-color: var(--color3);
+        transform: translateY(0) rotate(0deg);
+      }
+
+      40% {
+        transform: translateY(-1.5em) rotate(0deg);
+      }
+
+      45% {
+        transform: translateY(-2em) rotate(-90deg);
+      }
+
+      50% {
+        transform: translateY(-1.5em) rotate(-180deg);
+      }
+
+      60%,
+      to {
+        left: 6em;
+        background-color: var(--color2);
+        transform: translateY(0) rotate(-180deg);
+      }
+    }
+
+    @keyframes fourth {
+
+      from,
+      40% {
+        left: 9em;
+        background-color: var(--color4);
+        transform: translateY(0) rotate(0deg);
+      }
+
+      50% {
+        transform: translateY(-1.5em) rotate(0deg);
+      }
+
+      55% {
+        transform: translateY(-2em) rotate(-90deg);
+      }
+
+      60% {
+        transform: translateY(-1.5em) rotate(-180deg);
+      }
+
+      65%,
+      to {
+        left: 9em;
+        background-color: var(--color3);
+        transform: translateY(0) rotate(-180deg);
+      }
+    }
+
+    @keyframes fifth {
+
+      from,
+      50% {
+        left: 12em;
+        background-color: var(--color5);
+        transform: translateY(0) rotate(0deg);
+      }
+
+      60% {
+        transform: translateY(-1.5em) rotate(0deg);
+      }
+
+      70% {
+        transform: translateY(-2em) rotate(-90deg);
+      }
+
+      80% {
+        transform: translateY(-1.5em) rotate(-180deg);
+      }
+
+      90%,
+      to {
+        left: 12em;
+        background-color: var(--color4);
+        transform: translateY(0) rotate(-180deg);
+      }
+    }
+
+    .test {
+      position: relative;
+      font-size: 40px;
+    }
+
+    .test>div {
+      position: absolute;
+      height: 2em;
+      width: 2em;
+    }
+
+    .test>div:nth-of-type(1) {
+      background-color: skyblue;
+    }
+
+    .test>div:nth-of-type(2) {
+      background-color: yellowgreen;
+
+      animation: test 2000ms;
+      animation-direction: alternate;
+      animation-iteration-count: infinite;
+      /* animation-timing-function: ease-out, ease-in-out, ease-in; */
+      animation-timing-function: ease-out, ease-in;
+    }
+
+    @keyframes test {
+
+      from,
+      20% {
+        transform: matrix(-1, 0, 0, -1, 0, 0);
+      }
+
+      /* 35% {
+        transform: matrix(-1, 0, 0, -1, 0, -80);
+      } */
+
+      50% {
+        transform: matrix(0, 1, -1, 0, -100, -80);
+      }
+
+      /* 65% {
+        transform: matrix(1, 0, 0, 1, -120, -80);
+      } */
+
+      to,
+      80% {
+        transform: matrix(1, 0, 0, 1, -120, 0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- <div class="container">
+    <div class="loader">
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div> -->
+  <div class="container">
+    <div class="test">
+      <div></div>
+      <div></div>
+    </div>
+  </div>
+</body>
+
+</html>
