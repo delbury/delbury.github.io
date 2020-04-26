@@ -13,6 +13,7 @@
       --color3: #40a9ff;
       --color4: #69c0ff;
       --color5: #91d5ff;
+      --animation-duration: 2s;
     }
 
     .loader {
@@ -31,41 +32,100 @@
       width: 2em;
       height: 2em;
       border-radius: 0.35em;
-      animation-duration: 5s;
-      animation-iteration-count: infinite;
-      animation-direction: alternate;
-      /* animation-timing-function: cubic-bezier(0.5, 0, 0.5, 1); */
+
+      animation: move var(--animation-duration) ease-in-out infinite alternate;
     }
 
-    .loader>span:not(:first-of-type) {
-      transform-origin: -0.5em center;
-      animation-timing-function: ease-out, ease-in-out, ease-in;
+    .loader>span>span {
+      display: inline-block;
+      width: 100%;
+      height: 100%;
+      background-color: transparent;
+
+      animation-duration: var(--animation-duration);
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
     }
+
+    .loader>span>span::before {
+      display: block;
+      content: "";
+      width: 100%;
+      height: 100%;
+      border-radius: 0.35em;
+
+      animation-duration: var(--animation-duration);
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+    }
+
 
     .loader>span:nth-of-type(1) {
       background-color: var(--color1);
       animation-name: first, first-color;
-      animation-timing-function: ease-in-out;
+      animation-duration: var(--animation-duration);
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
     }
 
+    /* 方块2 */
     .loader>span:nth-of-type(2) {
+      left: 3em;
+      animation-name: second-move;
+    }
+
+    .loader>span:nth-of-type(2)>span {
+      animation-name: second-jump;
+    }
+
+    .loader>span:nth-of-type(2)>span::before {
       background-color: var(--color2);
-      animation-name: second;
+      animation-name: second-rotate;
     }
 
+    /* 方块3 */
     .loader>span:nth-of-type(3) {
+      left: 6em;
+      animation-name: third-move;
+    }
+
+    .loader>span:nth-of-type(3)>span {
+      animation-name: third-jump;
+    }
+
+    .loader>span:nth-of-type(3)>span::before {
       background-color: var(--color3);
-      animation-name: third;
+      animation-name: third-rotate;
     }
 
+    /* 方块4 */
     .loader>span:nth-of-type(4) {
-      background-color: var(--color4);
-      animation-name: fourth;
+      left: 9em;
+      animation-name: fourth-move;
     }
 
+    .loader>span:nth-of-type(4)>span {
+      animation-name: fourth-jump;
+    }
+
+    .loader>span:nth-of-type(4)>span::before {
+      background-color: var(--color4);
+      animation-name: fourth-rotate;
+    }
+
+    /* 方块5 */
     .loader>span:nth-of-type(5) {
+      left: 12em;
+      animation-name: fifth-move;
+    }
+
+    .loader>span:nth-of-type(5)>span {
+      animation-name: fifth-jump;
+    }
+
+    .loader>span:nth-of-type(5)>span::before {
       background-color: var(--color5);
-      animation-name: fifth;
+      animation-name: fifth-rotate;
     }
 
     @keyframes first {
@@ -106,127 +166,202 @@
       }
     }
 
-    @keyframes second {
+    @keyframes second-move {
 
       from,
       10% {
-        left: 3em;
-        background-color: var(--color2);
-        transform: translateY(0) rotate(0deg);
+        transform: translate(0em);
+        animation-timing-function: ease-in-out;
       }
 
-      20% {
-        transform: translateY(-1.5em) rotate(0deg);
-      }
-
-      30% {
-        transform: translateY(-2em) rotate(-90deg);
-      }
-
-      40% {
-        transform: translateY(-1.5em) rotate(-180deg);
-      }
-
-      50% {
-        left: 3em;
-        background-color: var(--color1);
-        transform: translateY(0) rotate(-180deg) scale(1.2, 0.8);
-      }
-
-      52%,
+      44%,
       to {
-        left: 3em;
-        background-color: var(--color1);
-        transform: translateY(0) rotate(-180deg);
+        transform: translate(-3em);
       }
     }
 
-    @keyframes third {
+    @keyframes second-rotate {
+
+      from,
+      10% {
+        transform: rotate(0deg);
+        background-color: var(--color2);
+        animation-timing-function: ease-in-out;
+      }
+
+      44%,
+      to {
+        transform: rotate(-180deg);
+        background-color: var(--color1);
+      }
+    }
+
+    @keyframes second-jump {
+
+      from,
+      10% {
+        transform: translateY(0);
+        animation-timing-function: ease-out;
+      }
+
+      27% {
+        transform: translateY(-3em);
+        animation-timing-function: ease-in;
+      }
+
+      44%,
+      to {
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes third-move {
 
       from,
       35% {
-        left: 6em;
-        background-color: var(--color3);
-        transform: translateY(0) rotate(0deg);
+        transform: translate(0em);
+        animation-timing-function: ease-in-out;
       }
 
-      40% {
-        transform: translateY(-1.5em) rotate(0deg);
-      }
-
-      45% {
-        transform: translateY(-2em) rotate(-90deg);
-      }
-
-      50% {
-        transform: translateY(-1.5em) rotate(-180deg);
-      }
-
-      60%,
+      55%,
       to {
-        left: 6em;
-        background-color: var(--color2);
-        transform: translateY(0) rotate(-180deg);
+        transform: translate(-3em);
       }
     }
 
-    @keyframes fourth {
+    @keyframes third-rotate {
 
       from,
-      40% {
-        left: 9em;
-        background-color: var(--color4);
-        transform: translateY(0) rotate(0deg);
+      35% {
+        transform: rotate(0deg);
+        background-color: var(--color3);
+        animation-timing-function: ease-in-out;
       }
 
-      50% {
-        transform: translateY(-1.5em) rotate(0deg);
+      55%,
+      to {
+        transform: rotate(-180deg);
+        background-color: var(--color2);
+      }
+    }
+
+    @keyframes third-jump {
+
+      from,
+      35% {
+        transform: translateY(0);
+        animation-timing-function: ease-out;
       }
 
-      55% {
-        transform: translateY(-2em) rotate(-90deg);
+      45% {
+        transform: translateY(-3em);
+        animation-timing-function: ease-in;
       }
 
-      60% {
-        transform: translateY(-1.5em) rotate(-180deg);
+      55%,
+      to {
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fourth-move {
+
+      from,
+      45% {
+        transform: translate(0em);
+        animation-timing-function: ease-in-out;
       }
 
       65%,
       to {
-        left: 9em;
-        background-color: var(--color3);
-        transform: translateY(0) rotate(-180deg);
+        transform: translate(-3em);
       }
     }
 
-    @keyframes fifth {
+    @keyframes fourth-rotate {
 
       from,
-      50% {
-        left: 12em;
-        background-color: var(--color5);
-        transform: translateY(0) rotate(0deg);
+      45% {
+        transform: rotate(0deg);
+        background-color: var(--color4);
+        animation-timing-function: ease-in-out;
       }
 
-      60% {
-        transform: translateY(-1.5em) rotate(0deg);
+      65%,
+      to {
+        transform: rotate(-180deg);
+        background-color: var(--color3);
+      }
+    }
+
+    @keyframes fourth-jump {
+
+      from,
+      45% {
+        transform: translateY(0);
+        animation-timing-function: ease-out;
       }
 
-      70% {
-        transform: translateY(-2em) rotate(-90deg);
+      55% {
+        transform: translateY(-3em);
+        animation-timing-function: ease-in;
       }
 
-      80% {
-        transform: translateY(-1.5em) rotate(-180deg);
+      65%,
+      to {
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fifth-move {
+
+      from,
+      56% {
+        transform: translate(0em);
+        animation-timing-function: ease-in-out;
       }
 
       90%,
       to {
-        left: 12em;
-        background-color: var(--color4);
-        transform: translateY(0) rotate(-180deg);
+        transform: translate(-3em);
       }
     }
+
+    @keyframes fifth-rotate {
+
+      from,
+      56% {
+        transform: rotate(0deg);
+        background-color: var(--color5);
+        animation-timing-function: ease-in-out;
+      }
+
+      90%,
+      to {
+        transform: rotate(-180deg);
+        background-color: var(--color4);
+      }
+    }
+
+    @keyframes fifth-jump {
+
+      from,
+      56% {
+        transform: translateY(0);
+        animation-timing-function: ease-out;
+      }
+
+      73% {
+        transform: translateY(-3em);
+        animation-timing-function: ease-in;
+      }
+
+      90%,
+      to {
+        transform: translateY(0);
+      }
+    }
+
 
     .test {
       position: relative;
@@ -241,40 +376,27 @@
 
     .test>div:nth-of-type(1) {
       background-color: skyblue;
-    }
-
-    .test>div:nth-of-type(2) {
-      background-color: yellowgreen;
-
-      animation: test 2000ms;
-      animation-direction: alternate;
-      animation-iteration-count: infinite;
-      /* animation-timing-function: ease-out, ease-in-out, ease-in; */
-      animation-timing-function: ease-out, ease-in;
+      animation: test 200ms;
+      animation-fill-mode: forwards;
     }
 
     @keyframes test {
 
       from,
-      20% {
-        transform: matrix(-1, 0, 0, -1, 0, 0);
+      40% {
+        transform: scale(1, 1);
+        animation-timing-function: ease-out;
+        /* transform-origin: center bottom; */
       }
 
-      /* 35% {
-        transform: matrix(-1, 0, 0, -1, 0, -80);
-      } */
-
-      50% {
-        transform: matrix(0, 1, -1, 0, -100, -80);
+      70% {
+        transform: scale(1.5, 0.8);
+        animation-timing-function: ease-in;
+        /* transform-origin: center bottom; */
       }
 
-      /* 65% {
-        transform: matrix(1, 0, 0, 1, -120, -80);
-      } */
-
-      to,
-      80% {
-        transform: matrix(1, 0, 0, 1, -120, 0);
+      to {
+        transform: scale(1, 1);
       }
     }
   </style>
@@ -284,10 +406,10 @@
   <!-- <div class="container">
     <div class="loader">
       <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
-      <span></span>
+      <span><span></span></span>
+      <span><span></span></span>
+      <span><span></span></span>
+      <span><span></span></span>
     </div>
   </div> -->
   <div class="container">
