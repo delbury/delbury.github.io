@@ -13,7 +13,8 @@
       --color3: #40a9ff;
       --color4: #69c0ff;
       --color5: #91d5ff;
-      --animation-duration: 2s;
+      --animation-duration: 3s;
+      --animation-direction: normal;
     }
 
     .loader {
@@ -23,7 +24,7 @@
       /* justify-content: space-around; */
       width: 14em;
       height: 2em;
-      font-size: 20px;
+      font-size: 10px;
     }
 
     .loader>span {
@@ -33,7 +34,7 @@
       height: 2em;
       border-radius: 0.35em;
 
-      animation: move var(--animation-duration) ease-in-out infinite alternate;
+      animation: move var(--animation-duration) ease-in-out infinite var(--animation-direction);
     }
 
     .loader>span>span {
@@ -44,19 +45,31 @@
 
       animation-duration: var(--animation-duration);
       animation-iteration-count: infinite;
-      animation-direction: alternate;
+      animation-direction: var(--animation-direction);
     }
 
-    .loader>span>span::before {
+    .loader>span>span>span {
+      display: inline-block;
+      width: 100%;
+      height: 100%;
+      background-color: transparent;
+
+      animation-duration: var(--animation-duration);
+      animation-iteration-count: infinite;
+      animation-direction: var(--animation-direction);
+    }
+
+    .loader>span>span>span::before {
       display: block;
       content: "";
       width: 100%;
       height: 100%;
       border-radius: 0.35em;
+      /* box-shadow: 0 0 10px #999; */
 
       animation-duration: var(--animation-duration);
       animation-iteration-count: infinite;
-      animation-direction: alternate;
+      animation-direction: var(--animation-direction);
     }
 
 
@@ -65,7 +78,7 @@
       animation-name: first, first-color;
       animation-duration: var(--animation-duration);
       animation-iteration-count: infinite;
-      animation-direction: alternate;
+      animation-direction: var(--animation-direction);
     }
 
     /* 方块2 */
@@ -78,9 +91,13 @@
       animation-name: second-jump;
     }
 
-    .loader>span:nth-of-type(2)>span::before {
-      background-color: var(--color2);
+    .loader>span:nth-of-type(2)>span>span {
       animation-name: second-rotate;
+    }
+
+    .loader>span:nth-of-type(2)>span>span::before {
+      background-color: var(--color2);
+      animation-name: second-bounce;
     }
 
     /* 方块3 */
@@ -93,9 +110,13 @@
       animation-name: third-jump;
     }
 
-    .loader>span:nth-of-type(3)>span::before {
-      background-color: var(--color3);
+    .loader>span:nth-of-type(3)>span>span {
       animation-name: third-rotate;
+    }
+
+    .loader>span:nth-of-type(3)>span>span::before {
+      background-color: var(--color3);
+      animation-name: third-bounce;
     }
 
     /* 方块4 */
@@ -108,9 +129,13 @@
       animation-name: fourth-jump;
     }
 
-    .loader>span:nth-of-type(4)>span::before {
-      background-color: var(--color4);
+    .loader>span:nth-of-type(4)>span>span {
       animation-name: fourth-rotate;
+    }
+
+    .loader>span:nth-of-type(4)>span>span::before {
+      background-color: var(--color4);
+      animation-name: fourth-bounce;
     }
 
     /* 方块5 */
@@ -123,241 +148,469 @@
       animation-name: fifth-jump;
     }
 
-    .loader>span:nth-of-type(5)>span::before {
-      background-color: var(--color5);
+    .loader>span:nth-of-type(5)>span>span {
       animation-name: fifth-rotate;
+    }
+
+    .loader>span:nth-of-type(5)>span>span::before {
+      background-color: var(--color5);
+      animation-name: fifth-bounce;
     }
 
     @keyframes first {
 
-      from,
-      10% {
+      0%,
+      5%,
+      95%,
+      100% {
         left: 0;
       }
 
-      90%,
-      to {
+      45%,
+      50%,
+      55% {
         left: 12em;
       }
+
+
     }
 
     @keyframes first-color {
 
-      from,
-      10% {
+      0%,
+      5%,
+      95%,
+      100% {
         background-color: var(--color1);
       }
 
-      30% {
+      15%,
+      85% {
         background-color: var(--color2);
       }
 
-      50% {
+      25%,
+      75% {
         background-color: var(--color3);
       }
 
-      70% {
+      35%,
+      65% {
         background-color: var(--color4);
       }
 
-      90%,
-      to {
+      45%,
+      50%,
+      55% {
         background-color: var(--color5);
       }
     }
 
     @keyframes second-move {
 
-      from,
-      10% {
+      0%,
+      5%,
+      95%,
+      100% {
         transform: translate(0em);
         animation-timing-function: ease-in-out;
       }
 
-      44%,
-      to {
+      22%,
+      50%,
+      78% {
         transform: translate(-3em);
       }
     }
 
     @keyframes second-rotate {
 
-      from,
-      10% {
+      0%,
+      5%,
+      95%,
+      100% {
         transform: rotate(0deg);
+        animation-timing-function: ease-in-out;
+      }
+
+      22%,
+      50%,
+      78% {
+        transform: rotate(-180deg);
+      }
+    }
+
+    @keyframes second-bounce {
+
+      0%,
+      5% {
+        background-color: var(--color2);
+      }
+
+      22% {
+        background-color: var(--color1);
+        animation-timing-function: ease-in-out;
+        transform: scale(1, 1);
+      }
+
+      24% {
+        transform: scale(1.5, 0.8);
+        animation-timing-function: ease-in-out;
+        transform-origin: center top;
+      }
+
+      27% {
+        transform: scale(1, 1);
+      }
+
+      78% {
+        background-color: var(--color1);
+        transform: scale(1, 1);
+      }
+
+      95% {
+        transform: scale(1, 1);
         background-color: var(--color2);
         animation-timing-function: ease-in-out;
       }
 
-      44%,
-      to {
-        transform: rotate(-180deg);
-        background-color: var(--color1);
+      97% {
+        transform: scale(1.5, 0.8);
+        transform-origin: center bottom;
+        animation-timing-function: ease-in-out;
+      }
+
+      100% {
+        transform: scale(1, 1);
       }
     }
 
     @keyframes second-jump {
 
-      from,
-      10% {
+      0%,
+      5%,
+      95%,
+      100% {
         transform: translateY(0);
         animation-timing-function: ease-out;
       }
 
-      27% {
+      13.5%,
+      86.5% {
         transform: translateY(-3em);
         animation-timing-function: ease-in;
       }
 
-      44%,
-      to {
+      22%,
+      50%,
+      78% {
         transform: translateY(0);
       }
     }
 
     @keyframes third-move {
 
-      from,
-      35% {
+      0%,
+      17.5%,
+      82.5%,
+      100% {
         transform: translate(0em);
         animation-timing-function: ease-in-out;
       }
 
-      55%,
-      to {
+      27.5%,
+      50%,
+      72.5% {
         transform: translate(-3em);
       }
     }
 
     @keyframes third-rotate {
 
-      from,
-      35% {
+      0%,
+      17.5%,
+      82.5%,
+      100% {
         transform: rotate(0deg);
-        background-color: var(--color3);
         animation-timing-function: ease-in-out;
       }
 
-      55%,
-      to {
+      27.5%,
+      50%,
+      72.5% {
         transform: rotate(-180deg);
+      }
+    }
+
+    @keyframes third-bounce {
+
+      0%,
+      17.5% {
+        background-color: var(--color3);
+      }
+
+      27.5% {
         background-color: var(--color2);
+        animation-timing-function: ease-in-out;
+        transform: scale(1, 1);
+      }
+
+      29.5% {
+        transform: scale(1.5, 0.8);
+        animation-timing-function: ease-in-out;
+        transform-origin: center top;
+      }
+
+      32.5% {
+        transform: scale(1, 1);
+      }
+
+      72.5% {
+        background-color: var(--color2);
+      }
+
+      82.5% {
+        background-color: var(--color3);
+        animation-timing-function: ease-in-out;
+        transform: scale(1, 1);
+      }
+
+      84.5% {
+        transform: scale(1.5, 0.8);
+        animation-timing-function: ease-in-out;
+        transform-origin: center bottom;
+      }
+
+      87.5%,
+      100% {
+        transform: scale(1, 1);
       }
     }
 
     @keyframes third-jump {
 
-      from,
-      35% {
+      0%,
+      17.5%,
+      82.5%,
+      100% {
         transform: translateY(0);
         animation-timing-function: ease-out;
       }
 
-      45% {
+      22.5%,
+      77.5% {
         transform: translateY(-3em);
         animation-timing-function: ease-in;
       }
 
-      55%,
-      to {
+      27.5%,
+      50%,
+      72.5%,
+      100% {
         transform: translateY(0);
       }
     }
 
     @keyframes fourth-move {
 
-      from,
-      45% {
+      0%,
+      22.5%,
+      77.5%,
+      100% {
         transform: translate(0em);
         animation-timing-function: ease-in-out;
       }
 
-      65%,
-      to {
+      32.5%,
+      50%,
+      67.5% {
         transform: translate(-3em);
       }
     }
 
     @keyframes fourth-rotate {
 
-      from,
-      45% {
+      0%,
+      22.5%,
+      77.5%,
+      100% {
         transform: rotate(0deg);
-        background-color: var(--color4);
         animation-timing-function: ease-in-out;
       }
 
-      65%,
-      to {
+      32.5%,
+      50%,
+      67.5% {
         transform: rotate(-180deg);
+      }
+    }
+
+    @keyframes fourth-bounce {
+
+      0%,
+      22.5% {
+        background-color: var(--color4);
+      }
+
+      32.5% {
         background-color: var(--color3);
+        animation-timing-function: ease-in-out;
+        transform: scale(1, 1);
+      }
+
+      34.5% {
+        transform: scale(1.5, 0.8);
+        animation-timing-function: ease-in-out;
+        transform-origin: center top;
+      }
+
+      37.5% {
+        transform: scale(1, 1);
+      }
+
+      67.5% {
+        background-color: var(--color3);
+      }
+
+      77.5% {
+        background-color: var(--color4);
+        animation-timing-function: ease-in-out;
+        transform: scale(1, 1);
+      }
+
+      79.5% {
+        transform: scale(1.5, 0.8);
+        animation-timing-function: ease-in-out;
+        transform-origin: center bottom;
+      }
+
+      82.5%,
+      100% {
+        transform: scale(1, 1);
       }
     }
 
     @keyframes fourth-jump {
 
-      from,
-      45% {
+      0%,
+      22.5%,
+      77.5%,
+      100% {
         transform: translateY(0);
         animation-timing-function: ease-out;
       }
 
-      55% {
+      27.5%,
+      72.5% {
         transform: translateY(-3em);
         animation-timing-function: ease-in;
       }
 
-      65%,
-      to {
+      32.5%,
+      50%,
+      67.5% {
         transform: translateY(0);
       }
     }
 
     @keyframes fifth-move {
 
-      from,
-      56% {
+      0%,
+      28%,
+      72%,
+      100% {
         transform: translate(0em);
         animation-timing-function: ease-in-out;
       }
 
-      90%,
-      to {
+      45%,
+      50%,
+      55% {
         transform: translate(-3em);
       }
     }
 
     @keyframes fifth-rotate {
 
-      from,
-      56% {
+      0%,
+      28%,
+      72%,
+      100% {
         transform: rotate(0deg);
-        background-color: var(--color5);
         animation-timing-function: ease-in-out;
       }
 
-      90%,
-      to {
+      45%,
+      50%,
+      55% {
         transform: rotate(-180deg);
+      }
+    }
+
+    @keyframes fifth-bounce {
+
+      0%,
+      28% {
+        background-color: var(--color5);
+      }
+
+      45% {
         background-color: var(--color4);
+        animation-timing-function: ease-in-out;
+        transform: scale(1, 1);
+      }
+
+      47% {
+        transform: scale(1.5, 0.8);
+        animation-timing-function: ease-in-out;
+        transform-origin: center top;
+      }
+
+      50% {
+        transform: scale(1, 1);
+      }
+
+      55% {
+        background-color: var(--color4);
+      }
+
+      72% {
+        background-color: var(--color5);
+        animation-timing-function: ease-in-out;
+        transform: scale(1, 1);
+      }
+
+      74% {
+        transform: scale(1.5, 0.8);
+        animation-timing-function: ease-in-out;
+        transform-origin: center bottom;
+      }
+
+      77%,
+      100% {
+        transform: scale(1, 1);
       }
     }
 
     @keyframes fifth-jump {
 
-      from,
-      56% {
+      0%,
+      28%,
+      72%,
+      100% {
         transform: translateY(0);
         animation-timing-function: ease-out;
       }
 
-      73% {
+      36.5%,
+      63.5% {
         transform: translateY(-3em);
         animation-timing-function: ease-in;
       }
 
-      90%,
-      to {
+      45%,
+      50%,
+      55% {
         transform: translateY(0);
       }
     }
@@ -376,26 +629,25 @@
 
     .test>div:nth-of-type(1) {
       background-color: skyblue;
-      animation: test 200ms;
+      animation: test 1s;
       animation-fill-mode: forwards;
+      transform-origin: center bottom;
     }
 
     @keyframes test {
 
-      from,
-      40% {
+      0%,
+      30% {
         transform: scale(1, 1);
-        animation-timing-function: ease-out;
-        /* transform-origin: center bottom; */
+        animation-timing-function: ease;
       }
 
-      70% {
+      60% {
         transform: scale(1.5, 0.8);
-        animation-timing-function: ease-in;
-        /* transform-origin: center bottom; */
+        animation-timing-function: ease-in-out;
       }
 
-      to {
+      100% {
         transform: scale(1, 1);
       }
     }
@@ -403,21 +655,21 @@
 </head>
 
 <body>
-  <!-- <div class="container">
+  <div class="container">
     <div class="loader">
       <span></span>
-      <span><span></span></span>
-      <span><span></span></span>
-      <span><span></span></span>
-      <span><span></span></span>
+      <span><span><span></span></span></span>
+      <span><span><span></span></span></span>
+      <span><span><span></span></span></span>
+      <span><span><span></span></span></span>
     </div>
-  </div> -->
-  <div class="container">
+  </div>
+  <!-- <div class="container">
     <div class="test">
       <div></div>
       <div></div>
     </div>
-  </div>
+  </div> -->
 </body>
 
 </html>
