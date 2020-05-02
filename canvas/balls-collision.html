@@ -56,28 +56,36 @@
         const { x, y } = ball.getPosition();
         const dx = offsetX - x;
         const dy = offsetY - y;
+        const lastTwoMousePosition = [];
+        let aniReq = null;
 
-        let lastTwoMousePosition = [];
-        canvas.onmousemove = ev => {
-          const { offsetX, offsetY } = ev;
-          lastTwoMousePosition.unshift([offsetX, offsetY]);
+        // 记录这一帧的位置，并保存上一帧的位置
+        const recordPosition = () => {
+          const { x, y } = ball.getPosition();
+          lastTwoMousePosition.unshift([x, y]);
           if(lastTwoMousePosition.length > 2) {
             lastTwoMousePosition.pop();
           }
+          aniReq = requestAnimationFrame(recordPosition)
+        }
+        recordPosition();
+
+        canvas.onmousemove = ev => {
+          const { offsetX, offsetY } = ev;
           ball.directMoveTo(offsetX - dx, offsetY - dy);
         };
 
         document.onmouseup = ev => {
           if(lastTwoMousePosition.length === 2) {
             ball.setSpeed(
-              (lastTwoMousePosition[0][0] - lastTwoMousePosition[1][0]) / 5,
-              (lastTwoMousePosition[0][1] - lastTwoMousePosition[1][1]) / 5,
+              (lastTwoMousePosition[0][0] - lastTwoMousePosition[1][0]) / 2,
+              (lastTwoMousePosition[0][1] - lastTwoMousePosition[1][1]) / 2,
             );
           }
           
           canvas.onmousemove = null;
           canvas.onmouseup = null;
-
+          aniReq && cancelAnimationFrame(aniReq);
           ball.resume();
         };
       }

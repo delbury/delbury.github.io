@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spring Move</title>
+  <style>
+    .canvas {
+      display: flex;
+      align-items: center;
+      margin: auto;
+      width: fit-content;
+    }
+
+    .border {
+      margin-left: 20px;
+      border: 1px dashed skyblue;
+      font-size: 0;
+    }
+
+    .grab {
+      cursor: grab;
+    }
+
+    .grabbing {
+      cursor: grabbing;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="canvas">
+    <div class="border">
+      <canvas id="canvas" width="800" height="480">
+        <p>your browser do not support canvas</p>
+      </canvas>
+    </div>
+  </div>
+
+
+  <script type="module">
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'skyblue';
+    ctx.strokeStyle = 'skyblue';
+    ctx.lineWidth = 4;
+
+    const balls = Array.from({ length: 5 }, (v, k) => ({
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      radius: 20 - k * 2,
+      target: [],
+      spring: 0.02,
+      f: 0.85,
+      offset: 50
+    }));
+    balls.forEach((ball, index) => {
+      if(index === 0) {
+        ball.target = [ball.x, ball.y];
+      } else {
+        ball.target = [balls[index - 1].x, balls[index - 1].y];
+      }
+    });
+
+    canvas.onmousemove = ev => {
+      const { offsetX, offsetY } = ev;
+      const dx = balls[0].x - offsetX;
+      const dy = balls[0].y - offsetY;
+      const deg = Math.atan2(dy, dx);
+      const targetX = offsetX + Math.cos(deg) * balls[0].offset;
+      const targetY = offsetY + Math.sin(deg) * balls[0].offset;
+
+      balls[0].target = [targetX, targetY];
+    };
+
+    tick();
+
+    function tick() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      balls.forEach((ball, index) => {
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        if(index !== 0) {
+          const dx = ball.x - balls[index - 1].x;
+          const dy = ball.y - balls[index - 1].y;
+          const deg = Math.atan2(dy, dx);
+          const targetX = balls[index - 1].x + Math.cos(deg) * ball.offset;
+          const targetY = balls[index - 1].y + Math.sin(deg) * ball.offset;
+
+          ball.target = [targetX, targetY];
+          // ctx.beginPath();
+          // ctx.moveTo(ball.x, ball.y);
+          // ctx.lineTo(balls[index - 1].x, balls[index - 1].y);
+          // ctx.stroke();
+        } else {
+          // ctx.beginPath();
+          // ctx.moveTo(ball.x, ball.y);
+          // ctx.lineTo(ball.target[0], ball.target[1]);
+          // ctx.stroke();
+        }
+        ball.vx += (ball.target[0] - ball.x) * ball.spring;
+        ball.vy += (ball.target[1] - ball.y) * ball.spring;
+        ball.vx *= ball.f;
+        ball.vy *= ball.f;
+
+        if(Math.abs(ball.vx) < 0.001) {
+          //
+        } else {
+          ball.x += ball.vx
+          ball.y += ball.vy
+        }
+      });
+
+      
+
+      requestAnimationFrame(tick);
+    }
+  </script>
+</body>
+
+</html>

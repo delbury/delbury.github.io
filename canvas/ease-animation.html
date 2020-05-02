@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ease Move</title>
+  <style>
+    .canvas {
+      display: flex;
+      align-items: center;
+      margin: auto;
+      width: fit-content;
+    }
+
+    .border {
+      margin-left: 20px;
+      border: 1px dashed skyblue;
+      font-size: 0;
+    }
+
+    .grab {
+      cursor: grab;
+    }
+
+    .grabbing {
+      cursor: grabbing;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="canvas">
+    <div class="border">
+      <canvas id="canvas" width="800" height="480">
+        <p>your browser do not support canvas</p>
+      </canvas>
+    </div>
+  </div>
+
+
+  <script type="module">
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'skyblue';
+
+    const balls = Array.from({ length: 5 }, (v, k) => ({
+      x: 50,
+      y: 50,
+      vx: 0,
+      vy: 0,
+      radius: 20 - k * 2,
+      target: [],
+      ease: 0.2
+    }));
+
+    balls.forEach((ball, index) => {
+      if(index !== 0) {
+        ball.target = [balls[index - 1].x, balls[index - 1].y];
+      } else {
+        ball.target = [ball.x, ball.y];
+      }
+    });
+
+    canvas.onmousemove = ev => {
+      const { offsetX, offsetY } = ev;
+      balls[0].target = [offsetX, offsetY];
+    };
+
+    tick();
+
+    function tick() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      let stop = false;
+      balls.forEach((ball, index) => {
+        if(index !== 0) {
+          ball.target = [balls[index - 1].x, balls[index - 1].y];
+        }
+
+        ball.vx = (ball.target[0] - ball.x) * ball.ease;
+        ball.vy = (ball.target[1] - ball.y) * ball.ease;
+
+        if(Math.abs(ball.x - ball.target[0]) < 1) {
+          // ball.x = ball.target[0];
+          // ball.y = ball.target[1];
+          // stop = true;
+        } else {
+          ball.x += ball.vx
+          ball.y += ball.vy
+        }
+        
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      !stop && requestAnimationFrame(tick);
+    }
+  </script>
+</body>
+
+</html>
