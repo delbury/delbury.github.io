@@ -67,11 +67,11 @@
 
     canvas.onmousemove = ev => {
       const { offsetX, offsetY } = ev;
-      const dx = balls[0].x - offsetX;
-      const dy = balls[0].y - offsetY;
+      const dx = offsetX - balls[0].x;
+      const dy = offsetY - balls[0].y;
       const deg = Math.atan2(dy, dx);
-      const targetX = offsetX + Math.cos(deg) * balls[0].offset;
-      const targetY = offsetY + Math.sin(deg) * balls[0].offset;
+      const targetX = offsetX - Math.cos(deg) * balls[0].offset;
+      const targetY = offsetY - Math.sin(deg) * balls[0].offset;
 
       balls[0].target = [targetX, targetY];
     };
@@ -87,11 +87,11 @@
         ctx.fill();
 
         if(index !== 0) {
-          const dx = ball.x - balls[index - 1].x;
-          const dy = ball.y - balls[index - 1].y;
+          const dx = balls[index - 1].x - ball.x;
+          const dy = balls[index - 1].y - ball.y;
           const deg = Math.atan2(dy, dx);
-          const targetX = balls[index - 1].x + Math.cos(deg) * ball.offset;
-          const targetY = balls[index - 1].y + Math.sin(deg) * ball.offset;
+          const targetX = balls[index - 1].x - Math.cos(deg) * ball.offset;
+          const targetY = balls[index - 1].y - Math.sin(deg) * ball.offset;
 
           ball.target = [targetX, targetY];
           // ctx.beginPath();

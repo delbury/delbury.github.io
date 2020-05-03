@@ -5,7 +5,8 @@ export class ParticleText {
     ctx,
     {
       gridX = 10,
-      gridY = 10
+      gridY = 10,
+      moveMode
     } = {},
     {
       textSize = 100,
@@ -22,6 +23,7 @@ export class ParticleText {
 
     this.gridX = gridX;
     this.gridY = gridY;
+    this.moveMode = moveMode;
     this.particles = []; // 粒子实例
 
     this.init();
@@ -75,7 +77,8 @@ export class ParticleText {
       maxRadius: 2.3,
       minRadius: 0.8,
       growSpeed: Methods.randomPlusMinus(0.07, 0.11),
-      acceleration: 0.1
+      acceleration: 0.1,
+      moveMode: this.moveMode
     };
 
     // 方形

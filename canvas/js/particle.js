@@ -58,6 +58,9 @@ class Particle {
   constructor(
     ctx,
     {
+      initStates = {
+        flickering: true
+      },
       vx = 0,
       vy = 0,
       x = 0,
@@ -68,6 +71,7 @@ class Particle {
       reduction = 1, // 反弹衰减
       mass = 0, // 质量
       friction = 0, // 摩擦力系数
+      moveMode = 'step' // ease, step, spring
     } = {},
     {
       fillStyle = '#000',
@@ -86,9 +90,81 @@ class Particle {
     this.friction = friction;
     this.fillStyle = fillStyle;
     this.StrokeStyle = StrokeStyle;
+    this.moveMode = moveMode;
+    this.initStates = initStates;
+
+    this._flickering = !!initStates.flickering;
 
     if (target) {
-      this.moveTo(target)
+      switch (this.moveMode) {
+        case 'step':
+          this.moveTo(target);
+          break;
+        case 'ease':
+          this.startEaseMove(target);
+          break;
+        case 'spring':
+          this.startSpringMove(target);
+        default: break;
+      }
+    }
+  }
+
+  // 开始弹性移动
+  startSpringMove(target, spring = 0.01, friction = 0.95) {
+    this.target = target;
+    this._springMoving = true;
+    this._springMoveState = {
+      spring,
+      friction
+    };
+  }
+
+  // 弹性移动帧
+  springMoveTick() {
+    if (this._springMoving) {
+      this.vx += (this.target[0] - this.x) * this._springMoveState.spring;
+      this.vx *= this._springMoveState.friction;
+      this.vy += (this.target[1] - this.y) * this._springMoveState.spring;
+      this.vy *= this._springMoveState.friction;
+
+      this.x += this.vx;
+      this.y += this.vy;
+
+      if (Math.abs(this.vx) < 0.005 && Math.abs(this.vy) < 0.005) {
+        [this.x, this.y] = this.target;
+        this.vx = 0;
+        this.vy = 0;
+        this._springMoving = false;
+        this._springMoveState = null;
+      }
+    }
+  }
+
+  // 开始缓动
+  startEaseMove(target, ease = 0.05) {
+    this.target = target;
+    this._easeMoving = true;
+    this._easeMoveState = {
+      ease
+    };
+  }
+
+  // 缓动移动帧
+  easeMoveTick() {
+    if (this._easeMoving) {
+      this.vx = (this.target[0] - this.x) * this._easeMoveState.ease;
+      this.vy = (this.target[1] - this.y) * this._easeMoveState.ease;
+
+      this.x += this.vx;
+      this.y += this.vy;
+
+      if (Math.abs(this.vx) < 0.01 && Math.abs(this.vy) < 0.01) {
+        this.vx = 0;
+        this.vy = 0;
+        this._easeMoving = false;
+        this._easeMoveState = null;
+      }
     }
   }
 
@@ -101,7 +177,7 @@ class Particle {
   // 开始移动到目标点
   moveTo(target, duration = 80, step = 2) {
     if (!target || target.length < 2) {
-      return
+      return;
     }
     if (!this._baseMoving) {
       this.target = target;
@@ -137,6 +213,8 @@ class Particle {
   startRandomMove({ vx, vy }) {
     this._baseMoving = false;
     this._randomMoving = true;
+    this._easeMoving = false;
+    this._springMoving = false;
     this.vx = vx;
     this.vy = vy;
   }
@@ -145,7 +223,17 @@ class Particle {
   stopRandomMove() {
     this._randomMoving = false;
     if (this.target) {
-      this.moveTo(this.target);
+      switch (this.moveMode) {
+        case 'step':
+          this.moveTo(this.target);
+          break;
+        case 'ease':
+          this.startEaseMove(this.target);
+          break;
+        case 'spring':
+          this.startSpringMove(this.target);
+        default: break;
+      }
     }
   }
 
@@ -234,6 +322,16 @@ class Particle {
     this.vy = vy;
   }
 
+  // 开始闪烁
+  startFlicker() {
+    this._flickering = true;
+  }
+
+  // 停止闪烁
+  stopFlicker() {
+    this._flickering = false;
+  }
+
   // 每一帧
   tick() {
   }
@@ -286,10 +384,12 @@ export class CircleParticle extends Particle {
   }
 
   tick() {
+    this.springMoveTick();
+    this.easeMoveTick();
     this.freeFallTick();
     this.randomMoveTick();
     this.baseMoveTick();
-    this.flicker();
+    this.flickerTick();
     this.ctx.save();
     this.ctx.fillStyle = this.fillStyle;
     // this.ctx.strokeStyle = this.StrokeStyle;
@@ -333,7 +433,7 @@ export class CircleParticle extends Particle {
   }
 
   // 闪烁
-  flicker() {
+  flickerTick() {
     if (this._flickering) {
       this.radius += this.growSpeed;
       if (this.radius < 0) {
@@ -509,9 +609,9 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       this.moveTick();
     }
     this.collisionDetect && this.collisionDetect();
-    this.transition();
-    this.rotate();
-    this.flicker();
+    this.transitionTick();
+    this.rotateTick();
+    this.flickerTick();
     this.ctx.save();
     this.ctx.fillStyle = this.fillStyle;
     // this.ctx.strokeStyle = this.StrokeStyle;
@@ -531,6 +631,9 @@ export class CircumcenterPolygonParticle extends CircleParticle {
 
   // 过渡到n边形
   changeTo(n, cb) {
+    if (n < 3 || this._transiting) {
+      return;
+    }
     if (this.isRegular) {
       const from = this.degrees.length;
       const fromGap = 360 / from;
@@ -557,7 +660,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
   }
 
   // 形状改变过渡效果
-  transition() {
+  transitionTick() {
     if (this.isRegular && this._transiting) {
       let stop = false;
       if (this._changeState.dn > 0) {
@@ -623,7 +726,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
   }
 
   // 旋转
-  rotate() {
+  rotateTick() {
     if (this.degrees) {
       this.degrees = this.degrees.map(deg => {
         deg = (deg - this.rotateSpeed + 360) % 360;
@@ -634,6 +737,9 @@ export class CircumcenterPolygonParticle extends CircleParticle {
 
   // 创建正多边形
   createRegular(count = 3) {
+    if (count < 3) {
+      return;
+    }
     this.degrees = this.randomDegrees(count, { isRegular: true });
   }
 
@@ -684,7 +790,7 @@ export class RectangleParticle extends Particle {
   tick() {
     this.randomMoveTick();
     this.baseMoveTick();
-    this.flicker();
+    this.flickerTick();
 
     this.ctx.save();
     this.ctx.fillStyle = this.fillStyle;
@@ -694,7 +800,7 @@ export class RectangleParticle extends Particle {
   }
 
   // 闪烁
-  flicker() {
+  flickerTick() {
     if (this._flickering) {
       this.width += this.growSpeedWidth;
       this.height += this.growSpeedHeight;

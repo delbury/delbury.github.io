@@ -43,7 +43,7 @@ class _Base {
 }
 
 // 弹性碰撞
-export class BallsCollision extends _Base {
+export class BallsCollisionController extends _Base {
   constructor(props) {
     super(props);
 
@@ -115,5 +115,84 @@ export class BallsCollision extends _Base {
     this.instance.forEach(item => {
       item.resume();
     });
+  }
+}
+
+// 粒子文本
+export class ParticleTextController extends _Base {
+  constructor(props, defaults) {
+    super(props);
+    this.defaults = { text: 'Hello', ...defaults };
+
+    this.init();
+    this.tick();
+  }
+
+  // 初始化
+  init() {
+    this.instance = new ParticleText(
+      this.ctx,
+      { gridX: 5, gridY: 5, moveMode: 'spring' },
+      { textSize: 100 }
+    );
+    this.instance.createEffect(this.defaults.text);
+  }
+
+  tick() {
+    // 清除画板
+    // this.ctx.clearRect(0, 0, this.width, this.height);
+    this.ctx.save();
+    this.ctx.fillStyle = '#000';
+    this.ctx.fillRect(0, 0, this.width, this.height);
+    this.ctx.restore();
+
+    // this.instance.ctx.putImageData(this.instance.imageData, 0, 0);
+    this.instance.particles.forEach(part => {
+      part.shapeParticle.tick();
+    });
+
+    return requestAnimationFrame(this.tick.bind(this));
+  }
+
+  // 改变文本
+  changeText(text) {
+    this.instance.createEffect(text);
+  }
+
+  focus() {
+    this.instance.focus();
+  }
+  blur() {
+    this.instance.blur();
+  }
+}
+
+export class PolygonShapeChangeController extends _Base {
+  constructor(props, defaults) {
+    super(props);
+    this.defaults = { edges: 3, ...defaults };
+
+    this.init();
+    this.tick();
+  }
+
+  init() {
+    this.instance = new CircumcenterPolygonParticle(
+      this.ctx,
+      {
+        x: this.ctx.canvas.width / 2,
+        y: this.ctx.canvas.height / 2,
+        radius: 100,
+        // degrees: [],
+      },
+      {
+        fillStyle: 'yellowgreen'
+      }
+    );
+    this.instance.createRegular(this.defaults.edges);
+  }
+
+  changeShape(n) {
+    this.instance.changeTo(n);
   }
 }

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canvas Effects</title>
+  <style>
+    .canvas {
+      display: flex;
+      align-items: center;
+      margin: auto;
+      width: fit-content;
+    }
+
+    .border {
+      margin-left: 20px;
+      border: 1px dashed skyblue;
+      font-size: 0;
+    }
+
+    .grab {
+      cursor: grab;
+    }
+
+    .grabbing {
+      cursor: grabbing;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="canvas">
+    <div class="control">
+      <input id="input-text" type="text" placeholder="输入文本" value="ABCD">
+      <button id="btn-change">改变</button>
+    </div>
+    <div class="border">
+      <canvas id="canvas" width="800" height="480">
+        <p>your browser do not support canvas</p>
+      </canvas>
+    </div>
+  </div>
+
+
+  <script type="module">
+    import { ParticleTextController } from './js/controllers.js';
+    const inputText = document.getElementById('input-text');
+    const ptc = new ParticleTextController(document.getElementById('canvas'), {
+      text: inputText.value
+    });
+    window.ptc = ptc;
+
+    document.getElementById('btn-change').onclick = ev => {
+      ptc.changeText(inputText.value.trim());
+    };
+    inputText.onkeydown = ev => {
+      if(ev.keyCode === 13) {
+        ptc.changeText(inputText.value.trim());
+      }
+    };
+
+    const canvas = document.getElementById('canvas');
+    canvas.onmouseenter = ev => {
+      ptc.focus();
+    };
+    canvas.onmouseleave = ev => {
+      ptc.blur();
+    };
+  </script>
+</body>
+
+</html>
