@@ -3,7 +3,7 @@ import { ParticleText } from './particle-text.js';
 
 class _Base {
   constructor(ele) {
-    if (!ele || ele.tagName != 'CANVAS') {
+    if ((!ele || ele.tagName != 'CANVAS') && (self.OffscreenCanvas && !(ele instanceof OffscreenCanvas))) {
       throw new TypeError('错误的canvas元素');
     }
 

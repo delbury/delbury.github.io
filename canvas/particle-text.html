@@ -18,14 +18,6 @@
       border: 1px dashed skyblue;
       font-size: 0;
     }
-
-    .grab {
-      cursor: grab;
-    }
-
-    .grabbing {
-      cursor: grabbing;
-    }
   </style>
 </head>
 
@@ -46,27 +38,54 @@
   <script type="module">
     import { ParticleTextController } from './js/controllers.js';
     const inputText = document.getElementById('input-text');
-    const ptc = new ParticleTextController(document.getElementById('canvas'), {
-      text: inputText.value
-    });
-    window.ptc = ptc;
-
-    document.getElementById('btn-change').onclick = ev => {
-      ptc.changeText(inputText.value.trim());
-    };
-    inputText.onkeydown = ev => {
-      if(ev.keyCode === 13) {
-        ptc.changeText(inputText.value.trim());
-      }
-    };
-
     const canvas = document.getElementById('canvas');
-    canvas.onmouseenter = ev => {
-      ptc.focus();
-    };
-    canvas.onmouseleave = ev => {
-      ptc.blur();
-    };
+    let ptc = null;
+
+    // 使用 worker
+    if(window.OffscreenCanvas && window.Worker) {
+      const worker = new Worker('./works/particle-text-worker.js', { type: 'module' });
+      const offCanvas = canvas.transferControlToOffscreen()
+      worker.postMessage({
+        type: 'init',
+        text: inputText.value,
+        canvas: offCanvas
+      }, [offCanvas]);
+
+      // 控制
+      document.getElementById('btn-change').onclick = ev => {
+        worker.postMessage({ type: 'change-text', text: inputText.value });
+      };
+      inputText.onkeydown = ev => {
+        if(ev.keyCode === 13) {
+          worker.postMessage({ type: 'change-text', text: inputText.value });
+        }
+      };
+      canvas.onmouseenter = ev => {
+        worker.postMessage({ type: 'focus' });
+      };
+      canvas.onmouseleave = ev => {
+        worker.postMessage({ type: 'blur' });
+      };
+    } else {
+      ptc = new ParticleTextController(document.getElementById('canvas'), {
+        text: inputText.value
+      });
+
+      document.getElementById('btn-change').onclick = ev => {
+        ptc && ptc.changeText(inputText.value.trim());
+      };
+      inputText.onkeydown = ev => {
+        if(ev.keyCode === 13) {
+          ptc && ptc.changeText(inputText.value.trim());
+        }
+      };
+      canvas.onmouseenter = ev => {
+        ptc && ptc.focus();
+      };
+      canvas.onmouseleave = ev => {
+        ptc && ptc.blur();
+      };
+    }
   </script>
 </body>
 

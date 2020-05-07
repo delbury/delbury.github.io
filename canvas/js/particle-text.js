@@ -32,8 +32,8 @@ export class ParticleText {
   // 初始化
   init() {
     // 创建辅助 canvas
-    const OffCanvas = window.OffscreenCanvas ?
-      new window.OffscreenCanvas(1, 1) :
+    const OffCanvas = self.OffscreenCanvas ?
+      new self.OffscreenCanvas(1, 1) :
       document.createElement('canvas');
     OffCanvas.width = this.ctx.canvas.width;
     OffCanvas.height = this.ctx.canvas.height;
