@@ -2,8 +2,8 @@
 // @name         Swagger Click Copy
 // @namespace    http://tampermonkey.net/
 // @version      0.2
-// @description  try to take over the world!
-// @author       You
+// @description  点击复制Swagger页面的接口URL路径
+// @author       delbury
 // @match        http://*/swagger-ui.html*
 // @grant        none
 // ==/UserScript==
