@@ -92,7 +92,8 @@ export class BallsCollisionController extends _Base {
         // this.instance[0].reverseSpeed();
         // this.instance[1].reverseSpeed();
 
-        this.instance[0].perfectlyCollide(this.instance[1]);
+        // 完全弹性碰撞
+        this.instance[0].perfectlyCollide(this.instance[1], 0.9);
         return true;
       }
       return false;

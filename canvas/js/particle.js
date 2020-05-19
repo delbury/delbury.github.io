@@ -41,15 +41,15 @@ export class Methods {
   }
 
   // 完全弹性碰撞后的速度
-  static perfectlyInelasticCollide(v1, v2, m1, m2) {
+  static perfectlyInelasticCollide(v1, v2, m1, m2, e) {
     if (m1 === Infinity) {
       return [v1, -v2];
     } else if (m2 === Infinity) {
       return [-v1, v2];
     } else {
       return [
-        ((m1 - m2) * v1 + 2 * m2 * v2) / (m1 + m2),
-        ((m2 - m1) * v2 + 2 * m1 * v1) / (m1 + m2)
+        ((m1 - e * m2) * v1 + (1 + e) * m2 * v2) / (m1 + m2),
+        ((m2 - e * m1) * v2 + (1 + e) * m1 * v1) / (m1 + m2)
       ];
     }
   }
@@ -473,11 +473,11 @@ export class CircumcenterPolygonParticle extends CircleParticle {
   }
 
   // 完全弹性碰撞
-  perfectlyCollide(cpp) {
+  perfectlyCollide(cpp, e = 1) {
     const thisMass = this.pauseMove ? Infinity : this.mass;
     const cppMass = cpp.pauseMove ? Infinity : cpp.mass;
-    const vxs = Methods.perfectlyInelasticCollide(this.vx, cpp.vx, thisMass, cppMass);
-    const vys = Methods.perfectlyInelasticCollide(this.vy, cpp.vy, thisMass, cppMass);
+    const vxs = Methods.perfectlyInelasticCollide(this.vx, cpp.vx, thisMass, cppMass, e);
+    const vys = Methods.perfectlyInelasticCollide(this.vy, cpp.vy, thisMass, cppMass, e);
     [this.vx, this.vy] = [vxs[0], vys[0]];
     [cpp.vx, cpp.vy] = [vxs[1], vys[1]];
   }
