@@ -58,8 +58,8 @@ export class BallsCollisionController extends _Base {
         {
           x: this.ctx.canvas.width / 3 * 1,
           y: this.ctx.canvas.height / 2,
-          vx: -3,
-          vy: -5,
+          // vx: -3,
+          // vy: -5,
           radius: 30,
           // degrees: [30, 135, 290],
           mass: 5,
@@ -74,8 +74,8 @@ export class BallsCollisionController extends _Base {
         {
           x: this.ctx.canvas.width / 3 * 2,
           y: this.ctx.canvas.height / 2,
-          vx: -6,
-          vy: 4,
+          // vx: -6,
+          // vy: 4,
           radius: 60,
           // degrees: [20, 130, 230, 310],
           mass: 8,
@@ -88,7 +88,15 @@ export class BallsCollisionController extends _Base {
     ];
 
     this.instance[0].collisionDetect = () => {
-      if (this.instance[1] && this.instance[0].collideWith(this.instance[1])) {
+      if (!this.instance[1]) {
+        return;
+      }
+
+      const { status, collidedAxises, minAxis } = this.instance[0].collideWith(this.instance[1])
+      if (status !== 0) {
+        this.instance[1].setAbsolutePosition(-minAxis.axis.x * minAxis.overlapLength, -minAxis.axis.y * minAxis.overlapLength)
+      }
+      if (status === 1) {
         // this.instance[0].reverseSpeed();
         // this.instance[1].reverseSpeed();
 

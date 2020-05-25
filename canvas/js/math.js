@@ -71,10 +71,17 @@ export class Projection {
   // 是否重叠
   isOverlapWith(projection) {
     const flag = !(this.min > projection.max || this.max < projection.min);
+
+    // 计算重叠到分离的最短长度
     if (flag) {
       const arr = [this.min, this.max, projection.min, projection.max].sort((a, b) => a - b);
-      const overlapLength = arr[2] - arr[1];
-      return overlapLength;
+      // 当一个投影完全在另一个投影中时，需要区分
+      if (Math.abs(arr[3] - arr[0] - Math.max(this.max - this.min, projection.max - projection.min)) <= Number.EPSILON) {
+        // 部分重叠
+        return Math.min(arr[2] - arr[0], arr[3] - arr[1])
+      } else {
+        return arr[2] - arr[1];
+      }
     }
     return null;
   }

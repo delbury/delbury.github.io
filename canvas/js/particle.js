@@ -322,6 +322,12 @@ class Particle {
     this.vy = vy;
   }
 
+  // 设置相对位置
+  setAbsolutePosition(dx, dy) {
+    this.x += dx;
+    this.y += dy;
+  }
+
   // 开始闪烁
   startFlicker() {
     this._flickering = true;
@@ -485,6 +491,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
   // 检测碰撞
   collideWith(cpp) {
     let isCollided = true;
+    const collidedAxises = []; // 产生碰撞的投影轴
     if (this.degrees.length && cpp.degrees.length) {
       // 两个都是多边形
       const thisVectors = this.getVertexVector();
@@ -496,9 +503,15 @@ export class CircumcenterPolygonParticle extends CircleParticle {
         const thisProjection = new Projection(thisVectors.map(vector => vector.dotProduct(axises[i])));
         const anotherProjection = new Projection(anotherVectors.map(vector => vector.dotProduct(axises[i])));
 
-        if (!thisProjection.isOverlapWith(anotherProjection)) {
+        const len = thisProjection.isOverlapWith(anotherProjection)
+        if (!len) {
           isCollided = false;
           break;
+        } else {
+          collidedAxises.push({
+            axis: axises[i],
+            overlapLength: len
+          });
         }
       }
 
@@ -506,7 +519,12 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     } else if (!this.degrees.length && !cpp.degrees.length) {
       // 两个都是圆
       isCollided = (this.x - cpp.x) ** 2 + (this.y - cpp.y) ** 2 <= (this.radius + cpp.radius) ** 2
-
+      if (isCollided) {
+        collidedAxises.push({
+          axis: new Vector(this.x - cpp.x, this.y - cpp.y),
+          overlapLength: (this.radius + cpp.radius) - Math.sqrt((this.x - cpp.x) ** 2 + (this.y - cpp.y) ** 2)
+        });
+      }
     } else {
       // 一个是圆，另一个是多边形
       let circle = null;
@@ -539,19 +557,41 @@ export class CircumcenterPolygonParticle extends CircleParticle {
         const circleProjection = new Projection(circleVector.map(vector => vector.dotProduct(axises[i])));
         const polygonProjection = new Projection(polygonVectors.map(vector => vector.dotProduct(axises[i])));
 
-        if (!circleProjection.isOverlapWith(polygonProjection)) {
+        const len = circleProjection.isOverlapWith(polygonProjection)
+        if (!len) {
           isCollided = false;
           break;
+        } else {
+          collidedAxises.push({
+            axis: axises[i],
+            overlapLength: len
+          });
         }
       }
 
     }
 
+    // 计算最短碰撞重叠向量
+    let minAxis = null;
+    if (isCollided) {
+      minAxis = collidedAxises[0];
+      for (let i = 1; i < collidedAxises.length; i++) {
+        if (collidedAxises[i].overlapLength < minAxis.overlapLength) {
+          minAxis = collidedAxises[i];
+        }
+      }
+      minAxis = {
+        axis: minAxis.axis.normalize(),
+        overlapLength: minAxis.overlapLength
+      }
+    }
+
     if (this._prevTickCollided && isCollided) {
-      return false;
+      // 碰撞后重叠
+      return { status: -1, collidedAxises, minAxis };
     } else {
       this._prevTickCollided = isCollided;
-      return isCollided;
+      return { status: Number(isCollided), collidedAxises, minAxis };
     }
   }
 
