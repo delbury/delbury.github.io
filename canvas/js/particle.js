@@ -510,7 +510,18 @@ export class CircleParticle extends Particle {
   }
 
   isInside(x, y) {
-    return (this.x - x) ** 2 + (this.y - y) ** 2 < this.radius ** 2;
+    if(!this.degrees.length) {
+      return (this.x - x) ** 2 + (this.y - y) ** 2 < this.radius ** 2;
+    } else {
+      const path = new Path2D();
+      this.degrees.forEach(deg => {
+        const rad = deg / 180 * Math.PI;
+        path.arc(this.x, this.y, this.radius, rad, rad, false);
+      });
+      path.closePath();
+      return this.ctx.isPointInPath(path, x, y);
+    }
+    return false;
   }
 }
 
