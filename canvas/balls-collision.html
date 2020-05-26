@@ -45,7 +45,7 @@
     window.instance = instance;
     const canvas = document.getElementById('canvas');
 
-    document.addEventListener('mousedown', ev => {
+    canvas.addEventListener('mousedown', ev => {
       const { offsetX, offsetY } = ev;
       
       const ball = instance.grabBall(offsetX, offsetY);
@@ -84,9 +84,17 @@
           }
           
           canvas.onmousemove = null;
-          canvas.onmouseup = null;
+          document.onmouseup = null;
           aniReq && cancelAnimationFrame(aniReq);
-          ball.resume();
+          ball.resume({
+            // fallOptions: {
+            //   vy0: ball.vy,
+            //   stopY: ball.ctx.canvas.height - ball.radius,
+            //   gravity: 0.9,
+            //   reduction: 0.75,
+            //   keeping: true
+            // }
+          });
         };
       }
     });

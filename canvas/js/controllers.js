@@ -51,19 +51,37 @@ export class BallsCollisionController extends _Base {
     this.tick();
   }
 
+  // 随机速度
+  randomSpeed() {
+    return Methods.randomSpeed(1, 10);
+    // return {};
+  }
+
   init() {
     this.instance = [
       new CircumcenterPolygonParticle(
         this.ctx,
         {
+          x: 700,
+          y: 380,
+          ...this.randomSpeed(),
+          radius: 35,
+          mass: 5,
+          text: '1'
+        },
+        {
+          fillStyle: 'chocolate'
+        }
+      ),
+      new CircumcenterPolygonParticle(
+        this.ctx,
+        {
           x: this.ctx.canvas.width / 3 * 1,
           y: this.ctx.canvas.height / 2,
-          // vx: -3,
-          // vy: -5,
+          ...this.randomSpeed(),
           radius: 30,
-          // degrees: [30, 135, 290],
           mass: 5,
-          // friction: 0.004,
+          text: '2'
         },
         {
           fillStyle: 'yellowgreen'
@@ -74,38 +92,90 @@ export class BallsCollisionController extends _Base {
         {
           x: this.ctx.canvas.width / 3 * 2,
           y: this.ctx.canvas.height / 2,
-          // vx: -6,
-          // vy: 4,
+          ...this.randomSpeed(),
           radius: 60,
-          // degrees: [20, 130, 230, 310],
+          degrees: [20, 130, 230, 310],
           mass: 8,
-          // friction: 0.004,
+          text: '3'
         },
         {
           fillStyle: 'skyblue'
         }
       ),
+      new CircumcenterPolygonParticle(
+        this.ctx,
+        {
+          x: 100,
+          y: 100,
+          ...this.randomSpeed(),
+          radius: 45,
+          degrees: [30, 135, 290],
+          mass: 6,
+          text: '4'
+        },
+        {
+          fillStyle: 'deepskyblue'
+        }
+      ),
+      new CircumcenterPolygonParticle(
+        this.ctx,
+        {
+          x: 600,
+          y: 380,
+          ...this.randomSpeed(),
+          radius: 35,
+          mass: 5,
+          text: '5'
+        },
+        {
+          fillStyle: 'darkred'
+        }
+      ),
     ];
 
-    this.instance[0].collisionDetect = () => {
-      if (!this.instance[1]) {
-        return;
-      }
+  }
 
-      const { status, collidedAxises, minAxis } = this.instance[0].collideWith(this.instance[1])
-      if (status !== 0) {
-        this.instance[1].setAbsolutePosition(-minAxis.axis.x * minAxis.overlapLength, -minAxis.axis.y * minAxis.overlapLength)
-      }
-      if (status === 1) {
-        // this.instance[0].reverseSpeed();
-        // this.instance[1].reverseSpeed();
+  draw() {
+    this.ctx.clearRect(0, 0, this.width, this.height);
 
-        // 完全弹性碰撞
-        this.instance[0].perfectlyCollide(this.instance[1], 0.9);
-        return true;
+    if (this.instance && this.instance.length) {
+      this.instance.forEach(item => item.changeStatus());
+      // 碰撞检测
+      for (let i = 0, len = this.instance.length; i < len - 1; i++) {
+        for (let j = i + 1; j < len; j++) {
+          const { status, minAxis, collidedAxises } = this.instance[i].collideWith(this.instance[j])
+
+          if (status !== 0) {
+            const dx = (minAxis.axis.x * minAxis.overlapLength);
+            const dy = (minAxis.axis.y * minAxis.overlapLength);
+
+            if (this.instance[i].currentMass === Infinity && this.instance[j].currentMass === Infinity) {
+              // 两者质量都为无限
+              this.instance[i].setAbsolutePosition(dx / 2, dy / 2);
+              this.instance[j].setAbsolutePosition(dx / 2, dy / 2);
+            } else if (this.instance[i].currentMass === Infinity) {
+              // 其中一个质量为无限
+              this.instance[j].setAbsolutePosition(dx, dy);
+            } else if (this.instance[j].currentMass === Infinity) {
+              // 其中一个质量为无限
+              this.instance[i].setAbsolutePosition(-dx, -dy);
+            } else {
+              // 否则
+              const scale = this.instance[i].currentMass / this.instance[j].currentMass;
+              this.instance[i].setAbsolutePosition(-dx * scale, -dy * scale);
+              this.instance[j].setAbsolutePosition(dx * scale, dy * scale);
+            }
+          }
+          if (status === 1) {
+            // 完全弹性碰撞
+            this.instance[i].perfectlyCollide(this.instance[j], 0.9);
+          }
+        }
       }
-      return false;
-    };
+      this.instance.forEach(item => item.draw());
+    } else {
+      this.instance.tick();
+    }
   }
 
   // 点击选中

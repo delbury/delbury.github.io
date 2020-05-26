@@ -34,12 +34,12 @@ export class Vector {
   }
 
   // 归一化
-  normalize() {
+  normalize(reverse = false) {
     const len = this.length;
     if (len === 0) {
       return new Vector(0, 0);
     } else {
-      return new Vector(this.x / len, this.y / len);
+      return reverse ? new Vector(-this.x / len, -this.y / len) : new Vector(this.x / len, this.y / len);
     }
   }
 
@@ -49,13 +49,27 @@ export class Vector {
   }
 
   // 获取垂直单位向量
-  verticalUnitVector() {
-    return this.perpendicular().normalize();
+  verticalUnitVector(clockwise) {
+    return this.perpendicular(clockwise).normalize();
   }
 
   // 获取边向量
   edgeVector(vector) {
     return this.subtract(vector);
+  }
+
+  // 反向
+  reverse() {
+    return new Vector(-this.x, -this.y);
+  }
+
+  // 方向象限相同
+  isSameQuadrant(vector) {
+    const x1 = this.x === 0 ? 0 : (this.x / (Math.abs(this.x)));
+    const y1 = this.y === 0 ? 0 : (this.y / (Math.abs(this.y)));
+    const x2 = vector.x === 0 ? 0 : (vector.x / (Math.abs(vector.x)));
+    const y2 = vector.y === 0 ? 0 : (vector.y / (Math.abs(vector.y)));
+    return x1 === x2 && y1 === y2;
   }
 }
 

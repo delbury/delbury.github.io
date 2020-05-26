@@ -59,7 +59,12 @@ class Particle {
     ctx,
     {
       initStates = {
-        flickering: true
+        flickering: true,
+        baseMoving: false,
+        freeFalling: false,
+        springMoving: false,
+        easeMoving: false,
+        pauseMove: true
       },
       vx = 0,
       vy = 0,
@@ -71,11 +76,14 @@ class Particle {
       reduction = 1, // 反弹衰减
       mass = 0, // 质量
       friction = 0, // 摩擦力系数
-      moveMode = 'step' // ease, step, spring
+      moveMode = 'step', // ease, step, spring
+      text = '', // 显示的文字
     } = {},
     {
       fillStyle = '#000',
-      StrokeStyle = '#000'
+      StrokeStyle = '#000',
+      fontType = '24px SimHei',
+      textColor = '#fff'
     } = {}
   ) {
     this.ctx = ctx;
@@ -90,10 +98,19 @@ class Particle {
     this.friction = friction;
     this.fillStyle = fillStyle;
     this.StrokeStyle = StrokeStyle;
+    this.fontType = fontType;
+    this.textColor = textColor;
     this.moveMode = moveMode;
     this.initStates = initStates;
+    this.text = text;
 
     this._flickering = !!initStates.flickering;
+    this._baseMoving = !!initStates.baseMoving;
+    this._freeFalling = !!initStates.freeFalling;
+    this._springMoving = !!initStates.springMoving;
+    this._easeMoving = !!initStates.easeMoving;
+    this.pauseMove = !!initStates.pauseMove;
+    this._speedDirection = {}; // 根据上次的位置判断当前的移动方向
 
     if (target) {
       switch (this.moveMode) {
@@ -257,13 +274,15 @@ class Particle {
   }
 
   // 开始自由落体运动
-  startFreeFall({ vy0, gravity, reduction, stopY, rebound = true } = {}) {
+  startFreeFall({ vy0, stopY, gravity, reduction, rebound = true, keeping = false } = {}) {
     this.reduction = reduction || this.reduction;
     this.gravity = gravity || this.gravity;
     this._freeFallState = {
       stopY,
       rebound,
-      startPosition: [this.x, this.y]
+      startPosition: [this.x, this.y],
+      lastReboundedV: null,
+      keeping
     };
     this.vy = vy0;
     this._freeFalling = true;
@@ -282,12 +301,18 @@ class Particle {
         this.y = this._freeFallState.stopY;
 
         // 是否反弹
-        if (this._freeFallState.rebound && Math.abs(this.vy) >= 2) {
+        if (this._freeFallState.rebound) {
           this.vy *= -this.reduction;
 
+          if (this._freeFallState.lastReboundedV !== null && (this.vy - this._freeFallState.lastReboundedV) <= 0.5) {
+            this.vy = 0;
+            !this._freeFallState.keeping && (this._freeFalling = false);
+          } else {
+            this._freeFallState.lastReboundedV = this.vy
+          }
         } else {
           this.vy = 0;
-          this._freeFalling = false;
+          !this._freeFallState.keeping && (this._freeFalling = false);
         }
       } else {
         this.y += this.vy;
@@ -298,6 +323,12 @@ class Particle {
 
   // 无动画移动
   directMoveTo(x, y) {
+    // 记录移动方向
+    this.speedDirection = {
+      vxDir: x - this.x === 0 ? 1 : (x - this.x) / Math.abs(x - this.x),
+      vyDir: y - this.y === 0 ? 1 : (y - this.y) / Math.abs(y - this.y),
+    };
+
     this.x = x;
     this.y = y;
   }
@@ -340,6 +371,28 @@ class Particle {
 
   // 每一帧
   tick() {
+  }
+
+  // 当前的质量
+  get currentMass() {
+    return this.pauseMove ? Infinity : this.mass || 0
+  }
+
+  // 速度方向
+  get speedDirection() {
+    if (!this.pauseMove) {
+      // 移动时
+      return {
+        vxDir: this.vx === 0 ? 1 : this.vx / Math.abs(this.vx),
+        vyDir: this.vy === 0 ? 1 : this.vy / Math.abs(this.vy)
+      }
+    } else {
+      // 手动拖动时
+      return this._speedDirection;
+    }
+  }
+  set speedDirection(val) {
+    this._speedDirection = val;
   }
 
   /**
@@ -412,11 +465,15 @@ export class CircleParticle extends Particle {
     }
 
     if (this.y + this.vy + this.radius > this.ctx.canvas.height || this.y + this.vy - this.radius < 0) {
-      this.vy = -this.vy;
+      if (!this._freeFalling) {
+        this.vy = -this.vy;
+      }
     }
 
     this.x += this.vx;
-    this.y += this.vy;
+    if (!this._freeFalling) {
+      this.y += this.vy;
+    }
 
     if (this.vx !== 0 && this.vy !== 0) {
       const rad = Math.atan2(Math.abs(this.vy), Math.abs(this.vx));
@@ -480,8 +537,8 @@ export class CircumcenterPolygonParticle extends CircleParticle {
 
   // 完全弹性碰撞
   perfectlyCollide(cpp, e = 1) {
-    const thisMass = this.pauseMove ? Infinity : this.mass;
-    const cppMass = cpp.pauseMove ? Infinity : cpp.mass;
+    const thisMass = this.currentMass;
+    const cppMass = cpp.currentMass;
     const vxs = Methods.perfectlyInelasticCollide(this.vx, cpp.vx, thisMass, cppMass, e);
     const vys = Methods.perfectlyInelasticCollide(this.vy, cpp.vy, thisMass, cppMass, e);
     [this.vx, this.vy] = [vxs[0], vys[0]];
@@ -494,12 +551,15 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     const collidedAxises = []; // 产生碰撞的投影轴
     if (this.degrees.length && cpp.degrees.length) {
       // 两个都是多边形
+
+      // 获取各多边形的顶点向量
       const thisVectors = this.getVertexVector();
       const anotherVectors = cpp.getVertexVector();
-      const axises = [...this.getVertexAxis(thisVectors), ...this.getVertexAxis(anotherVectors)];
+      const axises = [...this.getVertexAxis(thisVectors), ...this.getVertexAxis(anotherVectors)]; // 获取投影轴向量
 
       // 循环判断各轴
       for (let i = 0, len = axises.length; i < len; i++) {
+        // 计算各边在投影轴上的投影
         const thisProjection = new Projection(thisVectors.map(vector => vector.dotProduct(axises[i])));
         const anotherProjection = new Projection(anotherVectors.map(vector => vector.dotProduct(axises[i])));
 
@@ -508,9 +568,13 @@ export class CircumcenterPolygonParticle extends CircleParticle {
           isCollided = false;
           break;
         } else {
+          // const source = i >= this.degrees.length ? cpp.degrees.length : this.degrees.length;
+          const reverse = i < this.degrees.length;
           collidedAxises.push({
-            axis: axises[i],
-            overlapLength: len
+            axis: reverse ? axises[i].reverse() : axises[i],
+            overlapLength: len,
+            // source,
+            reverse
           });
         }
       }
@@ -521,7 +585,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       isCollided = (this.x - cpp.x) ** 2 + (this.y - cpp.y) ** 2 <= (this.radius + cpp.radius) ** 2
       if (isCollided) {
         collidedAxises.push({
-          axis: new Vector(this.x - cpp.x, this.y - cpp.y),
+          axis: new Vector(cpp.x - this.x, cpp.y - this.y),
           overlapLength: (this.radius + cpp.radius) - Math.sqrt((this.x - cpp.x) ** 2 + (this.y - cpp.y) ** 2)
         });
       }
@@ -529,15 +593,17 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       // 一个是圆，另一个是多边形
       let circle = null;
       let polygon = null;
+      let clockwise = true;
       if (!this.degrees.length) {
         circle = this;
         polygon = cpp;
       } else {
         circle = cpp;
         polygon = this;
+        clockwise = false;
       }
 
-      const polygonVectors = polygon.getVertexVector();
+      const polygonVectors = polygon.getVertexVector(); // 多边形的顶点向量
       let circleAxis = null;
       polygonVectors.map(vector => {
         const cv = vector.subtract(new Vector(circle.x, circle.y));
@@ -545,15 +611,18 @@ export class CircumcenterPolygonParticle extends CircleParticle {
           circleAxis = cv;
         }
       });
-      circleAxis = circleAxis.normalize();
-      const circleVector = [
-        (new Vector(circle.x, circle.y)).subtract(circleAxis.antiNormalize(circle.radius)),
-        (new Vector(circle.x, circle.y)).add(circleAxis.antiNormalize(circle.radius))
-      ];
-      const axises = [circleAxis, ...this.getVertexAxis(polygonVectors)];
+      circleAxis = circleAxis.normalize(!clockwise); // 圆心到多变形最近的顶点的投影轴向量
+
+      const axises = [circleAxis, ...this.getVertexAxis(polygonVectors, clockwise)]; // 需要计算的各投影轴
 
       // 循环判断各轴
       for (let i = 0, len = axises.length; i < len; i++) {
+        // 计算圆相对于投影轴的顶点向量
+        const circleVector = [
+          (new Vector(circle.x, circle.y)).subtract(axises[i].antiNormalize(circle.radius)),
+          (new Vector(circle.x, circle.y)).add(axises[i].antiNormalize(circle.radius))
+        ];
+
         const circleProjection = new Projection(circleVector.map(vector => vector.dotProduct(axises[i])));
         const polygonProjection = new Projection(polygonVectors.map(vector => vector.dotProduct(axises[i])));
 
@@ -581,8 +650,9 @@ export class CircumcenterPolygonParticle extends CircleParticle {
         }
       }
       minAxis = {
+        ...minAxis,
         axis: minAxis.axis.normalize(),
-        overlapLength: minAxis.overlapLength
+        overlapLength: minAxis.overlapLength,
       }
     }
 
@@ -604,8 +674,8 @@ export class CircumcenterPolygonParticle extends CircleParticle {
   }
 
   // 获取投影轴
-  getVertexAxis(vectors) {
-    return vectors.map(((vc, index) => vc.edgeVector(vectors[(index + 1) % vectors.length]).verticalUnitVector()));
+  getVertexAxis(vectors, clockwise) {
+    return vectors.map(((vc, index) => vc.edgeVector(vectors[(index + 1) % vectors.length]).verticalUnitVector(clockwise)));
   }
 
   // 随机变形
@@ -623,7 +693,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
 
   // 移动帧
   moveTick() {
-    if (!this._baseMoving && !this._randomMoving && !this._freeFalling) {
+    if (!this._baseMoving && !this._randomMoving) {
       this.move();
     }
   }
@@ -633,25 +703,39 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     this.vx = 0;
     this.vy = 0;
     this.pauseMove = true;
+    this._freeFalling = false;
   }
 
   // 恢复
-  resume() {
+  resume(params = {}) {
     if (this.pauseMove === true) {
       this.pauseMove = false;
     }
+
+    if (!params || typeof params !== 'object') {
+      return;
+    }
+    if (params.fallOptions) {
+      this.startFreeFall(params.fallOptions)
+    }
   }
 
-  tick() {
+  // 状态改变
+  changeStatus() {
     if (!this.pauseMove) {
       this.randomMoveTick();
       this.baseMoveTick();
       this.moveTick();
     }
-    this.collisionDetect && this.collisionDetect();
+    this.freeFallTick();
     this.transitionTick();
     this.rotateTick();
     this.flickerTick();
+
+  }
+
+  // 绘制
+  draw() {
     this.ctx.save();
     this.ctx.fillStyle = this.fillStyle;
     // this.ctx.strokeStyle = this.StrokeStyle;
@@ -666,7 +750,21 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     }
 
     this.ctx.fill();
+    if (this.text) {
+      // 绘制文本
+      this.ctx.fillStyle = this.textColor;
+      this.ctx.font = this.fontType;
+      this.ctx.textBaseline = 'middle';
+      const width = this.ctx.measureText(this.text).width;
+      this.ctx.fillText(this.text, this.x - width / 2, this.y);
+    }
+
     this.ctx.restore();
+  }
+
+  tick() {
+    this.changeStatus();
+    this.draw();
   }
 
   // 过渡到n边形
