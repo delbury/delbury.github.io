@@ -44,6 +44,7 @@
     const instance = new BallsCollisionController(document.getElementById('canvas'));
     window.instance = instance;
     const canvas = document.getElementById('canvas');
+    let inertance = false;
 
     canvas.addEventListener('mousedown', ev => {
       const { offsetX, offsetY } = ev;
@@ -76,7 +77,8 @@
         };
 
         document.onmouseup = ev => {
-          if(lastTwoMousePosition.length === 2) {
+          // 设置惯性移动
+          if(lastTwoMousePosition.length === 2 && inertance) {
             ball.setSpeed(
               (lastTwoMousePosition[0][0] - lastTwoMousePosition[1][0]) / 2,
               (lastTwoMousePosition[0][1] - lastTwoMousePosition[1][1]) / 2,
