@@ -221,7 +221,8 @@ export class BallsCollisionController extends _Base {
           }
           if (status === 1) {
             // 完全弹性碰撞
-            this.instance[i].perfectlyCollide(this.instance[j], 0.9);
+            // this.instance[i].perfectlyCollide(this.instance[j], 0.9);
+            this.instance[i].noncentricCollide(this.instance[j]);
           }
         }
       }
@@ -337,8 +338,7 @@ function textInit() {
       {
         x: 390,
         y: 50,
-        // ...this.randomSpeed(),
-        vy: 2,
+        ...this.randomSpeed(),
         radius: 35,
         mass: 5,
         text: '1',
@@ -353,9 +353,8 @@ function textInit() {
       {
         x: 410,
         y: 300,
-        // ...this.randomSpeed(),
-        vy: -2,
-        radius: 35,
+        ...this.randomSpeed(),
+        radius: 30,
         mass: 5,
         text: '2',
         friction
@@ -364,6 +363,39 @@ function textInit() {
         fillStyle: 'darkred'
       }
     ),
-
+    new CircumcenterPolygonParticle(
+      this.ctx,
+      {
+        x: 410,
+        y: 300,
+        ...this.randomSpeed(),
+        vy: -2,
+        radius: 40,
+        mass: 5,
+        text: '3',
+        // degrees: [0, 120, 240],
+        friction
+      },
+      {
+        fillStyle: 'skyblue'
+      }
+    ),
+    new CircumcenterPolygonParticle(
+      this.ctx,
+      {
+        x: 410,
+        y: 300,
+        ...this.randomSpeed(),
+        vy: -2,
+        radius: 25,
+        mass: 5,
+        text: '3',
+        // degrees: [0, 120, 240],
+        friction
+      },
+      {
+        fillStyle: 'yellowgreen'
+      }
+    ),
   ];
 }

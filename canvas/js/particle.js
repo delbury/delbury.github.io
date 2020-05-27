@@ -486,6 +486,7 @@ export class CircleParticle extends Particle {
     }
   }
 
+  // 判断坐标点是否在当前图形内
   isInside(x, y) {
     if (!this.degrees.length) {
       return (this.x - x) ** 2 + (this.y - y) ** 2 < this.radius ** 2;
@@ -498,7 +499,7 @@ export class CircleParticle extends Particle {
       path.closePath();
       return this.ctx.isPointInPath(path, x, y);
     }
-    return false;
+    // return false;
   }
 }
 
@@ -523,12 +524,42 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     // this.moveTo([0, 0]);
   }
 
+  // 非对心碰撞
+  noncentricCollide(cpp) {
+    const thisSpeedVector = new Vector(this.vx, this.vy); // VA的速度向量
+    const cppSpeedVector = new Vector(cpp.vx, cpp.vy); // VB的速度向量
+    const centroidVector = new Vector(cpp.centroid[0] - this.centroid[0], cpp.centroid[1] - this.centroid[1]).normalize(); // AB质心连线的向量
+    const centroidVerticalVector = centroidVector.verticalUnitVector(false); // AB质心连线的法向量（逆时针）
+    
+    const thisSpeedParallel = thisSpeedVector.dotProduct(centroidVector);
+    const thisSpeedVertical = thisSpeedVector.dotProduct(centroidVerticalVector);
+
+    const cppSpeedParallel = cppSpeedVector.dotProduct(centroidVector);
+    const cppSpeedVertical = cppSpeedVector.dotProduct(centroidVerticalVector);
+
+    const [thisVP, cppVP] = Methods.perfectlyInelasticCollide(thisSpeedParallel, cppSpeedParallel, this.currentMass, cpp.currentMass); // 质心连线向量上的动量守恒
+
+    // 碰撞后的分量速度重新换算成 vx,vy
+    const thisVx = centroidVector.multiply(thisVP).dotProduct(new Vector(1, 0)) +
+      centroidVerticalVector.multiply(thisSpeedVertical).dotProduct(new Vector(1, 0));
+    const thisVy = centroidVector.multiply(thisVP).dotProduct(new Vector(0, 1)) +
+      centroidVerticalVector.multiply(thisSpeedVertical).dotProduct(new Vector(0, 1));
+
+    const cppVx = centroidVector.multiply(cppVP).dotProduct(new Vector(1, 0)) +
+      centroidVerticalVector.multiply(cppSpeedVertical).dotProduct(new Vector(1, 0));
+    const cppVy = centroidVector.multiply(cppVP).dotProduct(new Vector(0, 1)) +
+      centroidVerticalVector.multiply(cppSpeedVertical).dotProduct(new Vector(0, 1));
+
+    this.vx = thisVx;
+    this.vy = thisVy;
+    cpp.vx = cppVx;
+    cpp.vy = cppVy;
+  }
+
   // 完全弹性碰撞
   perfectlyCollide(cpp, e = 1) {
-    const thisMass = this.currentMass;
-    const cppMass = cpp.currentMass;
-    const vxs = Methods.perfectlyInelasticCollide(this.vx, cpp.vx, thisMass, cppMass, e);
-    const vys = Methods.perfectlyInelasticCollide(this.vy, cpp.vy, thisMass, cppMass, e);
+    const vxs = Methods.perfectlyInelasticCollide(this.vx, cpp.vx, this.currentMass, cpp.currentMass, e);
+    const vys = Methods.perfectlyInelasticCollide(this.vy, cpp.vy, this.currentMass, cpp.currentMass, e);
     [this.vx, this.vy] = [vxs[0], vys[0]];
     [cpp.vx, cpp.vy] = [vxs[1], vys[1]];
   }

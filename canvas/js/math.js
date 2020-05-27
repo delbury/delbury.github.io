@@ -22,6 +22,11 @@ export class Vector {
     return new Vector(this.x - vector.x, this.y - vector.y);
   }
 
+  // 乘常数
+  multiply(scale) {
+    return new Vector(this.x * scale, this.y * scale);
+  }
+
   // 点积
   dotProduct(vector) {
     return this.x * vector.x + this.y * vector.y;
@@ -185,14 +190,5 @@ export class Methods {
     } else {
       return [x, y]
     }
-  }
-
-  // 沿一个方向向量，分解速度为垂直和平行分量
-  resolveSpeedByVector(vx, vy, vector) {
-    const vxRad = new Vector(1, 0).radianWith(vector);
-    const vyRad = new Vector(0, 1).radianWith(vector);
-
-    const vParallel = 0; // 水平分量
-    const vVertical = 0; // 垂直分量
   }
 }
