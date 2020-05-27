@@ -53,12 +53,12 @@ export class BallsCollisionController extends _Base {
 
   // 随机速度
   randomSpeed() {
-    // return Methods.randomSpeed(1, 10);
-    return {};
+    return Methods.randomSpeed(1, 10);
+    // return {};
   }
 
   // 创建七巧板
-  creatNeves(sideLength = 200, totalWeight = 100) {
+  creatNeves(sideLength = 300, totalWeight = 100) {
     const cw = this.ctx.canvas.width / 2;
     const ch = this.ctx.canvas.height / 2;
     this.instance = [
@@ -95,10 +95,14 @@ export class BallsCollisionController extends _Base {
           y: ch + sideLength / 4,
           radius: sideLength / 4,
           mass: totalWeight / 16,
-          degrees: [0, 180, 270]
+          degrees: [0, 180, 270],
+          text: 2,
         },
         {
-          fillStyle: 'crimson'
+          fillStyle: 'crimson',
+          textOptions: {
+            // textOffsetY: -sideLength / 10
+          }
         }
       ),
       new CircumcenterPolygonParticle(
@@ -108,7 +112,8 @@ export class BallsCollisionController extends _Base {
           y: ch,
           radius: sideLength / 4,
           mass: totalWeight / 8,
-          degrees: [0, 90, 180, 270]
+          degrees: [0, 90, 180, 270],
+          text: 3
         },
         {
           fillStyle: 'burlywood'
@@ -147,10 +152,14 @@ export class BallsCollisionController extends _Base {
           y: ch + sideLength / 4,
           radius: sideLength / 4,
           mass: totalWeight / 8,
-          degrees: [0, 90, 180]
+          degrees: [0, 90, 180],
+          text: 7
         },
         {
-          fillStyle: 'teal '
+          fillStyle: 'teal ',
+          textOptions: {
+            // textOffsetY: sideLength / 10
+          }
         }
       ),
       new CircumcenterPolygonParticle(
@@ -160,18 +169,23 @@ export class BallsCollisionController extends _Base {
           y: ch + sideLength / 2,
           radius: sideLength / 4,
           mass: totalWeight / 8,
-          degrees: [0, 180, 270]
+          degrees: [0, 180, 270],
+          text: 8
         },
         {
-          fillStyle: 'teal '
+          fillStyle: 'teal ',
+          textOptions: {
+            // textOffsetY: -sideLength / 10
+          }
         }
       ),
-    ].filter((item, index) => index === 3 || index == 2);
+    ];
+    // ].filter((item, index) => index === 6 || index == 7);
   }
 
   init() {
-    // textInit.call(this);
-    this.creatNeves();
+    textInit.call(this);
+    // this.creatNeves();
   }
 
   draw() {
@@ -193,10 +207,10 @@ export class BallsCollisionController extends _Base {
               this.instance[i].setAbsolutePosition(dx / 2, dy / 2);
               this.instance[j].setAbsolutePosition(dx / 2, dy / 2);
             } else if (this.instance[i].currentMass === Infinity) {
-              // 其中一个质量为无限
+              // 其中一个质量为无限，抓起前面的
               this.instance[j].setAbsolutePosition(dx, dy);
             } else if (this.instance[j].currentMass === Infinity) {
-              // 其中一个质量为无限
+              // 其中一个质量为无限，抓起后面的
               this.instance[i].setAbsolutePosition(-dx, -dy);
             } else {
               // 否则
@@ -316,16 +330,19 @@ export class PolygonShapeChangeController extends _Base {
 }
 
 function textInit() {
+  const friction = 0;
   this.instance = [
     new CircumcenterPolygonParticle(
       this.ctx,
       {
-        x: 700,
-        y: 380,
-        ...this.randomSpeed(),
+        x: 390,
+        y: 50,
+        // ...this.randomSpeed(),
+        vy: 2,
         radius: 35,
         mass: 5,
-        text: '1'
+        text: '1',
+        friction
       },
       {
         fillStyle: 'chocolate'
@@ -334,60 +351,19 @@ function textInit() {
     new CircumcenterPolygonParticle(
       this.ctx,
       {
-        x: this.ctx.canvas.width / 3 * 1,
-        y: this.ctx.canvas.height / 2,
-        ...this.randomSpeed(),
-        radius: 30,
-        mass: 5,
-        text: '2'
-      },
-      {
-        fillStyle: 'yellowgreen'
-      }
-    ),
-    new CircumcenterPolygonParticle(
-      this.ctx,
-      {
-        x: this.ctx.canvas.width / 3 * 2,
-        y: this.ctx.canvas.height / 2,
-        ...this.randomSpeed(),
-        radius: 60,
-        degrees: [20, 130, 230, 310],
-        mass: 8,
-        text: '3'
-      },
-      {
-        fillStyle: 'skyblue'
-      }
-    ),
-    new CircumcenterPolygonParticle(
-      this.ctx,
-      {
-        x: 100,
-        y: 100,
-        ...this.randomSpeed(),
-        radius: 45,
-        degrees: [30, 135, 290],
-        mass: 6,
-        text: '4'
-      },
-      {
-        fillStyle: 'deepskyblue'
-      }
-    ),
-    new CircumcenterPolygonParticle(
-      this.ctx,
-      {
-        x: 600,
-        y: 380,
-        ...this.randomSpeed(),
+        x: 410,
+        y: 300,
+        // ...this.randomSpeed(),
+        vy: -2,
         radius: 35,
         mass: 5,
-        text: '5'
+        text: '2',
+        friction
       },
       {
         fillStyle: 'darkred'
       }
     ),
+
   ];
 }

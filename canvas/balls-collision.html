@@ -48,7 +48,7 @@
     const instance = new BallsCollisionController(document.getElementById('canvas'));
     window.instance = instance;
     const canvas = document.getElementById('canvas');
-    let inertance = false;
+    let inertance = true; // 是否惯性移动
 
     canvas.addEventListener('mousedown', ev => {
       const { offsetX, offsetY } = ev;

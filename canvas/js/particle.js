@@ -1,59 +1,6 @@
-import { Vector, Projection } from './math.js';
+import { Vector, Projection, Methods } from './math.js';
+export { Methods };
 
-// 工具类
-export class Methods {
-  // 范围内随机值
-  static randomValue(min, max) {
-    return Math.random() * (max - min) + min;
-  }
-
-  // 随机颜色
-  static randomColor() {
-    return '#' + Math.floor(Math.random() * 2 ** 24).toString(16);
-  }
-
-  // 随机位置
-  static randomPosition(xmin = 0, xmax = 0, ymin = 0, ymax = 0) {
-    return {
-      x: Methods.randomValue(xmin, xmax),
-      y: Methods.randomValue(ymin, ymax)
-    }
-  }
-
-  // 随机速度
-  static randomSpeed(min = 0, max = 0) {
-    return {
-      vx: Methods.randomValue(min, max) * (Math.random() > 0.5 ? 1 : -1),
-      vy: Methods.randomValue(min, max) * (Math.random() > 0.5 ? 1 : -1)
-    };
-  }
-
-  // 随机正负值范围
-  static randomPlusMinus(min = 0, max = 0) {
-    return Methods.randomValue(min, max) * (Math.random() > 0.5 ? 1 : -1)
-  }
-
-  // 构造函数内参数赋值
-  static setParams(target, params, kv) {
-    for (let [k, v] of Object.entries(kv)) {
-      target[k] = params[k] || v || 0;
-    }
-  }
-
-  // 完全弹性碰撞后的速度
-  static perfectlyInelasticCollide(v1, v2, m1, m2, e) {
-    if (m1 === Infinity) {
-      return [v1, -v2];
-    } else if (m2 === Infinity) {
-      return [-v1, v2];
-    } else {
-      return [
-        ((m1 - e * m2) * v1 + (1 + e) * m2 * v2) / (m1 + m2),
-        ((m2 - e * m1) * v2 + (1 + e) * m1 * v1) / (m1 + m2)
-      ];
-    }
-  }
-}
 class Particle {
   constructor(
     ctx,
@@ -82,8 +29,7 @@ class Particle {
     {
       fillStyle = '#000',
       StrokeStyle = '#000',
-      fontType = '24px SimHei',
-      textColor = '#fff'
+      textOptions = {}
     } = {}
   ) {
     this.ctx = ctx;
@@ -98,8 +44,14 @@ class Particle {
     this.friction = friction;
     this.fillStyle = fillStyle;
     this.StrokeStyle = StrokeStyle;
-    this.fontType = fontType;
-    this.textColor = textColor;
+    this.textOptions = {
+      fontType: '24px SimHei',
+      textColor: '#fff',
+      textOffsetX: 0,
+      textOffsetY: 0,
+      ...textOptions
+    };
+
     this.moveMode = moveMode;
     this.initStates = initStates;
     this.text = text;
@@ -395,37 +347,62 @@ class Particle {
     this._speedDirection = val;
   }
 
-  /**
-    get x() {
-      if(!Number.isNaN(+this.width)) {
-        return this._x + this.width / 2;
-      } else {
-        return this._x;
-      }
-    }
-    set x(val) {
-      if(!Number.isNaN(+this.width)) {
-        this._x = val - this.width / 2;
-      } else {
-        this._x = val;
-      }
-    }
+  // 设置坐标监听
+  get x() {
+    return this._x || 0;
+  }
+  set x(val) {
+    this._x = val;
 
-    get y() {
-      if(!Number.isNaN(+this.height)) {
-        return this._y + this.height / 2;
-      } else {
-        return this._y;
-      }
+    if (!this.prevX) {
+      this.prevX = [val];
+    } else {
+      this.prevX.unshift(val);
+      this.prevX.length = 2;
     }
-    set y(val) {
-      if(!Number.isNaN(+this.height)) {
-        this._y = val - this.height / 2;
-      } else {
-        this._y = val;
-      }
+  }
+
+  get y() {
+    return this._y || 0;
+  }
+  set y(val) {
+    this._y = val;
+
+    if (!this.prevY) {
+      this.prevY = [val];
+    } else {
+      this.prevY.unshift(val);
+      this.prevY.length = 2;
     }
-  */
+  }
+
+  // 半径监听
+  get radius() {
+    return this._radius || 0;
+  }
+  set radius(val) {
+    this._radius = val;
+
+    this._centroid = Methods.calcCentroid(0, 0, val, this.degrees || []) // 重新计算相对质心
+  }
+
+  // 角度值监听
+  get degrees() {
+    return this._degrees || [];
+  }
+  set degrees(val) {
+    this._degrees = val;
+
+    this._centroid = Methods.calcCentroid(0, 0, this.radius, val || []) // 重新计算相对质心
+  }
+
+  // 质心
+  get centroid() {
+    return [
+      this._centroid[0] + this.x,
+      this._centroid[1] + this.y
+    ]
+  }
 }
 
 // 圆形粒子
@@ -475,7 +452,7 @@ export class CircleParticle extends Particle {
       this.y += this.vy;
     }
 
-    if (this.vx !== 0 && this.vy !== 0) {
+    if (this.vx !== 0 || this.vy !== 0) {
       const rad = Math.atan2(Math.abs(this.vy), Math.abs(this.vx));
 
       const dvx = this.friction * this.mass * Math.cos(rad);
@@ -510,7 +487,7 @@ export class CircleParticle extends Particle {
   }
 
   isInside(x, y) {
-    if(!this.degrees.length) {
+    if (!this.degrees.length) {
       return (this.x - x) ** 2 + (this.y - y) ** 2 < this.radius ** 2;
     } else {
       const path = new Path2D();
@@ -574,18 +551,24 @@ export class CircumcenterPolygonParticle extends CircleParticle {
         const thisProjection = new Projection(thisVectors.map(vector => vector.dotProduct(axises[i])));
         const anotherProjection = new Projection(anotherVectors.map(vector => vector.dotProduct(axises[i])));
 
-        const len = thisProjection.isOverlapWith(anotherProjection)
+        const len = thisProjection.overlapWith(anotherProjection)
         if (!len) {
           isCollided = false;
           break;
         } else {
           // const source = i >= this.degrees.length ? cpp.degrees.length : this.degrees.length;
           const reverse = i < this.degrees.length;
+
+          // 计算质心
+          const thisCentroid = this.centroid;
+          const cppCentroid = cpp.centroid;
+
           collidedAxises.push({
             axis: reverse ? axises[i].reverse() : axises[i],
             overlapLength: len,
+            centerVector: new Vector(cppCentroid[0] - thisCentroid[0], cppCentroid[1] - thisCentroid[1])
             // source,
-            reverse
+            // reverse
           });
         }
       }
@@ -637,7 +620,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
         const circleProjection = new Projection(circleVector.map(vector => vector.dotProduct(axises[i])));
         const polygonProjection = new Projection(polygonVectors.map(vector => vector.dotProduct(axises[i])));
 
-        const len = circleProjection.isOverlapWith(polygonProjection)
+        const len = circleProjection.overlapWith(polygonProjection)
         if (!len) {
           isCollided = false;
           break;
@@ -660,10 +643,18 @@ export class CircumcenterPolygonParticle extends CircleParticle {
           minAxis = collidedAxises[i];
         }
       }
+
+      let reverse = false;
+      if (minAxis.centerVector && minAxis.centerVector.angleWith(minAxis.axis) > 90) {
+        // 判断是否需要反向
+        // 若为钝角，则反向
+        reverse = true;
+      }
       minAxis = {
         ...minAxis,
-        axis: minAxis.axis.normalize(),
+        axis: minAxis.axis.normalize(reverse),
         overlapLength: minAxis.overlapLength,
+        reverse
       }
     }
 
@@ -763,11 +754,12 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     this.ctx.fill();
     if (this.text) {
       // 绘制文本
-      this.ctx.fillStyle = this.textColor;
-      this.ctx.font = this.fontType;
+      this.ctx.fillStyle = this.textOptions.textColor;
+      this.ctx.font = this.textOptions.fontType;
       this.ctx.textBaseline = 'middle';
       const width = this.ctx.measureText(this.text).width;
-      this.ctx.fillText(this.text, this.x - width / 2, this.y);
+      const position = this.centroid;
+      this.ctx.fillText(this.text, position[0] - width / 2 + this.textOptions.textOffsetX, position[1] + this.textOptions.textOffsetY);
     }
 
     this.ctx.restore();
