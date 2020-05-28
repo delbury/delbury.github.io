@@ -6,12 +6,13 @@ class Particle {
     ctx,
     {
       initStates = {
-        flickering: true,
+        flickering: false,
         baseMoving: false,
         freeFalling: false,
         springMoving: false,
         easeMoving: false,
-        pauseMove: true
+        pauseMove: true,
+        rotating: false
       },
       vx = 0,
       vy = 0,
@@ -28,8 +29,9 @@ class Particle {
     } = {},
     {
       fillStyle = '#000',
-      StrokeStyle = '#000',
-      textOptions = {}
+      strokeStyle = '#000',
+      textOptions = {},
+      // transform = [1, 0, 0, 1] // 矩阵变换, 前四个参数，不包括位移
     } = {}
   ) {
     this.ctx = ctx;
@@ -43,7 +45,8 @@ class Particle {
     this.mass = mass;
     this.friction = friction;
     this.fillStyle = fillStyle;
-    this.StrokeStyle = StrokeStyle;
+    this.strokeStyle = strokeStyle;
+    // this.transform = transform;
     this.textOptions = {
       fontType: '24px SimHei',
       textColor: '#fff',
@@ -62,6 +65,7 @@ class Particle {
     this._springMoving = !!initStates.springMoving;
     this._easeMoving = !!initStates.easeMoving;
     this.pauseMove = !!initStates.pauseMove;
+    this._rotating = !!initStates.rotating
     this._speedDirection = {}; // 根据上次的位置判断当前的移动方向
 
     if (target) {
@@ -348,10 +352,20 @@ class Particle {
   }
 
   // 设置坐标监听
+  beforeSetX() {
+    return null;
+  }
   get x() {
     return this._x || 0;
   }
   set x(val) {
+    if (Number.isNaN(+val)) {
+      throw new TypeError(`坐标值数据类型错误:${val}`);
+    }
+    const returnVal = this.beforeSetX(val);
+    if (returnVal !== null && returnVal !== undefined) {
+      return this._x = returnVal;
+    }
     this._x = val;
 
     if (!this.prevX) {
@@ -362,10 +376,20 @@ class Particle {
     }
   }
 
+  beforeSetY() {
+    return null;
+  }
   get y() {
     return this._y || 0;
   }
   set y(val) {
+    if (Number.isNaN(+val)) {
+      throw new TypeError(`坐标值数据类型错误:${val}`);
+    }
+    const returnVal = this.beforeSetY(val);
+    if (returnVal !== null && returnVal !== undefined) {
+      return this._y = returnVal;
+    }
     this._y = val;
 
     if (!this.prevY) {
@@ -374,34 +398,6 @@ class Particle {
       this.prevY.unshift(val);
       this.prevY.length = 2;
     }
-  }
-
-  // 半径监听
-  get radius() {
-    return this._radius || 0;
-  }
-  set radius(val) {
-    this._radius = val;
-
-    this._centroid = Methods.calcCentroid(0, 0, val, this.degrees || []) // 重新计算相对质心
-  }
-
-  // 角度值监听
-  get degrees() {
-    return this._degrees || [];
-  }
-  set degrees(val) {
-    this._degrees = val;
-
-    this._centroid = Methods.calcCentroid(0, 0, this.radius, val || []) // 重新计算相对质心
-  }
-
-  // 质心
-  get centroid() {
-    return [
-      this._centroid[0] + this.x,
-      this._centroid[1] + this.y
-    ]
   }
 }
 
@@ -428,7 +424,7 @@ export class CircleParticle extends Particle {
     this.flickerTick();
     this.ctx.save();
     this.ctx.fillStyle = this.fillStyle;
-    // this.ctx.strokeStyle = this.StrokeStyle;
+    // this.ctx.strokeStyle = this.strokeStyle;
     this.ctx.beginPath();
     this.ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
     this.ctx.fill();
@@ -490,6 +486,9 @@ export class CircleParticle extends Particle {
   isInside(x, y) {
     if (!this.degrees.length) {
       return (this.x - x) ** 2 + (this.y - y) ** 2 < this.radius ** 2;
+      // const path = new Path2D();
+      // path.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+      // return this.ctx.isPointInPath(path, x, y);
     } else {
       const path = new Path2D();
       this.degrees.forEach(deg => {
@@ -500,6 +499,53 @@ export class CircleParticle extends Particle {
       return this.ctx.isPointInPath(path, x, y);
     }
     // return false;
+  }
+
+  // 半径监听
+  get radius() {
+    return this._radius || 0;
+  }
+  set radius(val) {
+    this._radius = val;
+
+    const res = Methods.calcCentroid(0, 0, val, this.degrees || []); // 重新计算相对质心
+    this._centroid = res.centroid;
+    this._vertex = res.vertex;
+  }
+
+  // 角度值监听
+  get degrees() {
+    return this._degrees || [];
+  }
+  set degrees(val) {
+    this._degrees = val;
+
+    const res = Methods.calcCentroid(0, 0, this.radius, val || []); // 重新计算相对质心
+    this._centroid = res.centroid;
+    this._vertex = res.vertex;
+  }
+
+  // 质心
+  get centroid() {
+    return [
+      this._centroid[0] + this.x,
+      this._centroid[1] + this.y
+    ]
+  }
+
+  beforeSetX(val) {
+    if (val <= this.radius) {
+      return this.radius
+    } else if (val >= this.ctx.canvas.width - this.radius) {
+      return this.ctx.canvas.width - this.radius
+    }
+  }
+  beforeSetY(val) {
+    if (val <= this.radius) {
+      return this.radius
+    } else if (val >= this.ctx.canvas.height - this.radius) {
+      return this.ctx.canvas.height - this.radius
+    }
   }
 }
 
@@ -524,13 +570,28 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     // this.moveTo([0, 0]);
   }
 
+  beforeSetX(val) {
+    if (!this.degrees.length) {
+      return super.beforeSetX(val);
+    } else {
+      return val;
+    }
+  }
+  beforeSetY(val) {
+    if (!this.degrees.length) {
+      return super.beforeSetY(val);
+    } else {
+      return val;
+    }
+  }
+
   // 非对心碰撞
   noncentricCollide(cpp) {
     const thisSpeedVector = new Vector(this.vx, this.vy); // VA的速度向量
     const cppSpeedVector = new Vector(cpp.vx, cpp.vy); // VB的速度向量
     const centroidVector = new Vector(cpp.centroid[0] - this.centroid[0], cpp.centroid[1] - this.centroid[1]).normalize(); // AB质心连线的向量
     const centroidVerticalVector = centroidVector.verticalUnitVector(false); // AB质心连线的法向量（逆时针）
-    
+
     const thisSpeedParallel = thisSpeedVector.dotProduct(centroidVector);
     const thisSpeedVertical = thisSpeedVector.dotProduct(centroidVerticalVector);
 
@@ -658,7 +719,8 @@ export class CircumcenterPolygonParticle extends CircleParticle {
         } else {
           collidedAxises.push({
             axis: axises[i],
-            overlapLength: len
+            overlapLength: len,
+            centerVector: new Vector(cpp.centroid[0] - this.centroid[0], cpp.centroid[1] - this.centroid[1])
           });
         }
       }
@@ -753,6 +815,42 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     }
   }
 
+  // 移动帧
+  move() {
+    if (this.x + this.vx + this.radius > this.ctx.canvas.width || this.x + this.vx - this.radius < 0) {
+      this.vx = -this.vx;
+    }
+
+    if (this.y + this.vy + this.radius > this.ctx.canvas.height || this.y + this.vy - this.radius < 0) {
+      if (!this._freeFalling) {
+        this.vy = -this.vy;
+      }
+    }
+
+    this.x += this.vx;
+    if (!this._freeFalling) {
+      this.y += this.vy;
+    }
+
+    if (this.vx !== 0 || this.vy !== 0) {
+      const rad = Math.atan2(Math.abs(this.vy), Math.abs(this.vx));
+
+      const dvx = this.friction * this.mass * Math.cos(rad);
+      const dvy = this.friction * this.mass * Math.sin(rad);
+
+      const tvx = this.vx > 0 ? this.vx - dvx : this.vx + dvx;
+      const tvy = this.vy > 0 ? this.vy - dvy : this.vy + dvy;
+
+      if ((tvx > 0 && this.vx < 0) || tvx < 0 && this.vx > 0) {
+        this.vx = 0;
+        this.vy = 0;
+      } else {
+        this.vx = tvx;
+        this.vy = tvy;
+      }
+    }
+  }
+
   // 状态改变
   changeStatus() {
     if (!this.pauseMove) {
@@ -771,15 +869,18 @@ export class CircumcenterPolygonParticle extends CircleParticle {
   draw() {
     this.ctx.save();
     this.ctx.fillStyle = this.fillStyle;
-    // this.ctx.strokeStyle = this.StrokeStyle;
+    // this.ctx.strokeStyle = this.strokeStyle;
     this.ctx.beginPath();
+    const dx = 0;
+    const dy = 0;
+    // this.ctx.setTransform(this.transform[0], this.transform[1], this.transform[2], this.transform[3], dx, dy); // 设置形变
     if (this.degrees.length) {
       this.degrees.forEach(deg => {
         const rad = deg / 180 * Math.PI;
-        this.ctx.arc(this.x, this.y, this.radius, rad, rad, false);
+        this.ctx.arc(this.x - dx, this.y - dy, this.radius, rad, rad, false);
       });
     } else {
-      this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+      this.ctx.arc(this.x - dx, this.y - dy, this.radius, 0, Math.PI * 2, false);
     }
 
     this.ctx.fill();
@@ -790,9 +891,10 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       this.ctx.textBaseline = 'middle';
       const width = this.ctx.measureText(this.text).width;
       const position = this.centroid;
-      this.ctx.fillText(this.text, position[0] - width / 2 + this.textOptions.textOffsetX, position[1] + this.textOptions.textOffsetY);
+      this.ctx.fillText(this.text, position[0] - width / 2 + this.textOptions.textOffsetX - dx, position[1] + this.textOptions.textOffsetY - dy);
     }
 
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0); // 还原形变
     this.ctx.restore();
   }
 
@@ -897,16 +999,6 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     }
   }
 
-  // 旋转
-  rotateTick() {
-    if (this.degrees) {
-      this.degrees = this.degrees.map(deg => {
-        deg = (deg - this.rotateSpeed + 360) % 360;
-        return deg;
-      });
-    }
-  }
-
   // 创建正多边形
   createRegular(count = 3) {
     if (count < 3) {
@@ -938,6 +1030,35 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       }
       return degrees.sort((a, b) => a - b);
     }
+  }
+
+  // 开始旋转
+  startRotating() {
+    this._rotating = true;
+  }
+
+  // 停止旋转
+  stopRotating() {
+    this._rotating = false;
+  }
+
+  // 旋转
+  rotateTick() {
+    if (this.degrees && this._rotating) {
+      this.degrees = this.degrees.map(deg => {
+        deg = (deg - this.rotateSpeed + 360) % 360;
+        return deg;
+      }); // 赋值后，重新计算了质心的位置
+    }
+  }
+
+  // 旋转至，绕质心旋转
+  rotateToDegrees(degrees) {
+    const c1 = [...this.centroid]; // 记录旋转前的质心位置
+    this.degrees = degrees;
+    const c2 = [...this.centroid]; // 记录旋转后的质心位置
+    this.x = c1[0] - c2[0] + this.x;
+    this.y = c1[1] - c2[1] + this.y;
   }
 }
 

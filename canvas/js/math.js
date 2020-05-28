@@ -183,12 +183,19 @@ export class Methods {
   static calcCentroid(x, y, radius, degrees) {
     if (degrees.length) {
       const coords = Methods.calcCoordinateByDegrees(x, y, radius, degrees);
-      return [
-        coords.reduce((sum, xy) => xy[0] + sum, 0) / coords.length,
-        coords.reduce((sum, xy) => xy[1] + sum, 0) / coords.length,
-      ];
+
+      return {
+        centroid: [
+          coords.reduce((sum, xy) => xy[0] + sum, 0) / coords.length,
+          coords.reduce((sum, xy) => xy[1] + sum, 0) / coords.length,
+        ],
+        vertex: coords
+      };
     } else {
-      return [x, y]
+      return {
+        centroid: [x, y],
+        vertex: [],
+      }
     }
   }
 }

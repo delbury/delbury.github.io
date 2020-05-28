@@ -184,7 +184,8 @@ export class BallsCollisionController extends _Base {
   }
 
   init() {
-    textInit.call(this);
+    textInitRect.call(this);
+    // textInitCircle.call(this);
     // this.creatNeves();
   }
 
@@ -201,6 +202,7 @@ export class BallsCollisionController extends _Base {
           if (status !== 0) {
             const dx = (minAxis.axis.x * minAxis.overlapLength);
             const dy = (minAxis.axis.y * minAxis.overlapLength);
+
 
             if (this.instance[i].currentMass === Infinity && this.instance[j].currentMass === Infinity) {
               // 两者质量都为无限
@@ -330,7 +332,8 @@ export class PolygonShapeChangeController extends _Base {
   }
 }
 
-function textInit() {
+// 测试用，圆形
+function textInitCircle() {
   const friction = 0;
   this.instance = [
     new CircumcenterPolygonParticle(
@@ -395,6 +398,62 @@ function textInit() {
       },
       {
         fillStyle: 'yellowgreen'
+      }
+    ),
+  ];
+}
+
+// 测试用，正方形
+function textInitRect() {
+  this.instance = [
+    new CircumcenterPolygonParticle(
+      this.ctx,
+      {
+        x: this.ctx.canvas.width * 3 / 4,
+        y: this.ctx.canvas.height / 3,
+        // ...this.randomSpeed(),
+        radius: 50,
+        degrees: [45, 135, 225, 315],
+        mass: 5,
+        text: '1',
+        friction: 0.3,
+      },
+      {
+        fillStyle: 'chocolate',
+        // transform: [1.5, 0, 0, 1.5]
+      }
+    ),
+    new CircumcenterPolygonParticle(
+      this.ctx,
+      {
+        x: 50,
+        y: this.ctx.canvas.height / 3,
+        // ...this.randomSpeed(),
+        radius: 50,
+        mass: 5,
+        text: '2',
+        friction: 0.3,
+      },
+      {
+        fillStyle: 'skyblue',
+        // transform: [1.5, 0, 0, 1.5]
+      }
+    ),
+    new CircumcenterPolygonParticle(
+      this.ctx,
+      {
+        x: this.ctx.canvas.width / 2,
+        y: this.ctx.canvas.height * 2 / 3,
+        // ...this.randomSpeed(),
+        radius: 60,
+        mass: 5,
+        text: '3',
+        degrees: [0, 90, 270],
+        friction: 0.3,
+      },
+      {
+        fillStyle: 'yellowgreen',
+        // transform: [1.5, 0, 0, 1.5]
       }
     ),
   ];

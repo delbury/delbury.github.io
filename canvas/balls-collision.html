@@ -118,7 +118,7 @@
             const rad = Math.atan2(offsetY - ball.y, offsetX - ball.x);
             const deg = ((rad - prevRad) / Math.PI * 180 + 360) % 360;
             prevRad = rad;
-            ball.degrees = ball.degrees.map(d => (d + deg) % 360);
+            ball.rotateToDegrees(ball.degrees.map(d => (d + deg) % 360));
           };
 
           document.onmouseup = ev => {
