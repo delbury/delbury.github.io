@@ -203,17 +203,17 @@ export class BallsCollisionController extends _Base {
             const dx = (minAxis.axis.x * minAxis.overlapLength);
             const dy = (minAxis.axis.y * minAxis.overlapLength);
 
-
+            console.log(minAxis.axis)
             if (this.instance[i].currentMass === Infinity && this.instance[j].currentMass === Infinity) {
               // 两者质量都为无限
-              this.instance[i].setAbsolutePosition(dx / 2, dy / 2);
+              this.instance[i].setAbsolutePosition(-dx / 2, -dy / 2);
               this.instance[j].setAbsolutePosition(dx / 2, dy / 2);
             } else if (this.instance[i].currentMass === Infinity) {
               // 其中一个质量为无限，抓起前面的
-              this.instance[j].setAbsolutePosition(dx, dy);
+              this.instance[j].frozen ? this.instance[j].setAbsolutePosition(-dx, -dy) : this.instance[j].setAbsolutePosition(dx, dy);
             } else if (this.instance[j].currentMass === Infinity) {
               // 其中一个质量为无限，抓起后面的
-              this.instance[i].setAbsolutePosition(-dx, -dy);
+              this.instance[i].frozen ? this.instance[j].setAbsolutePosition(dx, dy) : this.instance[i].setAbsolutePosition(-dx, -dy);
             } else {
               // 否则
               const scale = this.instance[i].currentMass / this.instance[j].currentMass;
@@ -426,13 +426,14 @@ function textInitRect() {
     new CircumcenterPolygonParticle(
       this.ctx,
       {
-        x: 50,
+        x: this.ctx.canvas.width / 2,
         y: this.ctx.canvas.height / 3,
         // ...this.randomSpeed(),
         radius: 50,
         mass: 5,
         text: '2',
         friction: 0.3,
+        // frozen: true,
       },
       {
         fillStyle: 'skyblue',

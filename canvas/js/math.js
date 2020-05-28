@@ -198,4 +198,26 @@ export class Methods {
       }
     }
   }
+
+  // 找到二维数组的同维度上的最大值和最小值
+  static findMinMaxFromVertex(arr, dimension) {
+    if(arr.constructor !== Array && arr.length === 0) {
+      throw new TypeError('arr: type error');
+    }
+    if(Number.isNaN(+dimension) || (dimension > arr.length - 1)) {
+      throw new TypeError('dimension: type error');
+    }
+
+    let min = arr[0][dimension];
+    let max = arr[0][dimension];
+    for(let i = 1, len = arr.length; i < len; i++) {
+      if(arr[i][dimension] > max) {
+        max = arr[i][dimension];
+      }
+      if(arr[i][dimension] < min) {
+        min = arr[i][dimension];
+      }
+    }
+    return { min, max };
+  }
 }

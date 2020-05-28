@@ -26,6 +26,7 @@ class Particle {
       friction = 0, // 摩擦力系数
       moveMode = 'step', // ease, step, spring
       text = '', // 显示的文字
+      frozen = false // 位置冻结
     } = {},
     {
       fillStyle = '#000',
@@ -58,6 +59,7 @@ class Particle {
     this.moveMode = moveMode;
     this.initStates = initStates;
     this.text = text;
+    this.frozen = frozen;
 
     this._flickering = !!initStates.flickering;
     this._baseMoving = !!initStates.baseMoving;
@@ -359,12 +361,18 @@ class Particle {
     return this._x || 0;
   }
   set x(val) {
+    // if(this.frozen) {
+    //   return;
+    // }
     if (Number.isNaN(+val)) {
-      throw new TypeError(`坐标值数据类型错误:${val}`);
+      throw new TypeError(`x: ${val}`);
     }
     const returnVal = this.beforeSetX(val);
     if (returnVal !== null && returnVal !== undefined) {
       return this._x = returnVal;
+    }
+    if(returnVal === false) {
+      return;
     }
     this._x = val;
 
@@ -383,12 +391,18 @@ class Particle {
     return this._y || 0;
   }
   set y(val) {
+    // if(this.frozen) {
+    //   return;
+    // }
     if (Number.isNaN(+val)) {
-      throw new TypeError(`坐标值数据类型错误:${val}`);
+      throw new TypeError(`y: ${val}`);
     }
     const returnVal = this.beforeSetY(val);
     if (returnVal !== null && returnVal !== undefined) {
       return this._y = returnVal;
+    }
+    if(returnVal === false) {
+      return;
     }
     this._y = val;
 
@@ -449,23 +463,27 @@ export class CircleParticle extends Particle {
     }
 
     if (this.vx !== 0 || this.vy !== 0) {
-      const rad = Math.atan2(Math.abs(this.vy), Math.abs(this.vx));
-
-      const dvx = this.friction * this.mass * Math.cos(rad);
-      const dvy = this.friction * this.mass * Math.sin(rad);
-
-      const tvx = this.vx > 0 ? this.vx - dvx : this.vx + dvx;
-      const tvy = this.vy > 0 ? this.vy - dvy : this.vy + dvy;
-
-      if ((tvx > 0 && this.vx < 0) || tvx < 0 && this.vx > 0) {
+      if(this.currentMass === Infinity) {
         this.vx = 0;
         this.vy = 0;
       } else {
-        this.vx = tvx;
-        this.vy = tvy;
+        const rad = Math.atan2(Math.abs(this.vy), Math.abs(this.vx));
+
+        const dvx = this.friction * this.currentMass * Math.cos(rad);
+        const dvy = this.friction * this.currentMass * Math.sin(rad);
+  
+        const tvx = this.vx > 0 ? this.vx - dvx : this.vx + dvx;
+        const tvy = this.vy > 0 ? this.vy - dvy : this.vy + dvy;
+  
+        if ((tvx > 0 && this.vx < 0) || tvx < 0 && this.vx > 0) {
+          this.vx = 0;
+          this.vy = 0;
+        } else {
+          this.vx = tvx;
+          this.vy = tvy;
+        }
       }
     }
-
   }
 
   // 闪烁
@@ -510,7 +528,15 @@ export class CircleParticle extends Particle {
 
     const res = Methods.calcCentroid(0, 0, val, this.degrees || []); // 重新计算相对质心
     this._centroid = res.centroid;
-    this._vertex = res.vertex;
+
+    if(this.degrees.length) {
+      this._vertexRange = {
+        x: Methods.findMinMaxFromVertex(res.vertex, 0),
+        y: Methods.findMinMaxFromVertex(res.vertex, 1),
+      };
+    } else {
+      this._vertexRange = null;
+    }
   }
 
   // 角度值监听
@@ -522,7 +548,15 @@ export class CircleParticle extends Particle {
 
     const res = Methods.calcCentroid(0, 0, this.radius, val || []); // 重新计算相对质心
     this._centroid = res.centroid;
-    this._vertex = res.vertex;
+
+    if(this.degrees.length) {
+      this._vertexRange = {
+        x: Methods.findMinMaxFromVertex(res.vertex, 0),
+        y: Methods.findMinMaxFromVertex(res.vertex, 1),
+      };
+    } else {
+      this._vertexRange = null;
+    }
   }
 
   // 质心
@@ -531,6 +565,11 @@ export class CircleParticle extends Particle {
       this._centroid[0] + this.x,
       this._centroid[1] + this.y
     ]
+  }
+
+  // 顶点坐标的最大最小值
+  get vertexRange() {
+    return this._vertexRange;
   }
 
   beforeSetX(val) {
@@ -574,14 +613,28 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     if (!this.degrees.length) {
       return super.beforeSetX(val);
     } else {
-      return val;
+      const { min, max } = this.vertexRange.x
+      if(min + val <= 0) {
+        return -min;
+      } else if(max + val >= this.ctx.canvas.width) {
+        return this.ctx.canvas.width - max;
+      } else {
+        return val;
+      }
     }
   }
   beforeSetY(val) {
     if (!this.degrees.length) {
       return super.beforeSetY(val);
     } else {
-      return val;
+      const { min, max } = this.vertexRange.y;
+      if(min + val <= 0) {
+        return -min;
+      } else if(max + val >= this.ctx.canvas.height) {
+        return this.ctx.canvas.height - max;
+      } else {
+        return val;
+      }
     }
   }
 
@@ -827,8 +880,10 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       }
     }
 
-    this.x += this.vx;
-    if (!this._freeFalling) {
+    if(this.vx !== 0) {
+      this.x += this.vx;
+    }
+    if (!this._freeFalling && this.vy !== 0) {
       this.y += this.vy;
     }
 
