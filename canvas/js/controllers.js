@@ -1,5 +1,6 @@
 import { ParticleCreater, CircleParticle, CircumcenterPolygonParticle, Methods } from './particle.js';
 import { ParticleText } from './particle-text.js';
+import { Vector } from './math.js';
 
 class _Base {
   constructor(ele) {
@@ -189,6 +190,19 @@ export class BallsCollisionController extends _Base {
     // this.creatNeves();
   }
 
+  // 冻结
+  frozenMove(frozenCpp, movedCpp, dx, dy) {
+    frozenCpp.setAbsolutePosition(dx, dy);
+    // if (frozenCpp._frozenStatus.xn || frozenCpp._frozenStatus.xp) {
+    //   // x轴方向冻结
+    //   movedCpp.setAbsolutePosition(-dx, 0);
+    // }
+    // if (frozenCpp._frozenStatus.yn || frozenCpp._frozenStatus.yp) {
+    //   // y轴方向冻结
+    //   movedCpp.setAbsolutePosition(0, -dy);
+    // }
+  }
+
   draw() {
     this.ctx.clearRect(0, 0, this.width, this.height);
 
@@ -203,22 +217,23 @@ export class BallsCollisionController extends _Base {
             const dx = (minAxis.axis.x * minAxis.overlapLength);
             const dy = (minAxis.axis.y * minAxis.overlapLength);
 
-            console.log(minAxis.axis)
             if (this.instance[i].currentMass === Infinity && this.instance[j].currentMass === Infinity) {
               // 两者质量都为无限
-              this.instance[i].setAbsolutePosition(-dx / 2, -dy / 2);
-              this.instance[j].setAbsolutePosition(dx / 2, dy / 2);
+              this.frozenMove(this.instance[i], this.instance[j], -dx / 2, -dy / 2); // 冻结
+              this.frozenMove(this.instance[j], this.instance[i], dx / 2, dy / 2); // 冻结
             } else if (this.instance[i].currentMass === Infinity) {
               // 其中一个质量为无限，抓起前面的
-              this.instance[j].frozen ? this.instance[j].setAbsolutePosition(-dx, -dy) : this.instance[j].setAbsolutePosition(dx, dy);
+              this.frozenMove(this.instance[j], this.instance[i], dx, dy); // 冻结
             } else if (this.instance[j].currentMass === Infinity) {
               // 其中一个质量为无限，抓起后面的
-              this.instance[i].frozen ? this.instance[j].setAbsolutePosition(dx, dy) : this.instance[i].setAbsolutePosition(-dx, -dy);
+              this.frozenMove(this.instance[i], this.instance[j], -dx, -dy); // 冻结
             } else {
               // 否则
-              const scale = this.instance[i].currentMass / this.instance[j].currentMass;
-              this.instance[i].setAbsolutePosition(-dx * scale, -dy * scale);
-              this.instance[j].setAbsolutePosition(dx * scale, dy * scale);
+              const scalei = this.instance[i].currentMass / (this.instance[j].currentMass + this.instance[i].currentMass);
+              const scalej = 1 - scalei;
+
+              this.frozenMove(this.instance[j], this.instance[i], dx * scalei, dy * scalei); // 冻结
+              this.frozenMove(this.instance[i], this.instance[j], -dx * scalej, -dy * scalej); // 冻结
             }
           }
           if (status === 1) {
@@ -405,18 +420,19 @@ function textInitCircle() {
 
 // 测试用，正方形
 function textInitRect() {
+  const friction = 0;
   this.instance = [
     new CircumcenterPolygonParticle(
       this.ctx,
       {
-        x: this.ctx.canvas.width * 3 / 4,
-        y: this.ctx.canvas.height / 3,
-        // ...this.randomSpeed(),
+        x: 50,
+        y: 50,
+        ...this.randomSpeed(),
         radius: 50,
         degrees: [45, 135, 225, 315],
         mass: 5,
         text: '1',
-        friction: 0.3,
+        friction,
       },
       {
         fillStyle: 'chocolate',
@@ -426,14 +442,15 @@ function textInitRect() {
     new CircumcenterPolygonParticle(
       this.ctx,
       {
-        x: this.ctx.canvas.width / 2,
-        y: this.ctx.canvas.height / 3,
-        // ...this.randomSpeed(),
+        // x: this.ctx.canvas.width / 2,
+        x: 60,
+        y: 200,
+        ...this.randomSpeed(),
         radius: 50,
         mass: 5,
+        // vy: -3,
         text: '2',
-        friction: 0.3,
-        // frozen: true,
+        friction,
       },
       {
         fillStyle: 'skyblue',
@@ -445,17 +462,34 @@ function textInitRect() {
       {
         x: this.ctx.canvas.width / 2,
         y: this.ctx.canvas.height * 2 / 3,
-        // ...this.randomSpeed(),
+        ...this.randomSpeed(),
         radius: 60,
         mass: 5,
         text: '3',
         degrees: [0, 90, 270],
-        friction: 0.3,
+        friction,
       },
       {
         fillStyle: 'yellowgreen',
         // transform: [1.5, 0, 0, 1.5]
       }
     ),
-  ];
+    new CircumcenterPolygonParticle(
+      this.ctx,
+      {
+        x: 300,
+        y: 300,
+        ...this.randomSpeed(),
+        radius: 60,
+        mass: 5,
+        text: '4',
+        friction,
+      },
+      {
+        fillStyle: 'deepskyblue',
+        // transform: [1.5, 0, 0, 1.5]
+      }
+    ),
+  ]
+  // ].filter((item, index) => index == 1 || index === 0 || index === 2);
 }
