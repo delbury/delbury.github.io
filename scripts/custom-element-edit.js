@@ -96,6 +96,7 @@ window.addEventListener('load', function() {
       // 禁用部分按钮
       contextmenu.querySelectorAll('li[data-ctrltype=selected]').forEach(function(ele) {ele.dataset.disabled = true});
     }
+    contextmenu.querySelector('li.custom-clearall').dataset.disabled = queryList.length ? false : true;
 
   }
 
@@ -201,6 +202,7 @@ window.addEventListener('load', function() {
 
     // 清除隐藏
     const itemClearAll = document.createElement('li');
+    itemClearAll.className = 'custom-clearall';
     itemClearAll.dataset.ctrltype = 'haslist';
     itemClearAll.innerHTML = '清除全部';
     itemClearAll.onmousedown = ev => {
