@@ -11,7 +11,8 @@
 // ==/UserScript==
 
 (function() {
-  'use strict';
+'use strict';
+window.addEventListener('load', function() {
 
   const queryList = [];
   let locking = false; // 锁定
@@ -254,6 +255,8 @@
   // 根据元素拼装其query条件
   function assembleQuery(ele) {
     let query = '';
+    ele.classList.remove('select-element-hover');
+    ele.classList.remove('select-element-hover-over');
     while(ele) {
       let sub = ele.tagName.toLowerCase();
 
@@ -394,4 +397,5 @@
     `;
     document.head.appendChild(style);
   }
+});
 })();
