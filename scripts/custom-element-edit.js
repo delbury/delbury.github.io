@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Select Element
+// @name         Element Config
 // @namespace    http://tampermonkey.net/
 // @version      0.1
 // @description  try to take over the world!
@@ -7,30 +7,33 @@
 // @include      https://*
 // @include      http://*
 // @grant        none
-// @run-at       document-start
+// @run-at       document-idle
 // ==/UserScript==
 
 (function() {
   'use strict';
 
   const queryList = [];
+  let locking = false; // 锁定
   loadConfig(); // 加载设置
   createStyle();
   const contextmenu = createCustomContextmenu();
 
   let hoveringEle = null; // 当前hover的元素
-  let contextEle = null; // 右键点击的元素
+  const historyEle = []; // 历史选中的元素
   document.addEventListener('mousemove', ev => {
     // 动画效果
-    if(ev.altKey && ev.target !== document.body && ev.target !== document.documentElement && !contextmenu.contains(ev.target)) {
-      if(hoveringEle && hoveringEle !== ev.target) {
+    if(!locking) {
+      if(ev.altKey && ev.target !== document.body && ev.target !== document.documentElement && !contextmenu.contains(ev.target)) {
+        if(hoveringEle && hoveringEle !== ev.target) {
+          hoverOverAnimate(hoveringEle);
+        }
+        hoveringEle = ev.target;
+        hoverAnimate(hoveringEle);
+      } else if(hoveringEle) {
         hoverOverAnimate(hoveringEle);
+        hoveringEle = null;
       }
-      hoveringEle = ev.target;
-      hoverAnimate(hoveringEle);
-    } else if(hoveringEle) {
-      hoverOverAnimate(hoveringEle);
-      hoveringEle = null;
     }
   });
 
@@ -48,9 +51,6 @@
     if(ev.altKey && ev.button === 2) {
       ev.stopPropagation();
       ev.preventDefault();
-      if(hoveringEle) {
-        contextEle = ev.target;
-      }
 
       openCustomContextmenu(ev.clientX, ev.clientY);
     } else {
@@ -73,24 +73,29 @@
 
   // 关闭右键菜单
   function closeCustomContextmenu() {
-    contextEle = null;
+    locking = false;
     contextmenu.dataset.hidden = true;
     contextmenu.classList.add('custom-hidden');
+    hoverOverAnimate(hoveringEle);
   }
   // 打开右键菜单
   function openCustomContextmenu(x, y) {
+    locking = true;
     contextmenu.dataset.hidden = false;
     contextmenu.style.left = x + 'px';
     contextmenu.style.top = y + 'px';
     contextmenu.classList.remove('custom-hidden');
-    if(contextEle) {
+    historyEle.length = 0;
+    if(hoveringEle) {
       // 启用
       contextmenu.querySelectorAll('li[data-ctrltype=selected]').forEach(function(ele) {ele.dataset.disabled = false});
-
+      const btns = contextmenu.querySelectorAll('li[data-ctrltype=selected].custom-btns>span');
+      btns[0].dataset.disabled = true;
     } else {
       // 禁用部分按钮
       contextmenu.querySelectorAll('li[data-ctrltype=selected]').forEach(function(ele) {ele.dataset.disabled = true});
     }
+
   }
 
   // 创建右键菜单栏
@@ -104,8 +109,8 @@
     itemHidden.dataset.ctrltype = 'selected';
     itemHidden.innerHTML = '隐藏';
     itemHidden.onmousedown = ev => {
-      if(contextEle && itemHidden.dataset.disabled !== 'true') {
-        const selected = getLonelyParent(contextEle);
+      if(hoveringEle && itemHidden.dataset.disabled !== 'true') {
+        const selected = getLonelyParent(hoveringEle);
         const query = assembleQuery(selected);
         selected.style.display = 'none';
         queryList.push({
@@ -124,8 +129,8 @@
     itemDelete.dataset.ctrltype = 'selected';
     itemDelete.innerHTML = '删除';
     itemDelete.onmousedown = ev => {
-      if(contextEle && itemDelete.dataset.disabled !== 'true') {
-        const selected = getLonelyParent(contextEle);
+      if(hoveringEle && itemDelete.dataset.disabled !== 'true') {
+        const selected = getLonelyParent(hoveringEle);
         const query = assembleQuery(selected);
         selected.remove();
         queryList.push({
@@ -138,10 +143,60 @@
     };
     ul.appendChild(itemDelete);
 
-    // 分割线
-    const divder = document.createElement('li');
-    divder.className = 'divder';
-    ul.appendChild(divder);
+    // 分割线1
+    const divder1 = document.createElement('li');
+    divder1.className = 'divder';
+    ul.appendChild(divder1);
+
+    // 调整节点位置
+    const itemPosition = document.createElement('li');
+    itemPosition.dataset.ctrltype = 'selected';
+    itemPosition.className = 'custom-btns';
+    const btnMinus = document.createElement('span');
+    btnMinus.innerHTML = '撤销';
+    const btnPlus = document.createElement('span');
+    btnPlus.innerHTML = '父级';
+
+    btnMinus.onclick = ev => {
+      if(itemPosition.dataset.disabled === 'true' || btnMinus.dataset.disabled === 'true') {
+        return;
+      }
+      if(!historyEle.length) {
+        return;
+      } else {
+        // 撤回上一次历史
+        hoverOverAnimate(hoveringEle);
+        hoveringEle = historyEle.pop();
+        hoverAnimate(hoveringEle);
+      }
+      btnMinus.dataset.disabled = historyEle.length ? false : true;
+      btnPlus.dataset.disabled = hoveringEle.parentElement === document.body ? true : false;
+    };
+
+    btnPlus.onclick = ev => {
+      if(itemPosition.dataset.disabled === 'true' || btnPlus.dataset.disabled === 'true') {
+        return;
+      }
+      if(hoveringEle.parentElement === document.body) {
+        return;
+      } else {
+        // 上一级父级
+        historyEle.push(hoveringEle);
+        hoverOverAnimate(hoveringEle);
+        hoveringEle = hoveringEle.parentElement;
+        hoverAnimate(hoveringEle);
+      }
+      btnMinus.dataset.disabled = historyEle.length ? false : true;
+      btnPlus.dataset.disabled = hoveringEle.parentElement === document.body ? true : false;
+    };
+    itemPosition.appendChild(btnMinus);
+    itemPosition.appendChild(btnPlus);
+    ul.appendChild(itemPosition);
+
+    // 分割线2
+    const divder2 = document.createElement('li');
+    divder2.className = 'divder';
+    ul.appendChild(divder2);
 
     // 清除隐藏
     const itemClearAll = document.createElement('li');
@@ -250,6 +305,9 @@
   }
   // hover结束动画
   function hoverOverAnimate(ele) {
+    if(!ele) {
+      return;
+    }
     ele.classList.remove('select-element-hover');
     ele.classList.add('select-element-hover-over');
     const fn = () => {
@@ -264,10 +322,16 @@
     style.innerHTML = `
 .select-element-hover {
   background-color: #ccc !important;
-  box-shadow: 3px 3px 3px #666;
-  transition-property: background-color, box-shadow;
-  transition-duration: 200ms;
-  cursor: default;
+  box-shadow: 3px 3px 3px #666 !important;
+  transition-property: background-color, box-shadow !important;
+  transition-duration: 200ms !important;
+  cursor: default !important;
+}
+.select-element-hover * {
+  background-color: #ccc !important;
+  transition-property: background-color !important;
+  transition-duration: 200ms !important;
+  cursor: default !important;
 }
 .select-element-hover-over {
   box-shadow: none;
@@ -294,6 +358,25 @@
   cursor: default;
   user-select: none;
 }
+.custom-contentmenu>li.custom-btns {
+  display: flex;
+  padding: 0;
+  justify-content: space-between;
+}
+.custom-contentmenu>li.custom-btns>span {
+  display: block;
+  padding: 5px 10px;
+}
+.custom-contentmenu>li.custom-btns>span[data-disabled=true] {
+  color: #ccc;
+}
+.custom-contentmenu>li.custom-btns:not([data-disabled=true])>span:not([data-disabled=true]):hover {
+  background-color: #ddd;
+}
+.custom-contentmenu>li.custom-btns:not([data-disabled=true])>span:not([data-disabled=true]):active {
+  background-color: #ccc;
+}
+
 .custom-contentmenu>li[data-disabled=true] {
   color: #ccc;
 }
@@ -302,7 +385,7 @@
   margin: 5px 0;
   border-bottom: 1px dashed #ccc;
 }
-.custom-contentmenu>li:hover:not(.divder):not([data-disabled=true]) {
+.custom-contentmenu>li:hover:not(.divder):not([data-disabled=true]):not(.custom-btns) {
   background-color: #ddd;
 }
 .custom-hidden {
