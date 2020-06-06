@@ -1,3 +1,6 @@
+import { CircleParticle } from './CircleParticle.js';
+import { RectangleParticle } from './RectangleParticle.js';
+
 // 形状粒子
 export class ShapeParticle {
   constructor(ctx, params, options) {

@@ -1,4 +1,4 @@
-
+import { Methods } from '../math.js';
 
 export class Particle {
   constructor(

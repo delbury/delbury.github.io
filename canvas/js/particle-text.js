@@ -78,7 +78,10 @@ export class ParticleText {
       minRadius: 0.8,
       growSpeed: Methods.randomPlusMinus(0.07, 0.11),
       acceleration: 0.1,
-      moveMode: this.moveMode
+      moveMode: this.moveMode,
+      initStates: {
+        flickering: true
+      }
     };
 
     // 方形
