@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Four Dots</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    :root {
+      --baseSize: 160px;
+      --doorWith: 0.5em;
+      --doorHeigth: 0.75em;
+      --doorThickness: 0.05em;
+      --doorDistanceZ: -100px;
+
+      --duration: 5s;
+    }
+
+    .loader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 1em;
+      height: 1em;
+      font-size: var(--baseSize);
+      border: 1px solid;
+      /* background-color: rgba(153, 153, 153, 0.5); */
+
+      perspective-origin: 50% 0%;
+      perspective: 500px;
+      transform-style: preserve-3d;
+    }
+    .loader > .door {
+      width: var(--doorWith);
+      height: var(--doorHeigth);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      transform-origin: left center calc(var(--doorThickness) / 2 * -1);
+      transform-style: preserve-3d;
+
+      animation: rotateY var(--duration) infinite;
+    }
+    .door > .surface {
+      box-sizing: border-box;
+      position: absolute;
+      border: 1px solid #666;
+      /* opacity: 0.5; */
+    }
+    .door > .surface:nth-of-type(1),
+    .door > .surface:nth-of-type(2) {
+      width: var(--doorWith);
+      height: var(--doorHeigth);
+    }
+    .door > .surface:nth-of-type(3),
+    .door > .surface:nth-of-type(4) {
+      width: var(--doorThickness);
+      height: var(--doorHeigth);
+    }
+    .door > .surface:nth-of-type(5),
+    .door > .surface:nth-of-type(6) {
+      width: var(--doorWith);
+      height: var(--doorThickness);
+    }
+
+    .door > .surface:nth-of-type(1) {
+      background-color: skyblue;
+    }
+    .door > .surface:nth-of-type(2) {
+      background-color: greenyellow;
+      transform: rotateX(180deg) translateZ(var(--doorThickness));
+    }
+    .door > .surface:nth-of-type(3) {
+      background-color: plum;
+      transform: rotateY(90deg) translateX(calc(var(--doorThickness) / 2)) translateZ(calc(var(--doorWith) / 2 * -1));
+    }
+    .door > .surface:nth-of-type(4) {
+      background-color: coral;
+      transform: rotateY(90deg) translateX(calc(var(--doorThickness) / 2)) translateZ(calc(var(--doorWith) / 2));
+    }
+    .door > .surface:nth-of-type(5) {
+      background-color: darkslategrey;
+      transform: rotateX(90deg) translateY(calc(var(--doorThickness) / 2 * -1)) translateZ(calc(var(--doorHeigth) / 2 * -1));
+    }
+    .door > .surface:nth-of-type(6) {
+      background-color: lightcoral;
+      transform: rotateX(90deg) translateY(calc(var(--doorThickness) / 2 * -1)) translateZ(calc(var(--doorHeigth) / 2));
+    }
+
+    @keyframes rotateY {
+      from {
+        transform: rotateY(0deg);
+      }
+      to {
+        transform: rotateY(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="loader">
+      <div class="door">
+        <!-- 前 -->
+        <div class="surface"></div>
+
+        <!-- 后 -->
+        <div class="surface"></div>
+
+        <!-- 左 -->
+        <div class="surface"></div>
+
+        <!-- 右 -->
+        <div class="surface"></div>
+
+        <!-- 上 -->
+        <div class="surface"></div>
+
+        <!-- 下 -->
+        <div class="surface"></div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
