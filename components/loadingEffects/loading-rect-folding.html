@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Four Dots</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    :root {
+      --baseSize: 300px;
+      --rectWidth: 0.2em;
+      --rectHeight: 0.2em;
+
+      --duration: 5s;
+    }
+
+    /*
+     *       ┌─┐
+     *       └─┘
+     * ┌─┐┌─┐┌─┐
+     * └─┘└─┘└─┘
+     *       ┌─┐┌─┐
+     *       └─┘└─┘
+     */
+
+    .loader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 1em;
+      height: 1em;
+      font-size: var(--baseSize);
+      border: 1px solid;
+      /* background-color: rgba(153, 153, 153, 0.5); */
+
+      /* perspective-origin: 50% 0%;
+      perspective: 500px;
+      transform-style: preserve-3d; */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="loader">
+      <div class="rect">
+        
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
