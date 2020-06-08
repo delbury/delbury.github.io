@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Sphere</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    :root {
+      --baseSize: 200px;
+      --duration: 5s;
+    }
+
+    .loader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 1em;
+      height: 1em;
+      font-size: var(--baseSize);
+
+      /* border: 1px solid; */
+    }
+
+    .loader>.sphere {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      width: 0.5em;
+      height: 0.5em;
+      /* border: 1px solid; */
+      border-radius: 50%;
+      background: radial-gradient(circle at 70% 70%, rgb(230, 230, 230), rgb(170, 170, 170));
+      transform-style: preserve-3d;
+      perspective: 400px;
+
+      transform-origin: center bottom;
+    }
+
+    .loader>.sphere::before {
+      content: "";
+      display: block;
+      position: absolute;
+      left: 2%;
+      top: 2%;
+      width: 90%;
+      height: 90%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 20% 20%, #fff, rgba(255, 255, 255, 0) 60%);
+      filter: blur(5px);
+    }
+
+    .loader>.sphere::after {
+      position: absolute;
+      bottom: 0;
+      content: "";
+      display: block;
+      background-color: gray;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1) 40%, rgba(0, 0, 0, 0) 50%);
+      transform: translateY(0.25em) rotateX(90deg);
+    }
+
+    .sphere>.sub {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, #208ab4 0%, #6fbfff 30%, #4381b2 100%);
+
+      animation: turn-eye var(--duration) ease-out infinite;
+    }
+
+    .sphere>.sub::before {
+      position: absolute;
+      content: "";
+      display: block;
+      width: 40%;
+      height: 40%;
+      border-radius: 50%;
+      background-color: black;
+    }
+
+    .sphere>.sub::after {
+      position: absolute;
+      left: 18%;
+      top: 18%;
+      content: "";
+      display: block;
+      width: 30%;
+      height: 30%;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    @keyframes turn-eye {
+
+      from,
+      35% {
+        transform: translateX(0.05em) translateY(-0.05em) skewX(5deg) skewY(0deg) scale(0.98);
+      }
+
+
+      40%,
+      65% {
+        transform: translateX(0.09em) translateY(0.065em) skewX(0deg) skewY(-5deg) scale(0.95);
+      }
+
+      69%,
+      80% {
+        transform: translateX(0em) translateY(0em) skewX(0deg) skewY(0) scale(1);
+      }
+
+      90%,
+      95% {
+        transform: translateX(-0.09em) translateY(-0.065em) skewX(0deg) skewY(-5deg) scale(0.95);
+      }
+
+      to {
+        transform: translateX(0.05em) translateY(-0.05em) skewX(5deg) skewY(0deg) scale(0.98);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="loader">
+      <div class="sphere">
+        <div class="sub"></div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
