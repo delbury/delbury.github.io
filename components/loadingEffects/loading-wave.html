@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Day Night</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    :root {
+      --baseSize: 180px;
+      --durationRate: 0.5;
+    }
+
+    .loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 1em;
+      height: 1em;
+      font-size: var(--baseSize);
+
+      /* background-color: #ccc; */
+      /* border: 1px solid; */
+    }
+
+    .loader .bg {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      width: 80%;
+      height: 80%;
+      background: linear-gradient(60deg, rgba(84, 58, 183, 1) 0%, rgba(0, 172, 193, 1) 100%);
+      border-radius: 50%;
+      box-shadow: 3px 3px 3px navy;
+      overflow: hidden;
+    }
+
+    .loader .wave {
+      width: 100%;
+      height: 100%;
+    }
+
+    .wave .line {
+      animation-name: move-forever;
+      animation-timing-function: cubic-bezier(.55, .5, .45, .5);
+      animation-iteration-count: infinite;
+    }
+
+    .wave .line:nth-of-type(1) {
+      fill: rgba(255, 255, 255, 0.2);
+      animation-duration: calc(3s * var(--durationRate));
+    }
+
+    .wave .line:nth-of-type(2) {
+      fill: rgba(255, 255, 255, 0.4);
+      animation-duration: calc(7s * var(--durationRate));
+    }
+
+    .wave .line:nth-of-type(3) {
+      fill: rgba(255, 255, 255, 0.6);
+      animation-duration: calc(5s * var(--durationRate));
+    }
+
+    .wave .line:nth-of-type(4) {
+      fill: rgba(255, 255, 255, 0.8);
+      animation-duration: calc(11s * var(--durationRate));
+    }
+
+    .wave .line:nth-of-type(5) {
+      fill: rgba(255, 255, 255, 1);
+      animation-duration: calc(13s * var(--durationRate));
+    }
+
+    @keyframes move-forever {
+      0% {
+        transform: translateX(0px);
+      }
+
+      100% {
+        transform: translateX(176px);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="loader">
+      <div class="bg">
+        <svg class="wave" viewBox="176 0 176 80" xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none">
+          <defs>
+            <path id="wave-line" d="M0 50 c30 0 58 -18 88 -18 s58 18 88 18 s58 -18 88 -18 s58 18 88 18 V100 H0 z">
+              <!--   -->
+            </path>
+          </defs>
+          <g class="lines">
+            <use class="line" xlink:href="#wave-line" x="0" y="0"></use>
+            <use class="line" xlink:href="#wave-line" x="0" y="3"></use>
+            <use class="line" xlink:href="#wave-line" x="0" y="5"></use>
+            <use class="line" xlink:href="#wave-line" x="0" y="7"></use>
+            <use class="line" xlink:href="#wave-line" x="0" y="11"></use>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

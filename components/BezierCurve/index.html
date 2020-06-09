@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bezier Curve</title>
+  <style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+    }
+
+    .container {
+      box-sizing: border-box;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .layout {
+      display: flex;
+      align-items: center;
+      width: 80%;
+      height: 80%;
+    }
+
+    .place-area {
+      position: relative;
+      flex: 1;
+      height: 100%;
+      border: 1px dotted skyblue;
+    }
+
+    .ctrl-area {
+      margin-left: 10px;
+      width: 200px;
+      height: 100%;
+      border: 1px dotted skyblue;
+    }
+
+    .spot {
+      box-sizing: border-box;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 10px;
+      height: 10px;
+      border: 1px solid #333;
+      border-radius: 50%;
+      box-shadow: 1px 1px 3px #999;
+      font-size: 12px;
+      background-color: white;
+    }
+
+    .spot:hover {
+      box-shadow: 1px 1px 1px #666;
+      cursor: pointer;
+      z-index: 9;
+    }
+
+    .spot::before {
+      display: block;
+      width: fit-content;
+      padding: 5px;
+      content: attr(data-name)'\a''ab:\00A0'attr(data-abcoord)'\a''re:\00A0'attr(data-recoord);
+      transform: translateY(10px);
+    }
+
+    .spot:hover::before {
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 1px 1px 3px #aaa;
+    }
+
+    #spot-start {
+      left: 45%;
+      top: 30%;
+    }
+
+    #spot-end {
+
+      left: 80%;
+      top: 60%;
+    }
+
+    #spot-start-ctrl {
+      left: 40%;
+      top: 50%;
+    }
+
+    #spot-end-ctrl {
+      left: 55%;
+      top: 60%;
+    }
+
+    .cp {
+      cursor: pointer;
+    }
+
+    .svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .svg-path {
+      stroke-width: 2px;
+      stroke: #999;
+      fill: transparent;
+    }
+
+    .svg-path.dash {
+      stroke-dasharray: 2 2;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="layout">
+      <div id="place-area" class="place-area">
+        <!-- 开始点 -->
+        <div id="spot-start" class="spot place-spot" data-name="S"></div>
+        <!-- 结束点 -->
+        <div id="spot-end" class="spot place-spot" data-name="E"></div>
+        <!-- 开始点的控制点 -->
+        <div id="spot-start-ctrl" class="spot ctrl-spot" data-name="C1"></div>
+        <!-- 结束点的控制点 -->
+        <div id="spot-end-ctrl" class="spot ctrl-spot" data-name="C2"></div>
+
+        <svg id="svg" class="svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none">
+          <path id="svg-path" class="svg-path"></path>
+          <path id="svg-path-start" class="svg-path dash"></path>
+          <path id="svg-path-end" class="svg-path dash"></path>
+        </svg>
+      </div>
+      <div class="ctrl-area"></div>
+    </div>
+  </div>
+  <script src="./main.js"></script>
+</body>
+
+</html>
