@@ -43,6 +43,7 @@
     }
 
     .place-area {
+      position: relative;
       width: 100%;
       height: 100%;
     }
@@ -118,6 +119,10 @@
       cursor: pointer;
     }
 
+    .none {
+      display: none !important;
+    }
+
     .svg {
       width: 100%;
       height: 100%;
@@ -155,6 +160,7 @@
           <rect x="0" y="0" width="100%" height="100%" fill="url(#body-bg-grid)"></rect>
         </svg>
 
+        <!-- 三次贝塞尔路径曲线 -->
         <div id="workbench-cubic" class="place-area">
           <!-- 开始点 -->
           <div data-id="spot-start" class="spot place-spot" data-name="S"></div>
@@ -172,12 +178,32 @@
             <path data-id="svg-path-end" class="svg-path dash"></path>
           </svg>
         </div>
+
+        <!-- 二次贝塞尔路径曲线 -->
+        <div id="workbench-quadratic" class="place-area none">
+          <!-- 开始点 -->
+          <div data-id="spot-start" class="spot place-spot" data-name="S"></div>
+          <!-- 结束点 -->
+          <div data-id="spot-end" class="spot place-spot" data-name="E"></div>
+          <!-- 控制点 -->
+          <div data-id="spot-ctrl" class="spot ctrl-spot" data-name="C"></div>
+
+          <svg data-id="svg" class="svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none">
+            <path data-id="svg-path" class="svg-path"></path>
+            <path data-id="svg-path-start" class="svg-path dash"></path>
+            <path data-id="svg-path-end" class="svg-path dash"></path>
+          </svg>
+        </div>
+
+        <!-- 归一化三次贝塞尔曲线 -->
+        <div id="workbench-normalization" class="place-area none"></div>
       </div>
 
       <div class="ctrl-area">
-        <label>三次贝塞尔：<input type="radio" name="type" value="3" checked></label>
-        <label>二次贝塞尔：<input type="radio" name="type" value="2"></label>
-        <label>三次归一化：<input type="radio" name="type" value="1"></label>
+        <label><input type="radio" name="type" value="3" checked> 三次贝塞尔</label>
+        <label><input type="radio" name="type" value="2"> 二次贝塞尔</label>
+        <label><input type="radio" name="type" value="1"> 三次归一化</label>
       </div>
     </div>
   </div>

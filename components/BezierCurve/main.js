@@ -2,27 +2,100 @@
 (() => {
   // 拖动元素
   const bgGrid = document.querySelector('.bg-grid');
-  const bg = document.getElementById('workbench-cubic');
+  const bgs = {
+    '3': document.getElementById('workbench-cubic'), // 三次
+    '2': document.getElementById('workbench-quadratic'), // 二次
+    '1': document.getElementById('workbench-normalization'), // 归一
+  };
 
-  const svg = bg.querySelector('[data-id=svg]');
-  const svgPath = bg.querySelector('[data-id=svg-path]');
-  const svgPathStart = bg.querySelector('[data-id=svg-path-start]');
-  const svgPathEnd = bg.querySelector('[data-id=svg-path-end]');
+  // svg类型
+  const state = {
+    currentType: ''
+  };
 
-  const coords = [];
-  const spotList = [];
-  bingElementEvent('spot-start', 0);
-  bingElementEvent('spot-end', 3);
-  bingElementEvent('spot-start-ctrl', 1);
-  bingElementEvent('spot-end-ctrl', 2);
-  init();
+  // 贝塞尔的相关参数
+  const bezierState = {
+    '3': {
+      svg: bgs['3'].querySelector('[data-id=svg]'),
+      svgPath: bgs['3'].querySelector('[data-id=svg-path]'),
+      svgPathStart: bgs['3'].querySelector('[data-id=svg-path-start]'),
+      svgPathEnd: bgs['3'].querySelector('[data-id=svg-path-end]'),
+      coords: [],
+      spotList: [],
+      inited: false
+    },
+    '2': {
+      svg: bgs['2'].querySelector('[data-id=svg]'),
+      svgPath: bgs['2'].querySelector('[data-id=svg-path]'),
+      svgPathStart: bgs['2'].querySelector('[data-id=svg-path-start]'),
+      svgPathEnd: bgs['2'].querySelector('[data-id=svg-path-end]'),
+      coords: [],
+      spotList: [],
+      inited: false
+    },
+    '1': {}
+  }
 
 
+  let svg;
+  let svgPath;
+  let svgPathStart;
+  let svgPathEnd;
+  let coords;
+  let spotList;
 
-  function bingElementEvent(id, index) {
+  switchDataSource('3');
+  bindElementEvent('3', 'spot-start', 0);
+  bindElementEvent('3', 'spot-end', 3);
+  bindElementEvent('3', 'spot-start-ctrl', 1);
+  bindElementEvent('3', 'spot-end-ctrl', 2);
+  init('3');
+
+  bindElementEvent('2', 'spot-start', 0);
+  bindElementEvent('2', 'spot-end', 2);
+  bindElementEvent('2', 'spot-ctrl', 1);
+
+  bindTypeRadio();
+
+  // 切换数据源
+  function switchDataSource(type) {
+    state.currentType = type;
+    svg = bezierState[type].svg;
+    svgPath = bezierState[type].svgPath;
+    svgPathStart = bezierState[type].svgPathStart;
+    svgPathEnd = bezierState[type].svgPathEnd;
+    coords = bezierState[type].coords;
+    spotList = bezierState[type].spotList;
+  }
+
+  // 绑定切换radio事件
+  function bindTypeRadio() {
+    const eles = document.querySelectorAll('.ctrl-area input[name=type]');
+    eles.forEach(ele => {
+      if(ele.checked) {
+        state.currentType = ele.value;
+        switchDataSource(ele.value);
+      }
+      ele.onchange = ev => {
+        for(let key in bgs) {
+          if(ev.target.value == key) {
+            bgs[key].classList.remove('none');
+            switchDataSource(ev.target.value);
+            init(key);
+          } else {
+            bgs[key].classList.add('none');
+          }
+        }
+      }
+    });
+  }
+
+  // 绑定拖动事件
+  function bindElementEvent(type, id, index) {
+    const bg = bgs[type];
+    const spotList = bezierState[type].spotList;
     const ele = bg.querySelector(`[data-id=${id}]`);
     spotList[index] = ele;
-
 
     ele.onmousedown = ev => {
       const { offsetX: dx, offsetY: dy } = ev;
@@ -72,31 +145,46 @@
   }
 
   // 初始化
-  function init() {
+  function init(type) {
+    if(bezierState[type].inited) {
+      return;
+    }
+    bezierState[type].inited = true;
     spotList.forEach((spot, index) => {
       coords[index] = [spot.offsetLeft + 5, spot.offsetTop + 5];
-
     });
     calcRelativeCoords();
 
     const size = svg.parentElement.getBoundingClientRect();
     svg.setAttribute('viewBox', `0 0 ${size.width} ${size.height}`);
-
     update();
   }
 
   // 更新绘图
   function update() {
-    svgPath.setAttribute('d',
-      `M${coords[0][0]} ${coords[0][1]} ` +
-      `C${coords[1][0]} ${coords[1][1]} ${coords[2][0]} ${coords[2][1]} ${coords[3][0]} ${coords[3][1]}`
-    );
-    svgPathStart.setAttribute('d',
-      `M${coords[0][0]} ${coords[0][1]} L${coords[1][0]} ${coords[1][1]}`
-    );
-    svgPathEnd.setAttribute('d',
-      `M${coords[3][0]} ${coords[3][1]} L${coords[2][0]} ${coords[2][1]}`
-    );
+    if(state.currentType == '3') {
+      svgPath.setAttribute('d',
+        `M${coords[0][0]} ${coords[0][1]} ` +
+        `C${coords[1][0]} ${coords[1][1]} ${coords[2][0]} ${coords[2][1]} ${coords[3][0]} ${coords[3][1]}`
+      );
+      svgPathStart.setAttribute('d',
+        `M${coords[0][0]} ${coords[0][1]} L${coords[1][0]} ${coords[1][1]}`
+      );
+      svgPathEnd.setAttribute('d',
+        `M${coords[3][0]} ${coords[3][1]} L${coords[2][0]} ${coords[2][1]}`
+      );
+    } else if(state.currentType == '2') {
+      svgPath.setAttribute('d',
+        `M${coords[0][0]} ${coords[0][1]} ` +
+        `Q${coords[1][0]} ${coords[1][1]} ${coords[2][0]} ${coords[2][1]}`
+      );
+      svgPathStart.setAttribute('d',
+        `M${coords[0][0]} ${coords[0][1]} L${coords[1][0]} ${coords[1][1]}`
+      );
+      svgPathEnd.setAttribute('d',
+        `M${coords[2][0]} ${coords[2][1]} L${coords[1][0]} ${coords[1][1]}`
+      );
+    }
   }
 })();
 
