@@ -1,9 +1,13 @@
 
 (() => {
-  const svg = document.getElementById('svg');
-  const svgPath = document.getElementById('svg-path');
-  const svgPathStart = document.getElementById('svg-path-start');
-  const svgPathEnd = document.getElementById('svg-path-end');
+  // 拖动元素
+  const bgGrid = document.querySelector('.bg-grid');
+  const bg = document.getElementById('workbench-cubic');
+
+  const svg = bg.querySelector('[data-id=svg]');
+  const svgPath = bg.querySelector('[data-id=svg-path]');
+  const svgPathStart = bg.querySelector('[data-id=svg-path-start]');
+  const svgPathEnd = bg.querySelector('[data-id=svg-path-end]');
 
   const coords = [];
   const spotList = [];
@@ -13,11 +17,10 @@
   bingElementEvent('spot-end-ctrl', 2);
   init();
 
-  // 拖动元素
-  const bg = document.getElementById('place-area');
+
 
   function bingElementEvent(id, index) {
-    const ele = document.getElementById(id);
+    const ele = bg.querySelector(`[data-id=${id}]`);
     spotList[index] = ele;
 
 
@@ -29,8 +32,8 @@
       bg.onmousemove = ev => {
         ev.preventDefault();
 
-        const x = ev.pageX - bg.offsetLeft - dx;
-        const y = ev.pageY - bg.offsetTop - dy;
+        const x = ev.pageX - bgGrid.offsetLeft - dx;
+        const y = ev.pageY - bgGrid.offsetTop - dy;
         target.style.left = x + 'px';
         target.style.top = y + 'px';
 
