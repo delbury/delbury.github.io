@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Sphere</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    :root {
+      --baseSize: 200px;
+      --duration: 2.5s;
+      --moveDuration: 6s;
+    }
+
+    .loader {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 1em;
+      height: 1em;
+      font-size: var(--baseSize);
+      overflow: hidden;
+
+      perspective: 400px;
+      transform-style: preserve-3d;
+
+      /* border: 1px solid; */
+    }
+
+    .loader .action {
+      position: absolute;
+      bottom: -0.6em;
+    }
+
+    .loader .action:nth-of-type(1) {
+      left: 0.1em;
+      animation: flying calc(var(--moveDuration) / 1.5) infinite;
+    }
+
+    .loader .action:nth-of-type(2) {
+      animation: flying calc(var(--moveDuration) / 0.45) infinite;
+    }
+
+    .loader .action:nth-of-type(3) {
+      right: 0.2em;
+      animation: flying calc(var(--moveDuration) / 1) infinite;
+    }
+
+    .loader .action:nth-of-type(4) {
+      left: 0;
+      animation: flying calc(var(--moveDuration) / 0.85) infinite;
+    }
+
+    .loader .action:nth-of-type(5) {
+      right: 0;
+      animation: flying calc(var(--moveDuration) / 0.65) infinite;
+    }
+
+    .loader .sphere {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 0.5em;
+      height: 0.5em;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 55%,
+          rgba(240, 245, 255, 0.9),
+          rgba(240, 245, 255, 0.9) 40%,
+          rgba(225, 238, 255, 0.8) 60%,
+          rgba(43, 130, 255, 0.4));
+      transform: rotate(-30deg);
+    }
+
+    .loader .action:nth-of-type(1) .sphere {
+      width: 0.28em;
+      height: 0.28em;
+      z-index: 3;
+      animation: flexing1 var(--duration) ease-in-out alternate infinite;
+    }
+
+    .loader .action:nth-of-type(2) .sphere {
+      width: 0.4em;
+      height: 0.4em;
+      z-index: 1;
+      animation: flexing2 var(--duration) ease-in-out alternate infinite;
+    }
+
+    .loader .action:nth-of-type(3) .sphere {
+      width: 0.35em;
+      height: 0.35em;
+      z-index: 2;
+      animation: flexing3 var(--duration) ease-in-out alternate infinite;
+    }
+
+    .loader .action:nth-of-type(4) .sphere {
+      width: 0.18em;
+      height: 0.18em;
+      z-index: 5;
+      animation: flexing3 var(--duration) ease-in-out alternate infinite;
+    }
+
+    .loader .action:nth-of-type(5) .sphere {
+      width: 0.32em;
+      height: 0.32em;
+      z-index: 4;
+      animation: flexing3 var(--duration) ease-in-out alternate infinite;
+    }
+
+
+    .loader .sphere::before {
+      content: "";
+      display: block;
+      position: absolute;
+      right: 5%;
+      top: 5%;
+      width: 90%;
+      height: 90%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 80%,
+          rgba(255, 255, 255, 0),
+          rgba(255, 255, 255, 0) 74%,
+          white 80%,
+          white 84%,
+          rgba(255, 255, 255, 0) 100%);
+      filter: blur(1px);
+    }
+
+    .loader .sphere::after {
+      content: "";
+      display: block;
+      position: absolute;
+      left: 5%;
+      top: 5%;
+      width: 40%;
+      height: 80%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 130% 130%,
+          rgba(255, 255, 255, 0) 0,
+          rgba(255, 255, 255, 0) 46%,
+          rgba(255, 255, 255, 0.8) 50%,
+          rgba(255, 255, 255, 0.8) 58%,
+          rgba(255, 255, 255, 0) 60%,
+          rgba(255, 255, 255, 0) 100%);
+      filter: blur(2px);
+      transform: translateX(90%) translateY(60%) rotateZ(190deg) rotateX(20deg)
+    }
+
+    @keyframes flexing1 {
+      0% {
+        transform: scale(1);
+      }
+
+      20% {
+        transform: scaleY(0.95) scaleX(1.05);
+      }
+
+      48% {
+        transform: scaleY(1.08) scaleX(0.9);
+      }
+
+      68% {
+        transform: scaleY(0.98) scaleX(1.02);
+      }
+
+      80% {
+        transform: scaleY(1.02) scaleX(0.98);
+      }
+
+      97%,
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes flexing2 {
+      0% {
+        transform: scale(1);
+      }
+
+      18% {
+        transform: scaleX(0.95) scaleY(1.05);
+      }
+
+      59% {
+        transform: scaleX(1.08) scaleY(0.9);
+      }
+
+      77% {
+        transform: scaleX(0.98) scaleY(1.02);
+      }
+
+      86% {
+        transform: scaleX(1.02) scaleY(0.98);
+      }
+
+      95%,
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes flexing3 {
+      0% {
+        transform: scale(1);
+      }
+
+      10% {
+        transform: scaleY(0.97) scaleX(1.03);
+      }
+
+      33% {
+        transform: scaleY(1.05) scaleX(0.93);
+      }
+
+      52% {
+        transform: scaleY(0.99) scaleX(1.01);
+      }
+
+      71% {
+        transform: scaleY(1.04) scaleX(0.96);
+      }
+
+      86%,
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes flying {
+      from {
+        transform: translateY(0em);
+      }
+
+      to {
+        transform: translateY(-2em);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="loader">
+      <div class="action">
+        <div class="sphere"></div>
+      </div>
+      <div class="action">
+        <div class="sphere"></div>
+      </div>
+      <div class="action">
+        <div class="sphere"></div>
+      </div>
+      <div class="action">
+        <div class="sphere"></div>
+      </div>
+      <div class="action">
+        <div class="sphere"></div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
