@@ -95,12 +95,11 @@
     }
 
     [data-id=spot-start] {
-      left: 45%;
-      top: 30%;
+      left: 30%;
+      top: 70%;
     }
 
     [data-id=spot-end] {
-
       left: 80%;
       top: 60%;
     }
@@ -123,6 +122,12 @@
       display: none !important;
     }
 
+    .hide {
+      position: absolute;
+      z-index: -1;
+      opacity: 0;
+    }
+
     .svg {
       width: 100%;
       height: 100%;
@@ -131,7 +136,7 @@
     .svg-path {
       stroke-width: 2px;
       stroke: #999;
-      fill: transparent;
+      fill: none;
     }
 
     .svg-path.dash {
@@ -143,6 +148,17 @@
       stroke: #ddd;
       stroke-width: 1;
       /* stroke-opacity: 0.5; */
+    }
+
+    .btn-box {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .btn-box>button:not(:last-child) {
+      margin-bottom: 10px;
     }
   </style>
 </head>
@@ -197,13 +213,37 @@
         </div>
 
         <!-- 归一化三次贝塞尔曲线 -->
-        <div id="workbench-normalization" class="place-area none"></div>
+        <div id="workbench-normalization" class="place-area none">
+          <!-- 开始点 -->
+          <div data-id="spot-start" class="spot place-spot" data-name="S"></div>
+          <!-- 结束点 -->
+          <div data-id="spot-end" class="spot place-spot" data-name="E"></div>
+          <!-- 开始点的控制点 -->
+          <div data-id="spot-start-ctrl" class="spot ctrl-spot" data-name="C1"></div>
+          <!-- 结束点的控制点 -->
+          <div data-id="spot-end-ctrl" class="spot ctrl-spot" data-name="C2"></div>
+
+          <svg data-id="svg" class="svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none">
+            <path data-id="svg-path" class="svg-path"></path>
+            <path data-id="svg-path-start" class="svg-path dash"></path>
+            <path data-id="svg-path-end" class="svg-path dash"></path>
+          </svg>
+        </div>
       </div>
 
       <div class="ctrl-area">
         <label><input type="radio" name="type" value="3" checked> 三次贝塞尔</label>
         <label><input type="radio" name="type" value="2"> 二次贝塞尔</label>
         <label><input type="radio" name="type" value="1"> 三次归一化</label>
+
+        <div class="btn-box">
+          <button id="btn-copy-abs">复制绝对路径</button>
+          <button id="btn-copy-rel">复制相对路径</button>
+          <button id="btn-copy-fun" disabled>复制函数</button>
+        </div>
+
+        <input id="tool-input" class="hide" type="text">
       </div>
     </div>
   </div>
