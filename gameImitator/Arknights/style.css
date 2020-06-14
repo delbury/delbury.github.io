@@ -5,24 +5,29 @@ body {
 }
 
 .container {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100vw;
   height: 100vh;
+  z-index: 0;
 
   /* for test */
   background-color: #000;
 }
 
 .layout {
-  background-color: #fff;
+  position: relative;
 }
 
 @media (max-aspect-ratio: 1920/1080) {
   .layout {
     width: 100vw;
     height: 56.25vw;
+  }
+  html, body {
+    font-size: 1vw;
   }
 }
 
@@ -31,4 +36,179 @@ body {
     width: 177.78vh;
     height: 100vh;
   }
+  html, body {
+    font-size: 1.78vh;
+  }
 }
+
+.layout::before {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: url(./assets/img/bg_forest.png);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  z-index: -1;
+  filter: brightness(150%);
+  opacity: 0.8;
+}
+
+.area-config {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 25.36rem;
+  height: 5.88rem;
+}
+.area-config::before {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: linear-gradient(to right bottom, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 70%);
+  filter: blur(3px);
+}
+.area-config > i.iconfont {
+  width: 1em;
+  height: 1em;
+  font-size: 3.5rem;
+  color: #fff;
+}
+
+.area-account-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  top: 19rem;
+  left: 0;
+  width: 18rem;
+  height: 16rem;
+  overflow: hidden;
+}
+
+.area-account-info::before {
+  display: block;
+  content: "";
+  position: absolute;
+  left: -5rem;
+  height: 100%;
+  width: 100%;
+  z-index: -1;
+  
+  background: url(./assets/icons/logo_rhodes.png) no-repeat;
+  background-size: contain;
+  filter: invert(100%);
+  opacity: 0.5;
+}
+.area-account-info::after {
+  display: block;
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 5.6rem;
+  width: 13rem;
+  height: 3rem;
+  z-index: -1;
+
+  background-color: #323232;
+  box-shadow: 1px 1px 5px #333;
+}
+
+.area-account-info > .lv {
+}
+.area-account-info > .lv {
+  height: 9rem;
+}
+.area-account-info > .lv > .circle-full {
+  fill: none;
+  stroke: #5c5c5c;
+  stroke-width: 4px;
+}
+.area-account-info > .lv > .arc-current {
+  fill: none;
+  stroke: #f7ea58;
+  stroke-width: 4px;
+  stroke-linecap: round;
+}
+.area-account-info > .lv > .text-big {
+  fill: #fff;
+  font-size: 44px;
+  text-anchor: middle;
+  alignment-baseline: middle;
+}
+.area-account-info > .lv > .text-small {
+  fill: #fff;
+  font-size: 16px;
+  text-anchor: middle;
+  alignment-baseline: middle;
+  transform: translateY(34px);
+}
+.area-account-info > .info {
+  margin-top: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+}
+.area-account-info > .info > span:nth-of-type(1) {
+  margin-bottom: -0.3rem;
+  font-size: 2rem;
+  font-weight: bold;
+}
+.area-account-info > .info > span:nth-of-type(2) {
+  font-size: 1rem;
+}
+
+/* 右侧面板 */
+.area-entries {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 50rem;
+}
+
+.area-entries > .infos {
+}
+
+.area-entries > .infos > .system {
+  display: flex;
+  align-items: center;
+  font-size: 1.3rem;
+  color: #fff;
+}
+
+.area-entries > .infos > .system * {
+  white-space: nowrap;
+}
+
+.area-entries > .infos > .system::before {
+  content: "";
+  display: block;
+  margin-right: 1rem;
+  width: 20%;
+  border: 1px solid #fff;
+}
+.area-entries > .infos > .system::after {
+  content: "";
+  display: block;
+  margin-left: 1rem;
+  width: 60%;
+  border: 1px solid #fff;
+}
+.area-entries > .infos > .system > i {
+  margin-top: 0.05rem;
+  margin-right: 1rem;
+  font-size: 2.8rem;
+  color: #fff;
+}
+.area-entries > .operations {}

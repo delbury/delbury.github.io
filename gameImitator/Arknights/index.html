@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Arknights</title>
   <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./assets/icons/iconfont/iconfont.css">
   <script src="../common/js/anime.min.js"></script>
   <script src="../common/js/pieces.min.js"></script>
 </head>
@@ -13,7 +14,39 @@
 <body>
   <div class="container">
     <div class="layout">
-      <canvas id="canvas"></canvas>
+      <!-- 左上角按钮 -->
+      <div class="area-config">
+        <i class="iconfont icon-tubiao01"></i>
+        <i class="iconfont icon-icon_warning"></i>
+        <i class="iconfont icon-mail"></i>
+        <i class="iconfont icon-rili-tianchong"></i>
+      </div>
+
+      <!-- 账号信息 -->
+      <div class="area-account-info">
+        <svg class="lv" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none">
+          <circle class="circle-full" cx="50" cy="50" r="48"></circle>
+          <path class="arc-current" d="M50 2 A25 25 0 0 1 50 98"></path>
+          <text class="text-big" x="50" y="50">102</text>
+          <text class="text-small" x="50" y="50">LV</text>
+        </svg>
+        <div class="info">
+          <span>Delbury</span>
+          <span>ID:2333666</span>
+        </div>
+      </div>
+
+      <!-- 右侧面板 -->
+      <div class="area-entries">
+        <div class="infos">
+          <div class="system">
+            <i class="iconfont icon-Batterychargeveryhigh"></i>
+            <span id="system-time"></span>
+          </div>
+          <div class="sources"></div>
+        </div>
+        <div class="operations"></div>
+      </div>
     </div>
   </div>
   <script src="./main.js"></script>
