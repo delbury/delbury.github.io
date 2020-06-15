@@ -6,10 +6,10 @@ let timer = null;
   const canvasBg = document.getElementById('canvas-background');
   const canvasFg = document.getElementById('canvas-fragment');
   const slider = document.getElementById('input-slider');
-  const img_light = await createImage('./imgs/7.jpg');
-  const img_dark = await createImage('./imgs/8.jpg');
+  // const img_light = await createImage('./imgs/7.jpg');
+  // const img_dark = await createImage('./imgs/8.jpg');
   const img_fat = await createImage('./imgs/fat.jpg');
-  const img_tall = await createImage('./imgs/tall.jpg');
+  // const img_tall = await createImage('./imgs/tall.jpg');
   const sliderbar = document.querySelector('.slider input[type="range"]');
   const dialog = document.getElementById('dialog');
 
