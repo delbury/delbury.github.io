@@ -1,5 +1,4 @@
-# delbury.github.io
-  Home: [https://delbury.github.io](https://delbury.github.io)
+Home: [https://delbury.github.io](https://delbury.github.io)
 ------------------------
 ## **Canvas Demos**
 + ### Clock
