@@ -2,91 +2,186 @@ const fragmentWH = [40, 40];
 let notice = null;
 let timer = null;
 
+bindElements('demo-native', true);
+bindElements('demo-monitor', true);
+
 (async function() {
-  const canvasBg = document.getElementById('canvas-background');
-  const canvasFg = document.getElementById('canvas-fragment');
-  const slider = document.getElementById('input-slider');
-  // const img_light = await createImage('./imgs/7.jpg');
-  // const img_dark = await createImage('./imgs/8.jpg');
   const img_fat = await createImage('./imgs/fat.jpg');
-  // const img_tall = await createImage('./imgs/tall.jpg');
-  const sliderbar = document.querySelector('.slider input[type="range"]');
-  const dialog = document.getElementById('dialog');
 
-  const ctxb = canvasBg.getContext('2d');
-  const ctxf = canvasFg.getContext('2d');
-
-  const offCanvas = (function () {
-    if(window.OffscreenCanvas) {
-      return new OffscreenCanvas(canvasBg.width, canvasBg.height)
-    } else {
-      const can = document.createElement('canvas');
-      can.width = canvasBg.width;
-      can.height = canvasBg.height;
-      return can;
-    }
-  })();
-  const offCtx = offCanvas.getContext('2d');
-
-  let rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 绘图
-
-  // 绑定滑块事件
-  const inputSlider = document.getElementById('input-slider');
-  // 鼠标按下
-  inputSlider.onmousedown = ev => {
-    // 鼠标松开
-    inputSlider.onmouseup = ev => {
-      
-      canvasFg.classList.add('transition');
-      canvasFg.ontransitionend = ev => {
-        canvasFg.ontransitionend = null;
-        canvasFg.classList.remove('transition');
+  /**
+   * demo-native
+   * 原生的 input range
+   */
+  (() => {
+    const canvasBg = document.querySelector('#demo-native [data-id=canvas-background]');
+    const canvasFg = document.querySelector('#demo-native [data-id=canvas-fragment]');
+    const sliderbar = document.querySelector('#demo-native .slider input[type="range"]');
+    const dialog = document.querySelector('#demo-native [data-id=dialog]');
+  
+    const ctxb = canvasBg.getContext('2d');
+    const ctxf = canvasFg.getContext('2d');
+  
+    const offCanvas = (function () {
+      if(window.OffscreenCanvas) {
+        return new OffscreenCanvas(canvasBg.width, canvasBg.height)
+      } else {
+        const can = document.createElement('canvas');
+        can.width = canvasBg.width;
+        can.height = canvasBg.height;
+        return can;
       }
-      inputSlider.onmouseup = null;
-      const value = sliderbar.value / 100 * (canvasBg.width - fragmentWH[0]) / canvasBg.width;
-      sliderbar.value = '0';
-      canvasFg.style.left = 10 + 'px';
-      sliderbar.style.background = `linear-gradient(
+    })();
+    const offCtx = offCanvas.getContext('2d');
+  
+    let rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 绘图
+  
+    // 绑定滑块事件
+    const inputSlider = document.querySelector('#demo-native [data-id=input-slider]');
+    // 鼠标按下
+    inputSlider.onmousedown = ev => {
+      // 鼠标松开
+      inputSlider.onmouseup = ev => {
+        canvasFg.classList.add('transition');
+        canvasFg.ontransitionend = ev => {
+          canvasFg.ontransitionend = null;
+          canvasFg.classList.remove('transition');
+        }
+        inputSlider.onmouseup = null;
+        const value = sliderbar.value / 100 * (canvasBg.width - fragmentWH[0]) / canvasBg.width;
+        sliderbar.value = '0';
+        canvasFg.style.left = 10 + 'px';
+        sliderbar.style.background = '';
+  
+        // 在此校验是否成功
+        if(Math.abs(value - rightScale) < 0.01) {
+          // 成功
+          createNotice('demo-native', true);
+        } else {
+          // 失败
+          dialog.classList.add('shake');
+          dialog.onanimationend = ev => {
+            dialog.onanimationend = null;
+            dialog.classList.remove('shake');
+          };
+          createNotice('demo-native', false);
+        }
+      }
+    };
+    inputSlider.oninput = ev => {
+      const percent = (+ev.target.value).toFixed(2);
+      const left = +ev.target.value / 100 * (canvasBg.width - fragmentWH[0]);
+      canvasFg.style.left = left + 10 + 'px';
+      const string = `linear-gradient(
         to right,
         rgba(82, 196, 26, 0.2) 0%,
-        rgba(82, 196, 26, 0.2) 0%,
-        rgb(89, 89, 89, 0.2) 0%,
+        rgba(82, 196, 26, 0.2) ${percent}%,
+        rgb(89, 89, 89, 0.2) ${percent}%,
         rgb(89, 89, 89, 0.2) 100%
       )`;
+      sliderbar.style.background = string;
+    };
+  
+    // 按钮事件
+    document.querySelector('#demo-native [data-id=btn-refresh]').onclick = ev => {
+      rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 绘图
+    };
+  })();
 
-      // 在此校验是否成功
-      if(Math.abs(value - rightScale) < 0.01) {
-        // 成功
-        createNotice(true);
+  /**
+   * demo-monitor
+   * 模拟的 range 滑块
+   */
+  (() => {
+    const canvasBg = document.querySelector('#demo-monitor [data-id=canvas-background]');
+    const canvasFg = document.querySelector('#demo-monitor [data-id=canvas-fragment]');
+    const dialog = document.querySelector('#demo-monitor [data-id=dialog]');
+  
+    const ctxb = canvasBg.getContext('2d');
+    const ctxf = canvasFg.getContext('2d');
+  
+    const offCanvas = (function () {
+      if(window.OffscreenCanvas) {
+        return new OffscreenCanvas(canvasBg.width, canvasBg.height)
       } else {
-        // 失败
-        dialog.classList.add('shake');
-        dialog.onanimationend = ev => {
-          dialog.onanimationend = null;
-          dialog.classList.remove('shake');
-        };
-        createNotice(false);
+        const can = document.createElement('canvas');
+        can.width = canvasBg.width;
+        can.height = canvasBg.height;
+        return can;
       }
-    }
-  };
-  inputSlider.oninput = ev => {
-    const percent = (+ev.target.value).toFixed(2);
-    const left = +ev.target.value / 100 * (canvasBg.width - fragmentWH[0]);
-    canvasFg.style.left = left + 10 + 'px';
-    const string = `linear-gradient(
-      to right,
-      rgba(82, 196, 26, 0.2) 0%,
-      rgba(82, 196, 26, 0.2) ${percent}%,
-      rgb(89, 89, 89, 0.2) ${percent}%,
-      rgb(89, 89, 89, 0.2) 100%
-    )`;
-    sliderbar.style.background = string;
-  };
+    })();
+    const offCtx = offCanvas.getContext('2d');
+  
+    let rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 绘图
 
-  // 按钮事件
-  document.getElementById('btn-refresh').onclick = ev => {
-    rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 绘图
-  };
+    // 滑块拖动
+    const inputSlider = document.querySelector('#demo-monitor [data-id=input-slider]');
+    const totalWidth = inputSlider.parentElement.offsetWidth;
+    const thumb = inputSlider.offsetWidth;
+    const bgWidth = canvasBg.width - fragmentWH[0];
+    inputSlider.onmousedown = ev => {
+      let percent = 0;
+      const { pageX: opx } = ev;
+      inputSlider.classList.add('hover');
+
+      document.onmousemove = ev => {
+        const { pageX } = ev;
+        const left = pageX - opx;
+        let currentWidth = 0;
+        if(left <= 0) {
+          currentWidth = 0;
+        } else if(left >= totalWidth - thumb) {
+          currentWidth = totalWidth - thumb;
+        } else {
+          currentWidth = left;
+        }
+
+        inputSlider.style.left = currentWidth + 'px';
+        percent = currentWidth / (totalWidth - thumb);
+        const string = `linear-gradient(
+          to right,
+          rgba(82, 196, 26, 0.2) 0%,
+          rgba(82, 196, 26, 0.2) ${percent * 100}%,
+          rgb(89, 89, 89, 0.2) ${percent * 100}%,
+          rgb(89, 89, 89, 0.2) 100%
+        )`;
+        inputSlider.parentElement.style.background = string;
+
+        canvasFg.style.left = bgWidth * percent + 10 + 'px';
+      };
+
+      // 鼠标松开
+      document.onmouseup = ev => {
+        canvasFg.classList.add('transition');
+        canvasFg.ontransitionend = ev => {
+          canvasFg.ontransitionend = null;
+          canvasFg.classList.remove('transition');
+        }
+        const value = percent * bgWidth / canvasBg.width;
+        // 在此校验是否成功
+        if(Math.abs(value - rightScale) < 0.01) {
+          // 成功
+          createNotice('demo-monitor', true);
+        } else {
+          // 失败
+          dialog.classList.add('shake');
+          dialog.onanimationend = ev => {
+            dialog.onanimationend = null;
+            dialog.classList.remove('shake');
+          };
+          createNotice('demo-monitor', false);
+        }
+
+        inputSlider.classList.remove('hover');
+        inputSlider.style.left = '';
+        inputSlider.parentElement.style.background = '';
+        canvasFg.style.left = '10px';
+        document.onmousemove = null;
+        document.onmouseup = null;
+      };
+
+      ev.stopPropagation();
+    };
+  })();
 })();
 
 // 获取图片
@@ -223,7 +318,7 @@ function createPath([x, y], [w = 40, h = 40] = [], outer) {
 }
 
 // 创建提示文字
-function createNotice(flag = false) {
+function createNotice(id, flag = false) {
   if(notice) {
     notice.remove();
     notice = null;
@@ -236,7 +331,7 @@ function createNotice(flag = false) {
   notice = document.createElement('div');
   notice.className = flag ? 'notice-successed' : 'notice-failed';
   notice.innerHTML = flag ? '验证通过' : '验证失败';
-  document.getElementById('canvas-box').appendChild(notice);
+  document.querySelector(`#${id} [data-id=canvas-box]`).appendChild(notice);
   setTimeout(() => {
     notice.classList.add('raise-up');
   }, 0);
@@ -252,4 +347,36 @@ function createNotice(flag = false) {
       timer = null;
     }
   }, 800);
+}
+
+// 绑定元素
+function bindElements(containerId, show = false) {
+  const dialog = document.querySelector(`#${containerId} [data-id=dialog]`);
+  let showDialog = show;
+  if(show) {
+    dialog.classList.remove('none');
+  } else {
+    dialog.classList.add('none');
+    dialog.classList.add('fade-hidden');
+  }
+
+  document.querySelector(`#${containerId} [data-id=dialog-toggle]`).onclick = () => {
+    if(showDialog) {
+      // 隐藏
+      dialog.classList.toggle('fade-hidden');
+
+      dialog.ontransitionend = () => {
+        dialog.classList.add('none');
+        dialog.ontransitionend = null;
+      };
+    } else {
+      // 显示
+      dialog.classList.remove('none');
+      setTimeout(() => {
+        dialog.classList.toggle('fade-hidden');
+      }, 0);
+    }
+
+    showDialog = !showDialog;
+  };
 }

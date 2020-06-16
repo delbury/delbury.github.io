@@ -1,4 +1,13 @@
+html, body {
+  /* padding: 0; */
+  /* margin: 0; */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .container {
+  flex: 1 1 50%;
   position: relative;
   margin: auto;
   height: 480px;
@@ -88,17 +97,62 @@
 .slider input[type="range"]::-webkit-slider-thumb::before {
   content: "12123";
 }
-/* .slider input[type="range"]::-webkit-slider-runnable-track {
-  height: 40px;
-  border-radius: 20px;
-} */
-
 .slider > .label {
   position: absolute;
   white-space: nowrap;
   user-select: none;
   color: #bfbfbf;
   z-index: -1;
+}
+
+.slider > .input-slider-monitor {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 40px;
+  width: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(82, 196, 26, 0.2) 0%,
+    rgba(82, 196, 26, 0.2) 0%,
+    rgb(89, 89, 89, 0.2) 0%,
+    rgb(89, 89, 89, 0.2) 100%
+  );
+  border-radius: 20px;
+  box-shadow: inset 1px 1px 5px #bfbfbf;
+  outline: none;
+  z-index: 0;
+}
+.slider > .input-slider-monitor::before {
+  content: attr(data-label);
+  display: block;
+  position: absolute;
+  white-space: nowrap;
+  user-select: none;
+  color: #bfbfbf;
+  z-index: -1;
+}
+.slider > .input-slider-monitor .input-slider-monitor-thumb {
+  position: absolute;
+  left: 0;
+  height: 60px;
+  width: 60px;
+  background-color: #fff;
+  background-image: url("../common/icons/double-arro-right-grey.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 40px;
+  border: 1px solid #d9d9d9;
+  border-radius: 50%;
+  box-shadow: 1px 1px 6px #bfbfbf;
+  cursor: pointer;
+  user-select: none;
+}
+.slider > .input-slider-monitor .input-slider-monitor-thumb:hover,
+.slider > .input-slider-monitor .input-slider-monitor-thumb.hover {
+  background-image: url("../common/icons/double-arro-right-green.svg");
+  box-shadow: 1px 1px 5px #bfbfbf;
 }
 
 /* 按钮操作栏 */

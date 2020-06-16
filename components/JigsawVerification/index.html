@@ -9,39 +9,43 @@
   <link rel="stylesheet" href="../common/fonts/iconfont.css">
 </head>
 <body>
-  <div class="container">
-    <button id="dialog-toggle">open dialog</button>
-    <div id="dialog" class="dialog">
-      <div id="canvas-box" class="canvas-box">
-        <canvas id="canvas-background" width="384" height="216"></canvas>
-        <canvas id="canvas-fragment" width="384" height="216"></canvas>
+  <div id="demo-native" class="container">
+    <button data-id="dialog-toggle">open dialog</button>
+    <div data-id="dialog" class="dialog">
+      <div data-id="canvas-box" class="canvas-box">
+        <canvas data-id="canvas-background" width="384" height="216"></canvas>
+        <canvas data-id="canvas-fragment" width="384" height="216"></canvas>
       </div>
       <div class="slider">
-        <input id="input-slider" type="range" min="0" max="100" step="0.01" value="0">
+        <input data-id="input-slider" type="range" min="0" max="100" step="0.01" value="0">
         <span class="label">拖动滑块完成拼图</span>
       </div>
       <div class="btn-box">
-        <i id="btn-close" class="iconfont icon-close"></i>
-        <i id="btn-refresh" class="iconfont icon-exchangerate"></i>
+        <i data-id="btn-close" class="iconfont icon-close"></i>
+        <i data-id="btn-refresh" class="iconfont icon-exchangerate"></i>
+      </div>
+    </div>
+  </div>
+
+  <div id="demo-monitor" class="container">
+    <button data-id="dialog-toggle">open dialog</button>
+    <div data-id="dialog" class="dialog">
+      <div data-id="canvas-box" class="canvas-box">
+        <canvas data-id="canvas-background" width="384" height="216"></canvas>
+        <canvas data-id="canvas-fragment" width="384" height="216"></canvas>
+      </div>
+      <div class="slider">
+        <div class="input-slider-monitor" data-label="拖动滑块完成拼图">
+          <div data-id="input-slider" class="input-slider-monitor-thumb"></div>
+        </div>
+      </div>
+      <div class="btn-box">
+        <i data-id="btn-close" class="iconfont icon-close"></i>
+        <i data-id="btn-refresh" class="iconfont icon-exchangerate"></i>
       </div>
     </div>
   </div>
 
   <script src="./index.js"></script>
-  <script>
-    const dialog = document.getElementById('dialog');
-    let showDialog = true;
-    document.getElementById('dialog-toggle').onclick = () => {
-      !showDialog ? dialog.classList.remove('none') : null;
-      setTimeout(() => {
-        dialog.classList.toggle('fade-hidden');
-        showDialog = !showDialog;
-      }, 0);
-      
-      dialog.ontransitionend = () => {
-        !showDialog ? dialog.classList.add('none') : null;
-      };
-    };
-  </script>
 </body>
 </html>
