@@ -57,13 +57,13 @@
 			{ s: 0x2600, e: 0x26ff },
 		];
 
-		let text = '';
-		for(let range of ranges) {
-			for(let i = range.s; i <= range.e; i++) {
-				text += String.fromCodePoint(i);
-			}
-		}
-		emojis.innerHTML = text;
+		// let text = '';
+		// for(let range of ranges) {
+		// 	for(let i = range.s; i <= range.e; i++) {
+		// 		text += String.fromCodePoint(i);
+		// 	}
+		// }
+		// emojis.innerHTML = text;
 
 		input.oninput = ev => {
 			const string = ev.target.value.trim();
