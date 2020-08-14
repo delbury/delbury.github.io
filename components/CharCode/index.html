@@ -6,7 +6,7 @@
 	<title>Char Code</title>
 	<style>
 		.box {
-			height: 400px;
+			height: 600px;
 			display: flex;
 			justify-content: center;
 		}
@@ -31,14 +31,9 @@
 			border-right: 1px dashed skyblue;
 		}
 		
-		input {
-			height: 30px;
-		}
 		textarea {
 			flex: 1;
 			resize: vertical;
-		}
-		input, textarea {
 			margin-bottom: 20px;
 			padding: 5px 10px;
 			width: 500px;
@@ -50,138 +45,44 @@
 <body>
 	<div class="box">
 		<div class="container">
-			<h3>字符串/UTF-8编码 转换</h3>
-			<input id="chars" type="text" placeholder="字符串">
-			<textarea id="codes" placeholder="字符串编码"></textarea>
-		</div>
-
-		<div class="container">
-			<h3>UTF-8/Unicode 转换</h3>
+			<h3>字符/UTF-8/Unicode 转换</h3>
+			<textarea id="chars" placeholder="字符"></textarea>
 			<textarea id="utf8" placeholder="UTF-8编码"></textarea>
 			<textarea id="unicode" placeholder="Unicode编码"></textarea>
 		</div>
 	</div>
 
-	<script>
-		// 字符串/编码 转换
+	<script type="module">
+		import CharCode from './CharCode.js';
+
+		const charCode = new CharCode();
+		const elUtf8 = document.getElementById('utf8');
+		const elUnicode = document.getElementById('unicode');
 		const elChars = document.getElementById('chars');
-		const elCodes = document.getElementById('codes');
 
 		// 输入字符
 		elChars.oninput = ev => {
 			const string = ev.target.value.trim();
 			ev.target.value = string;
 
-			const codes = [];
-			for(let i = 0, len = string.length; i < len; i++) {
-				const code = '\\u' + string.charCodeAt(i).toString(16).padStart(4, '0');
-
-				codes.push(code);
-			}
-
-			const codesString = codes.join('');
-			elCodes.value = codesString;
+			const { codesString, codes } = charCode.charsToUnicode(string);
+			elUnicode.value = codesString;
+			charCode.unicodeToUtf8(codes);
 		};
 
-		// 输入字符编码
-		elCodes.oninput = ev => {
-			console.log(ev.target.value);
-		};
-	</script>
-
-	<script>
-		// UTF-8/Unicode 转换
-		const elUtf8 = document.getElementById('utf8');
-		const elUnicode = document.getElementById('unicode');
-		// const regTestUtf8 = /^(\\u[0-9a-f]{4})*$/i;
-		// const regMatchUtf8 = /\\u(?<code>[0-9a-f]{4})/ig;
-		const regTestUtf8 = /^(\\x[0-9a-f]{2})*$/i;
-		const regMatchUtf8 = /\\x(?<code>[0-9a-f]{2})/ig;
-
-		// 拼装unicode
-		const assembleUnicode = arr => {
-			return `\\u{${parseInt(arr.join(''), 2).toString(16)}}`;
-		};
-
+		// 输入utf-8编码
 		elUtf8.oninput = ev => {
 			const string = ev.target.value.trim();
 			ev.target.value = string;
-
-			if(regTestUtf8.test(string)) {
-				if(!string) {
-					elUnicode.value = ''
-					return;
-				}
-				// 编码转换
-				const matches = Array.from(string.matchAll(regMatchUtf8));
-				const transfers = [];
-				let multiBytes = false;
-				const multiBytesArr = [];
-
-				for(let item of matches) {
-					const code = parseInt(item.groups.code, 16);
-
-					if((code & 0b1000_0000) === 0b0000_0000) {
-						// 单字节
-						if(multiBytesArr.length) {
-							transfers.push(assembleUnicode(multiBytesArr));
-						}
-
-						multiBytesArr.length = 0;
-						multiBytes = false;
-						transfers.push(`\\u{${code.toString(16)}}`);
-
-					} else if((code & 0b1110_0000) === 0b1100_0000) {
-						// 2字节首字节
-						if(multiBytesArr.length) {
-							transfers.push(assembleUnicode(multiBytesArr));
-						}
-						multiBytes = true;
-						multiBytesArr.length = 0;
-						multiBytesArr.push((code & 0b0001_1111).toString(2).padStart(5, '0'));
-						console.log((code & 0b0001_1111).toString(2).padStart(5, '0'))
-
-					} else if((code & 0b1111_0000) === 0b1110_0000) {
-						// 3字节首字节
-						if(multiBytesArr.length) {
-							transfers.push(assembleUnicode(multiBytesArr));
-						}
-						multiBytes = true;
-						multiBytesArr.length = 0;
-						multiBytesArr.push((code & 0b0000_1111).toString(2).padStart(4, '0'));
-
-					} else if((code & 0b1111_1000) === 0b1111_0000) {
-						// 4字节首字节
-						if(multiBytesArr.length) {
-							transfers.push(assembleUnicode(multiBytesArr));
-						}
-						multiBytes = true;
-						multiBytesArr.length = 0;
-						multiBytesArr.push((code & 0b0000_0111).toString(2).padStart(3, '0'));
-
-					} else if((code & 0b1100_0000) === 0b1000_0000) {
-						// 多字节的剩余字节
-						multiBytesArr.push((code & 0b0011_1111).toString(2).padStart(6, '0'));
-					}
-				}
-
-				console.log(multiBytesArr)
-				if(multiBytesArr.length) {
-					transfers.push(assembleUnicode(multiBytesArr));
-				}
-				elUnicode.value = transfers.join('');
-			} else {
-				elUnicode.value = '无效的编码'
-			}
+			
+			elUnicode.value = charCode.utf8ToUnicode(string);
 		};
 
+		// 输入unicode
 		elUnicode.oninput = ev => {
 			const string = ev.target.value.trim();
 			ev.target.value = string;
 
-			try {
-				
-			} catch {}
 		};
 	</script>
 </body>
