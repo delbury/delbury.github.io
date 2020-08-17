@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,78 +8,32 @@
 	<style>
 		.box {
 			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
 		}
+
 		.container {
 			margin-top: 20px;
-			display: flex;
-			flex-direction: column;
-			/* align-items: center; */
-			/* justify-content: center; */
+
 			width: fit-content;
-		}
-
-		input {
-			margin-bottom: 20px;
-			padding: 0 10px;
-			width: 400px;
-			height: 30px;
-		}
-		textarea {
-			padding: 0 10px;
-			width: 400px;
-		}
-
-		#emojis {
-			font-size: 20px;
 		}
 	</style>
 </head>
+
 <body>
 	<div class="box">
 		<div class="container">
-			<input id="input" type="text" placeholder="输入字符">
-			<textarea id="info" disabled cols="30" rows="10"></textarea>
+			<input id="input" type="number" step="1" placeholder="输入Emoji字符">
 		</div>
+
 		<div class="container">
-			<span id="emojis"></span>
 		</div>
 	</div>
 
-
 	<script>
-		const input = document.getElementById('input');
-		const info = document.getElementById('info');
-		const emojis = document.getElementById('emojis');
-		const ranges = [
-			{ s: 0x1f300, e: 0x1f5ff },
-			// { s: 0x1f900, e: 0x1f9ff },
-			{ s: 0x1f600, e: 0x1f64f },
-			{ s: 0x1f680, e: 0x1f6ff },
-			{ s: 0x2600, e: 0x26ff },
-		];
-
-		// let text = '';
-		// for(let range of ranges) {
-		// 	for(let i = range.s; i <= range.e; i++) {
-		// 		text += String.fromCodePoint(i);
-		// 	}
-		// }
-		// emojis.innerHTML = text;
-
-		input.oninput = ev => {
-			const string = ev.target.value.trim();
-			ev.target.value = string;
-
-			const codes = [];
-			for(let i = 0, len = string.length; i < len; i++) {
-				const code = '\\u' + string.charCodeAt(i).toString(16).padStart(4, '0');
-
-				codes.push(code);
-			}
-
-			const codesString = codes.join('');
-			info.value = codesString;
-		};
+		const input
 	</script>
 </body>
+
 </html>
