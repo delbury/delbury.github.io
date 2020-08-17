@@ -1,7 +1,7 @@
 export default class CharCode {
   static regTestUtf8 = /^(\\x[0-9a-f]{2})+$/i; // 验证是否是utf-8编码字符串
   static regMatchUtf8 = /\\x(?<code>[0-9a-f]{2})/ig; // 解析utf-8字符串的编码
-  static regTestUnicode = /(\\u{[0-9a-f]{1,8}})+/i; // 验证是否是Unicode编码字符串
+  static regTestUnicode = /^(\\u{[0-9a-f]{1,8}})+$/i; // 验证是否是Unicode编码字符串
   static regMatchUnicode = /\\u{(?<code>[0-9a-f]{1,8})}/ig; // 解析Unicode字符串编码
 
   constructor() { }
