@@ -1,7 +1,7 @@
-
 * {
   box-sizing: border-box;
 }
+
 button {
   background-color: #1d39c4;
   color: #fff;
@@ -12,9 +12,11 @@ button {
   cursor: pointer;
   box-shadow: 3px 3px 5px #999;
 }
+
 button:hover {
   background-color: #10239e;
 }
+
 button:active {
   box-shadow: 1px 1px 5px #999;
 }
@@ -27,6 +29,24 @@ button:active {
 .fade-show {
   opacity: 1 !important;
 }
+
 .fade-hidden {
   opacity: 0 !important;
+}
+
+.flex-center-h {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-center-v {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-main-end {
+  justify-content: flex-end;
 }

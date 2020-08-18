@@ -5,35 +5,100 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Emojis</title>
+	<link rel="stylesheet" href="../common/style/element.css">
 	<style>
-		.box {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			justify-content: center;
-		}
-
 		.container {
 			margin-top: 20px;
+			display: flex;
+			align-items: center;
+			width: 640px;
+		}
 
-			width: fit-content;
+		textarea {
+			flex: 1;
+			width: 300px;
+			height: 120px;
+			resize: none;
+			font-size: 14px;
 		}
 	</style>
 </head>
 
 <body>
-	<div class="box">
+	<div class="flex-center-v">
 		<div class="container">
-			<input id="input" type="number" step="1" placeholder="输入Emoji字符">
+			<textarea id="chars" placeholder="输入Emoji字符"></textarea>
+			<div style="margin: 0 10px;">↔</div>
+			<textarea id="codepoints" placeholder="输入Unicode编码（16进制 “,”分隔）"></textarea>
+		</div>
+
+		<div class="container flex-main-end">
+			<button id="btn-emojis">Emojis</button>
 		</div>
 
 		<div class="container">
+			<div class="text-box" id="text-box"></div>
 		</div>
 	</div>
 
+	<!-- 字符转换控件 -->
 	<script>
-		const input
+		const chars = document.getElementById('chars');
+		const codepoints = document.getElementById('codepoints');
+
+		chars.oninput = ev => {
+			const string = ev.target.value.trim();
+			ev.target.value = string;
+
+			const arr = [];
+			for (let char of string) {
+				arr.push(char.codePointAt(0).toString(16));
+			}
+			codepoints.value = arr.join(',');
+		};
+
+		codepoints.oninput = ev => {
+			const string = ev.target.value.trim();
+			ev.target.value = string;
+
+			const arr = string.split(',');
+			let res = '';
+			for (let str of arr) {
+				const code = parseInt(str, 16);
+				if (!Number.isNaN(code) && code <= 0x10ffff) {
+					res += String.fromCodePoint(code);
+				}
+			}
+			chars.value = res;
+		};
 	</script>
+	<!-- end-字符转换控件 -->
+
+	<!-- 字符展示区 -->
+	<script>
+		/**
+		 * Unicode-控制字符
+		 * U+200E;LRM‎ 从左到右标记
+		 * U+200F;RLM 从右向左标记
+		 * U+200D;ZWJ‍ 零宽度连接器
+		 * U+200C;ZWNJ‌零宽度非连接器
+		 * U+202A;LRE‪ 开始从左到右嵌入
+		 * U+202B;RLE‫ 开始从右向左嵌入
+		 * U+202D;LRO‭ 开始从左向右覆盖
+		 * U+202E;RLO开始从右向左覆盖 X=8(就是”&#”加上”8238″，以下还会出现)
+		 * U+202C;PDF结束方向格式 Y=6(就是”&#”加上”8236″)
+
+		 * U+206E;NADS⁮
+		 * U+202F;NODS⁯
+		 * U+206B;ASS⁫
+		 * U+206A;ISS⁪
+		 * U+206D;AAFS⁭
+		 * U+206C;IAFS⁬
+		 * U+1E;RS 记录分隔符（块分隔符）
+		 * U+1F;US 单元分隔符（段分隔符）
+		 */
+	</script>
+	<!-- end-字符展示区 -->
 </body>
 
 </html>
