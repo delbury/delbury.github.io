@@ -47,6 +47,10 @@ button:active {
   justify-content: center;
 }
 
+.flex-main-between {
+  justify-content: space-between;
+}
+
 .flex-main-end {
   justify-content: flex-end;
 }

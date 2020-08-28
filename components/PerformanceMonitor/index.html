@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Performance Monitor</title>
+  <link rel="stylesheet" href="../common/style/element.css">
+  <style>
+    :root {
+      --bg-color: #262626;
+      --code-color-normal: #fff;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      width: 640px;
+      height: 640px;
+    }
+
+    .codes {
+      flex: 1;
+      padding: 10px;
+      font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
+      font-size: 14px;
+      overflow: auto;
+      background-color: var(--bg-color);
+      /* border: 1px dashed skyblue; */
+      border-radius: 5px;
+      color: var(--code-color-normal);
+      outline: none;
+
+      counter-reset: count 0;
+    }
+
+    .codes>div {
+      white-space: pre;
+      counter-increment: count 1;
+    }
+
+    .codes>div::before {
+      display: inline-block;
+      margin-right: 1em;
+      padding-right: 1em;
+      width: 2em;
+      border-right: 1px dashed #bfbfbf;
+      text-align: right;
+      content: counter(count);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="column">
+      <h4 class="flex-center-h flex-main-between">
+        <span>执行代码：只能运行单个函数</span>
+        <button id="btn-run">Run</button>
+      </h4>
+      <code id="codes" class="codes" contenteditable="true">
+        <div>/*</div>
+        <div> * 入口函数</div>
+        <div> */</div>
+        <!-- <div>function main(name, age = 233) {</div> -->
+        <div>const main = (nums, k) => {</div>
+        <div>  k = k % nums.length;</div>
+        <div>  nums.unshift(...nums.splice(nums.length - k, k));</div>
+        <div>  return nums;</div>
+        <div>}</div>
+        <div><br></div>
+      </code>
+    </div>
+  </div>
+  <script type="module">
+    import PerformanceMonitor from './PerformanceMonitor.js'
+    const pm = new PerformanceMonitor();
+    const codes = document.getElementById('codes');
+
+    // 测试用例
+    const cases = [
+      [[1,2,3,4,5,6,7,8], 18],
+      [[5,5,7,8,2], 23],
+      [[2,3,5,7,8], 4]
+    ]; 
+
+    document.getElementById('btn-run').onclick = ev => {
+      const res = pm.runCode(mergeCodeString(codes), cases);
+      console.log(res);
+    };
+    codes.onpaste = ev => {
+      // console.log(ev);
+    };
+    function mergeCodeString(ele) {
+      return Array.from(ele.querySelectorAll('div')).map(line => line.innerText).join('\n');
+    }
+  </script>
+</body>
+
+</html>
