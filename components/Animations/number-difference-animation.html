@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Number Difference Animation</title>
+  <link rel="stylesheet" href="../common/style/element.css">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    #changeable-number {
+      margin-bottom: 1em;
+      padding: 0 1em;
+      font-size: 40px;
+    }
+  </style>
+</head>
+<body class="flex-center-v">
+  <div class="flex-center-h">
+    <div id="changeable-number">0.00</div>
+  </div>
+  <div class="flex-center-h">
+    <input id="input" type="number" value="0.00" step="0.01" style="margin-right: 1em;">
+    <button id="btn-linear" style="margin-right: 1em;">线性</button>
+    <button id="btn-ease">缓动</button>
+  </div>
+  <script type="module">
+    import NumberDifferenceAnimation from './js/number-difference-animation.js';
+    const nda = new NumberDifferenceAnimation(document.getElementById('changeable-number'));
+    window.nda = nda;
+    
+    document.getElementById('btn-linear').onclick = ev => {
+      nda.changeValue(document.getElementById('input').value, 'linear');
+    };
+    document.getElementById('btn-ease').onclick = ev => {
+      nda.changeValue(document.getElementById('input').value, 'ease');
+    };
+  </script>
+</body>
+</html>

@@ -21,6 +21,13 @@ button:active {
   box-shadow: 1px 1px 5px #999;
 }
 
+input {
+  padding: 5px 8px;
+  border-radius: 3px;
+  box-shadow: none;
+  border: 1px solid #10239e;
+}
+
 .none {
   display: none !important;
   opacity: 0;
