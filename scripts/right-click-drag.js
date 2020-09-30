@@ -59,7 +59,7 @@
     if(ev.button === 2) {
       originPosition = null;
       moveFlag = false;
-
+      
       originPosition = {
         x: ev.screenX,
         y: ev.screenY,
@@ -67,10 +67,12 @@
 
       // 寻找可拖动元素
       scrollElement = findScrollableElement(ev.target);
-      currentScrollPosition = {
-        x: scrollElement.scrollLeft,
-        y: scrollElement.scrollTop,
-      };
+      if(scrollElement) {
+        currentScrollPosition = {
+          x: scrollElement.scrollLeft,
+          y: scrollElement.scrollTop,
+        };
+      }
 
       document.addEventListener('mousemove', fnMove);
     }
