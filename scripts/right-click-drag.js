@@ -88,6 +88,6 @@
 
       current = current.parentElement;
     }
-    return current;
+    return current === document.body ? document.documentElement : current;
   }
 })();
