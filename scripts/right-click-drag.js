@@ -88,6 +88,9 @@
 
       current = current.parentElement;
     }
-    return current === document.body ? document.documentElement : current;
+    if(current === document.body) {
+      return document.documentElement.scrollHeight === document.body.scrollHeight ? document.documentElement : document.body;
+    }
+    return current;
   }
 })();
