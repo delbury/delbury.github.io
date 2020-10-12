@@ -19,17 +19,19 @@
   let startFlag = false; // 开始标志
   let scrollElement = null; // 当前滚动元素
   let currentScrollPosition = null; // 当前的滚动元素的滚动位置
+  let frameCb = null; // 帧回调 handler
 
   // 构造style
   const style = document.createElement('style');
   style.type = 'text/css';
-  style.innerHTML = '.scroll-grabbing { cursor: grabbing !important; }';
+  style.innerHTML = '.scroll-grabbing { cursor: grabbing !important; } .will-scroll { will-change: scroll-position; }';
   document.head.appendChild(style);
 
   const fnMove = ev => {
     if(!startFlag) return;
 
-    if(!moveFlag && ((ev.screenX - originPosition.x) ** 2 + (ev.screenY - originPosition.y) ** 2 > 0)) {
+    if(!moveFlag) {
+      // ((ev.screenX - originPosition.x) ** 2 + (ev.screenY - originPosition.y) ** 2 > 0) // 移动范围控制
       moveFlag = true;
       document.body.classList.add('scroll-grabbing');
     }
@@ -39,7 +41,12 @@
       const dx = ev.screenX - originPosition.x;
       const dy = ev.screenY - originPosition.y;
 
-      scrollElement.scrollTo(currentScrollPosition.x - dx * moveScale, currentScrollPosition.y - dy * moveScale);
+      if(!frameCb) {
+        frameCb = requestAnimationFrame(() => {
+          scrollElement && scrollElement.scrollTo(currentScrollPosition.x - dx * moveScale, currentScrollPosition.y - dy * moveScale);
+          frameCb = null;
+        });
+      }
     }
   };
 
@@ -47,8 +54,13 @@
   document.addEventListener('mouseup', ev => {
     // document.removeEventListener('mousemove', fnMove);
     startFlag = false;
+
+    scrollElement && scrollElement.classList.remove('will-scroll');
     scrollElement = null;
-    document.body.classList.remove('scroll-grabbing');
+
+    frameCb = null;
+
+    document.body.classList.remove('scroll-grabbing'); // scroll-grabbing
   });
 
   // 鼠标移动事件
@@ -76,6 +88,7 @@
       // 寻找可拖动元素
       scrollElement = findScrollableElement(ev.target);
       if(scrollElement) {
+        scrollElement.classList.add('will-scroll');
         currentScrollPosition = {
           x: scrollElement.scrollLeft,
           y: scrollElement.scrollTop,
