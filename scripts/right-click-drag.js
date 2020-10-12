@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Right Click Drag
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  右键拖动可滚动元素
 // @author       delbury
 // @include      https://*
@@ -14,10 +14,11 @@
 
   const moveScale = 1.5; // 拖动距离与滚动距离的系数
 
-  let originPosition = null;
-  let moveFlag = false;
-  let scrollElement = null;
-  let currentScrollPosition = null;
+  let originPosition = null; // 开始原点位置
+  let moveFlag = false; // 移动标志
+  let startFlag = false; // 开始标志
+  let scrollElement = null; // 当前滚动元素
+  let currentScrollPosition = null; // 当前的滚动元素的滚动位置
 
   // 构造style
   const style = document.createElement('style');
@@ -26,6 +27,8 @@
   document.head.appendChild(style);
 
   const fnMove = ev => {
+    if(!startFlag) return;
+
     if(!moveFlag && ((ev.screenX - originPosition.x) ** 2 + (ev.screenY - originPosition.y) ** 2 > 0)) {
       moveFlag = true;
       document.body.classList.add('scroll-grabbing');
@@ -42,10 +45,14 @@
 
   // 松开鼠标清除事件
   document.addEventListener('mouseup', ev => {
-    document.removeEventListener('mousemove', fnMove);
+    // document.removeEventListener('mousemove', fnMove);
+    startFlag = false;
     scrollElement = null;
     document.body.classList.remove('scroll-grabbing');
   });
+
+  // 鼠标移动事件
+  document.addEventListener('mousemove', fnMove);
 
   // 判断阻止默认右键菜单
   document.addEventListener('contextmenu', ev => {
@@ -59,7 +66,8 @@
     if(ev.button === 2) {
       originPosition = null;
       moveFlag = false;
-      
+      startFlag = true;
+
       originPosition = {
         x: ev.screenX,
         y: ev.screenY,
@@ -74,7 +82,7 @@
         };
       }
 
-      document.addEventListener('mousemove', fnMove);
+      // document.addEventListener('mousemove', fnMove);
     }
   });
 
