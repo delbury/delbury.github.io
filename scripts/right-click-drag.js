@@ -102,17 +102,17 @@
 
   // 向上寻找可滚动元素
   function findScrollableElement(current) {
-    while(current && current !== document.body) {
+    while(current) {
       if(current.scrollHeight > current.clientHeight || current.scrollWidth > current.clientWidth) {
         const { overflowX, overflowY } = getComputedStyle(current);
         if(overflowX === 'auto' || overflowX === 'scroll' || overflowY === 'auto' || overflowY === 'scroll') {
-          break;
+          return current;
         }
       }
 
       current = current.parentElement;
     }
 
-    return current === document.body ? document.documentElement : current;
+    return document.documentElement;
   }
 })();
