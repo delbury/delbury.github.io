@@ -16,16 +16,23 @@
       padding: 0 1em;
       font-size: 40px;
     }
+    .btn-group > button:not(:last-child) {
+      margin-right: 0.5em;
+    }
   </style>
 </head>
 <body class="flex-center-v">
   <div class="flex-center-h">
     <div id="changeable-number">0.00</div>
   </div>
-  <div class="flex-center-h">
-    <input id="input" type="number" value="0.00" step="0.01" style="margin-right: 1em;">
-    <button id="btn-linear" style="margin-right: 1em;">线性</button>
-    <button id="btn-ease">缓动</button>
+  <div class="flex-center-v">
+    <input id="input" type="number" value="0.00" step="0.01" style="margin-bottom: 1em;">
+    <div class="btn-group">
+      <button id="btn-linear" >线性</button>
+      <button id="btn-ease">缓动</button>
+      <button id="btn-random-linear" >随机线性</button>
+      <button id="btn-random-ease" >随机缓动</button>
+    </div>
   </div>
   <script type="module">
     import NumberDifferenceAnimation from './js/number-difference-animation.js';
@@ -38,6 +45,16 @@
     document.getElementById('btn-ease').onclick = ev => {
       nda.changeValue(document.getElementById('input').value, 'ease');
     };
+    document.getElementById('btn-random-linear').onclick = ev => {
+      nda.changeValue(generateRandom(), 'linear');
+    };
+    document.getElementById('btn-random-ease').onclick = ev => {
+      nda.changeValue(generateRandom(), 'ease');
+    };
+
+    function generateRandom(range = 100000) {
+      return Math.random() * range * 2 - range;
+    }
   </script>
 </body>
 </html>
