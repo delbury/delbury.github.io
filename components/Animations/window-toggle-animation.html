@@ -66,6 +66,11 @@
     const wta = new WindowToggleAnimation(document.querySelector('.window'));
     window.wta = wta;
 
+    document.addEventListener('keydown', ev => {
+      if(ev.keyCode === 27) {
+        wta.toggle();
+      }
+    });
     document.getElementById('btn-minimize').onclick = ev => {
       wta.toggle();
     };
