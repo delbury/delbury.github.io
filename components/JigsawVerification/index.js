@@ -5,7 +5,7 @@ let timer = null;
 bindElements('demo-native', true);
 bindElements('demo-monitor', true);
 
-(async function() {
+(async function () {
   const img_fat = await createImage('./imgs/fat.jpg');
 
   /**
@@ -17,12 +17,12 @@ bindElements('demo-monitor', true);
     const canvasFg = document.querySelector('#demo-native [data-id=canvas-fragment]');
     const sliderbar = document.querySelector('#demo-native .slider input[type="range"]');
     const dialog = document.querySelector('#demo-native [data-id=dialog]');
-  
+
     const ctxb = canvasBg.getContext('2d');
     const ctxf = canvasFg.getContext('2d');
-  
+
     const offCanvas = (function () {
-      if(window.OffscreenCanvas) {
+      if (window.OffscreenCanvas) {
         return new OffscreenCanvas(canvasBg.width, canvasBg.height)
       } else {
         const can = document.createElement('canvas');
@@ -32,9 +32,9 @@ bindElements('demo-monitor', true);
       }
     })();
     const offCtx = offCanvas.getContext('2d');
-  
+
     let rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 绘图
-  
+
     // 绑定滑块事件
     const inputSlider = document.querySelector('#demo-native [data-id=input-slider]');
     // 鼠标按下
@@ -51,9 +51,9 @@ bindElements('demo-monitor', true);
         sliderbar.value = '0';
         canvasFg.style.left = 10 + 'px';
         sliderbar.style.background = '';
-  
+
         // 在此校验是否成功
-        if(Math.abs(value - rightScale) < 0.01) {
+        if (Math.abs(value - rightScale) < 0.01) {
           // 成功
           createNotice('demo-native', true);
         } else {
@@ -62,8 +62,11 @@ bindElements('demo-monitor', true);
           dialog.onanimationend = ev => {
             dialog.onanimationend = null;
             dialog.classList.remove('shake');
+
           };
           createNotice('demo-native', false);
+
+          rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 重绘
         }
       }
     };
@@ -80,7 +83,7 @@ bindElements('demo-monitor', true);
       )`;
       sliderbar.style.background = string;
     };
-  
+
     // 按钮事件
     document.querySelector('#demo-native [data-id=btn-refresh]').onclick = ev => {
       rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 绘图
@@ -95,12 +98,12 @@ bindElements('demo-monitor', true);
     const canvasBg = document.querySelector('#demo-monitor [data-id=canvas-background]');
     const canvasFg = document.querySelector('#demo-monitor [data-id=canvas-fragment]');
     const dialog = document.querySelector('#demo-monitor [data-id=dialog]');
-  
+
     const ctxb = canvasBg.getContext('2d');
     const ctxf = canvasFg.getContext('2d');
-  
+
     const offCanvas = (function () {
-      if(window.OffscreenCanvas) {
+      if (window.OffscreenCanvas) {
         return new OffscreenCanvas(canvasBg.width, canvasBg.height)
       } else {
         const can = document.createElement('canvas');
@@ -110,7 +113,7 @@ bindElements('demo-monitor', true);
       }
     })();
     const offCtx = offCanvas.getContext('2d');
-  
+
     let rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 绘图
 
     // 滑块拖动
@@ -127,9 +130,9 @@ bindElements('demo-monitor', true);
         const { pageX } = ev;
         const left = pageX - opx;
         let currentWidth = 0;
-        if(left <= 0) {
+        if (left <= 0) {
           currentWidth = 0;
-        } else if(left >= totalWidth - thumb) {
+        } else if (left >= totalWidth - thumb) {
           currentWidth = totalWidth - thumb;
         } else {
           currentWidth = left;
@@ -158,7 +161,7 @@ bindElements('demo-monitor', true);
         }
         const value = percent * bgWidth / canvasBg.width;
         // 在此校验是否成功
-        if(Math.abs(value - rightScale) < 0.01) {
+        if (Math.abs(value - rightScale) < 0.01) {
           // 成功
           createNotice('demo-monitor', true);
         } else {
@@ -167,8 +170,11 @@ bindElements('demo-monitor', true);
           dialog.onanimationend = ev => {
             dialog.onanimationend = null;
             dialog.classList.remove('shake');
+
           };
           createNotice('demo-monitor', false);
+
+          rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 重绘
         }
 
         inputSlider.classList.remove('hover');
@@ -180,6 +186,11 @@ bindElements('demo-monitor', true);
       };
 
       ev.stopPropagation();
+    };
+
+    // 按钮事件
+    document.querySelector('#demo-monitor [data-id=btn-refresh]').onclick = ev => {
+      rightScale = fillImage(ctxb, ctxf, offCtx, img_fat); // 绘图
     };
   })();
 })();
@@ -201,17 +212,17 @@ function fillImage(ctxb, ctxf, offCtx, img) {
   const { width: imgW, height: imgH } = img;
   const { width: canvasW, height: canvasH } = (ctxb || ctxf).canvas;
   const diff = (imgW / imgH - canvasW / canvasH);
-  
+
   let sWidth = imgW;
   let sHeight = imgH;
   let sx = 0;
   let sy = 0;
   // 裁剪
-  if(diff > Number.EPSILON) {
+  if (diff > Number.EPSILON) {
     // 宽度裁剪
     sWidth = canvasW / canvasH * imgH
     sx = (imgW - sWidth) / 2;
-  } else if(diff < -Number.EPSILON) {
+  } else if (diff < -Number.EPSILON) {
     // 高度裁剪
     sHeight = canvasH / canvasW * imgW
     sy = (imgH - sHeight) / 2;
@@ -285,12 +296,12 @@ function createPath([x, y], [w = 40, h = 40] = [], outer) {
   const path = new Path2D();
 
   const radW = W / 8;
-  const diffW =  W / 2 - radW; // 上突起的x轴偏移
+  const diffW = W / 2 - radW; // 上突起的x轴偏移
   const radH = H / 8;
-  const diffH =  H / 2 - radH; // 下突起的y轴偏移
+  const diffH = H / 2 - radH; // 下突起的y轴偏移
 
   // 外框
-  if(outer && outer.length) {
+  if (outer && outer.length) {
     const [cw, ch] = outer;
     path.moveTo(0, 0);
     path.lineTo(0, ch);
@@ -319,11 +330,11 @@ function createPath([x, y], [w = 40, h = 40] = [], outer) {
 
 // 创建提示文字
 function createNotice(id, flag = false) {
-  if(notice) {
+  if (notice) {
     notice.remove();
     notice = null;
 
-    if(timer) {
+    if (timer) {
       clearTimeout(timer);
       timer = null;
     }
@@ -337,7 +348,7 @@ function createNotice(id, flag = false) {
   }, 0);
 
   timer = setTimeout(() => {
-    if(notice) {
+    if (notice) {
       notice.classList.remove('raise-up');
       notice.ontransitionend = ev => {
         notice.remove();
@@ -353,7 +364,7 @@ function createNotice(id, flag = false) {
 function bindElements(containerId, show = false) {
   const dialog = document.querySelector(`#${containerId} [data-id=dialog]`);
   let showDialog = show;
-  if(show) {
+  if (show) {
     dialog.classList.remove('none');
   } else {
     dialog.classList.add('none');
@@ -361,7 +372,7 @@ function bindElements(containerId, show = false) {
   }
 
   document.querySelector(`#${containerId} [data-id=dialog-toggle]`).onclick = () => {
-    if(showDialog) {
+    if (showDialog) {
       // 隐藏
       dialog.classList.toggle('fade-hidden');
 

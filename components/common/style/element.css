@@ -21,7 +21,7 @@ button:active {
   box-shadow: 1px 1px 5px #999;
 }
 
-input {
+input:not(.native) {
   padding: 5px 8px;
   border-radius: 3px;
   box-shadow: none;
