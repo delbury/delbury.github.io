@@ -40,7 +40,7 @@
     import { PolygonShapeChangeController } from './js/controllers.js';
     const inputText = document.getElementById('input-text');
     const pscc = new PolygonShapeChangeController(document.getElementById('canvas'), {
-      edges: +inputText.value
+      edges: +inputText.value,
     });
     window.pscc = pscc;
     const canvas = document.getElementById('canvas');

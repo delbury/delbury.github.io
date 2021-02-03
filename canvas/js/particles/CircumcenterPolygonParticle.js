@@ -8,8 +8,9 @@ export class CircumcenterPolygonParticle extends CircleParticle {
 
     const kv = {
       degrees: [],
-      rotateSpeed: 0,
-      transitDuration: 25
+      rotateSpeed: -2,
+      rotateDegree: 0, // 旋转的角度
+      transitDuration: 25,
     };
     Methods.setParams(this, params, kv);
 
@@ -356,7 +357,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     // this.ctx.setTransform(this.transform[0], this.transform[1], this.transform[2], this.transform[3], dx, dy); // 设置形变
     if (this.degrees.length) {
       this.degrees.forEach(deg => {
-        const rad = deg / 180 * Math.PI;
+        const rad = (deg + this.rotateDegree ?? 0) / 180 * Math.PI;
         this.ctx.arc(this.x - dx, this.y - dy, this.radius, rad, rad, false);
       });
     } else {
@@ -539,10 +540,11 @@ export class CircumcenterPolygonParticle extends CircleParticle {
   // 旋转
   rotateTick() {
     if (this.degrees && this._rotating) {
-      this.degrees = this.degrees.map(deg => {
-        deg = (deg - this.rotateSpeed + 360) % 360;
-        return deg;
-      }); // 赋值后，重新计算了质心的位置
+      // this.degrees = this.degrees.map(deg => {
+      //   deg = (deg - this.rotateSpeed + 360) % 360;
+      //   return deg;
+      // }); // 赋值后，重新计算了质心的位置
+      this.rotateDegree = (this.rotateDegree + this.rotateSpeed) % 360;
     }
   }
 
