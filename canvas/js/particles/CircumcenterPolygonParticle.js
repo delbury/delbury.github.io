@@ -9,7 +9,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     const kv = {
       degrees: [],
       rotateSpeed: 0,
-      transitDuration: 20
+      transitDuration: 25
     };
     Methods.setParams(this, params, kv);
 
@@ -228,7 +228,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
         reverse
       }
     }
-    // console.log(this._prevTickCollided, isCollided)
+
     if (this._prevTickCollided && isCollided) {
       // 碰撞后重叠
       return { status: -1, collidedAxises, minAxis };
@@ -384,32 +384,55 @@ export class CircumcenterPolygonParticle extends CircleParticle {
   }
 
   // 过渡到n边形
-  changeTo(n, cb) {
-    if (n < 3 || this._transiting) {
+  changeTo(to, cb) {
+    if (to < 3 || this._transiting || to === this.degrees.length) {
+      cb && cb();
       return;
     }
     if (this.isRegular) {
       const from = this.degrees.length;
       const fromGap = 360 / from;
-      const dn = n - from;
+      const toGap = 360 / to;
+      const dn = to - from;
+
+      this.toDegrees = Array.from({ length: to }, (it, index) => +(index * 360 / to).toFixed(2));
+      if(dn < 0) {
+        this.toDegrees.push(...Array(-dn).fill(0));
+      }
       this._changeState = {
         from,
-        to: n,
+        to,
         dn,
         fromGap,
-        toGap: 360 / n,
-        gapPerTick: Math.abs((fromGap - 360 / n) / (this.transitDuration))
+        toGap,
+        gapPerTick: Math.abs((fromGap - 360 / to) / (this.transitDuration)),
+        gapPerTicks: Array.from({ length: Math.max(to, from) }, (it, index) => {
+          if(dn > 0) {
+            return ((index < from ? this.degrees[index] : 360) - this.toDegrees[index]) / this.transitDuration;
+
+          } else if(dn < 0) {
+            return Math.abs(index < to ? (this.degrees[index] - this.toDegrees[index]) : (360 - this.degrees[index])) / this.transitDuration;
+            
+          }
+        }),
       };
-      this.toDegrees = Array.from({ length: n }, (it, index) => index * 360 / n);
 
       if (dn > 0) {
-        this.degrees.push(...Array(dn).fill(this.degrees[0]));
+        this.degrees.push(...Array(dn).fill(360));
         this._transiting = true;
         this._transitionCallback = cb;
       } else if (dn < 0) {
         this._transiting = true;
         this._transitionCallback = cb;
       }
+      this.toDegressGT = this.toDegrees.map((td, index) => td >= this.degrees[index]); // 目标角度是否大于等于原始角度
+
+      // console.log('****************');
+      // console.log(this._changeState);
+      // console.log(this.degrees);
+      // console.log(this.toDegrees);
+      // console.log(this.toDegressGT);
+      // console.log('****************');
     }
   }
 
@@ -420,61 +443,52 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       if (this._changeState.dn > 0) {
         // 增加边
         this.degrees = this.degrees.map((deg, index, arr) => {
-          let offGap = 0;
-          if (index > this._changeState.from) {
-            offGap = (index - this._changeState.from) * this._changeState.fromGap / this.transitDuration;
-          }
-          const gapPerTick = this._changeState.gapPerTick * index - offGap;
+          if(deg !== this.toDegrees[index]) {
+            deg = deg - this._changeState.gapPerTicks[index];
 
-          deg = (deg - gapPerTick + 360) % 360;
-
-          if (index === 1) {
-            const dg = deg - arr[0] < 0 ? deg - arr[0] + 360 : deg - arr[0];
-            if (Math.abs(dg - this._changeState.toGap) < 1e-5) {
-              stop = true;
-            }
+          } else {
+            return +(deg).toFixed(2);
           }
-          return deg;
+          
+          if(
+            (this.toDegressGT[index] && (deg + 360 <= this.toDegrees[index])) || 
+            (!this.toDegressGT[index] && (deg <= this.toDegrees[index]))
+          ) {
+            deg = this.toDegrees[index];
+          }
+
+          return +((deg + 360) % 360).toFixed(2);
         });
+
       } else if (this._changeState.dn < 0) {
         // 减少边
         this.degrees = this.degrees.map((deg, index, arr) => {
-          deg = (deg + this._changeState.gapPerTick * index) % 360;
+          if(deg !== this.toDegrees[index]) {
+            deg = deg + this._changeState.gapPerTicks[index];
 
-          if (index === 1) {
-            const dg = deg - arr[0] < 0 ? deg - arr[0] + 360 : deg - arr[0];
-            if (Math.abs(dg - this._changeState.toGap) < 1e-5) {
-              stop = true;
-            }
-          }
-          return deg;
-        });
-        const len = this.degrees.length;
-        if (len > this._changeState.to) {
-          if (
-            this._prevl !== undefined &&
-            this._prevl !== null &&
-            (
-              this._prevl > this.degrees[len - 1] ||
-              (this._prevf >= this._prevl && this.degrees[0] <= this.degrees[len - 1]) ||
-              (this._prevf <= this._prevl && this.degrees[0] >= this.degrees[len - 1])
-            )
-          ) {
-            this.degrees.pop();
-            this._prevl = null;
-            this._
           } else {
-            this._prevl = this.degrees[len - 1];
-            this._prevf = this.degrees[0];
+            return +(deg).toFixed(2);
           }
-        }
-
+          
+          if(
+            (this.toDegressGT[index] && (deg >= this.toDegrees[index])) || 
+            (!this.toDegressGT[index] && (deg - 360 >= this.toDegrees[index]))
+          ) {
+            deg = this.toDegrees[index];
+          }
+          return +((deg + 360) % 360).toFixed(2);
+        });
       }
-      // console.log(this.degrees)
+
+      if(this.degrees[this.degrees.length - 1] === this.toDegrees[this.degrees.length - 1]) stop = true;
+
       if (stop) {
+        this.degrees.length = this._changeState.to;
         this._transiting = false;
         this._changeState = null;
-        this._transitionCallback && this._transitionCallback();
+        const cb = this._transitionCallback;
+        this._transitionCallback = null;
+        cb && cb();
       }
     }
   }

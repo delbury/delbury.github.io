@@ -345,6 +345,22 @@ export class PolygonShapeChangeController extends _Base {
   changeShape(n) {
     this.instance.changeTo(n);
   }
+
+  randomChangeShape(auto = false, callback) {
+    this._randomChanging = auto;
+    const randomN = () => Math.floor(Math.random() * 20 + 3);
+    const cb = () => {
+      if(this._randomChanging) {
+        setTimeout(() => {
+          const n = randomN();
+          callback && callback(n);
+          this.instance.changeTo(n, cb);
+        }, 500);
+      }
+    };
+
+    this.instance.changeTo(randomN(), cb);
+  }
 }
 
 // 测试用，圆形

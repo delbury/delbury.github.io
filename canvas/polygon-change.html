@@ -24,8 +24,9 @@
 <body>
   <div class="canvas">
     <div class="control">
-      <input id="input-text" type="number" placeholder="N边形" min="3" value="3">
+      <input id="input-text" type="number" placeholder="N边形" min="3" value="8">
       <button id="btn-change">改变</button>
+      <button id="btn-random">随机</button>
     </div>
     <div class="border">
       <canvas id="canvas" width="800" height="480">
@@ -45,9 +46,14 @@
     const canvas = document.getElementById('canvas');
 
     document.getElementById('btn-change').onclick = ev => {
+      // 改变
       pscc.changeShape(+inputText.value);
     };
-    inputText.oninput = ev => {
+    document.getElementById('btn-random').onclick = ev => {
+      // 随机
+      pscc.randomChangeShape(true, n => inputText.value = n);
+    };
+    inputText.onchange = ev => {
       pscc.changeShape(+inputText.value);
     };
   </script>
