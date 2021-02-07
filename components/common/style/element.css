@@ -61,3 +61,15 @@ input:not(.native) {
 .flex-main-end {
   justify-content: flex-end;
 }
+
+.full {
+  height: 100%;
+  width: 100%;
+}
+
+@font-face {
+  font-family: 'antdFont';
+  src: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+  'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+  'Noto Color Emoji';
+}

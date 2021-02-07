@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Fragment Carousel</title>
+  <link rel="stylesheet" href="../common/style/element.css">
+  <style>
+    :root {
+      --bg-color-1: #fa8c16;
+      --bg-color-2: #a0d911;
+      --bg-color-3: #13c2c2;
+      --size-base: 10;
+      --width: calc(var(--size-base) * 16px);
+      --height: calc(var(--size-base) * 9px);
+      --fw: calc(var(--size-base) * 5px); /* fragment-width */
+      --ofw: calc(var(--size-base) * -9px); /* offset-fragment-width */
+      --gw: 1px; /* gap-width，防止产生缝隙 */
+
+      --ttx: calc(var(--height) / 2); /* transform: translateX */
+      --tty: calc(var(--height) / 2); /* transform: translateY */
+      --delay-base: 150ms; /* animation-delay，base-time */
+    }
+    html, body {
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    .carousel-container {
+      width: var(--width);
+      height: var(--height);
+      /* overflow: hidden; */
+      border-radius: 3px;
+      box-shadow: 1px 1px 5px #999;
+    }
+    .carousel-warpper {
+      position: relative;
+      height: 100%;
+    }
+    .carousel-warpper > .carousel-item {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-family: antdFont;
+      font-weight: bold;
+    }
+
+    /* 轮播图的碎片 */
+    .carousel-warpper > .carousel-item > .fragment {
+      position: absolute;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+
+      animation-duration: 1500ms;
+      animation-iteration-count: infinite;
+      animation-direction: alternate;
+    }
+    .carousel-warpper > .carousel-item > .fragment:nth-of-type(1) {
+      clip-path: polygon(0px 0%, calc(var(--fw) + var(--gw)) 0%, calc(var(--ofw) + var(--fw) + var(--gw)) 100%, var(--ofw) 100%);
+      animation-name: fade-rt;
+      animation-delay: 0ms;
+    }
+    .carousel-warpper > .carousel-item > .fragment:nth-of-type(2) {
+      clip-path: polygon(var(--fw) 0%, calc(var(--fw) * 2 + var(--gw)) 0%, calc(var(--ofw) + var(--fw) * 2 + var(--gw)) 100%, calc(var(--ofw) + var(--fw)) 100%);
+      animation-name: fade-lb;
+      animation-delay: var(--delay-base);
+    }
+    .carousel-warpper > .carousel-item > .fragment:nth-of-type(3) {
+      clip-path: polygon(calc(var(--fw) * 2) 0%, calc(var(--fw) * 3 + var(--gw)) 0%, calc(var(--ofw) + var(--fw) * 3 + var(--gw)) 100%, calc(var(--ofw) + var(--fw) * 2) 100%);
+      animation-name: fade-rt;
+      animation-delay: calc(var(--delay-base) * 2);
+    }
+    .carousel-warpper > .carousel-item > .fragment:nth-of-type(4) {
+      clip-path: polygon(calc(var(--fw) * 3) 0%, calc(var(--fw) * 4 + var(--gw)) 0%, calc(var(--ofw) + var(--fw) * 4 + var(--gw)) 100%, calc(var(--ofw) + var(--fw) * 3) 100%);
+      animation-name: fade-lb;
+      animation-delay: calc(var(--delay-base) * 3);
+    }
+    .carousel-warpper > .carousel-item > .fragment:nth-of-type(5) {
+      clip-path: polygon(calc(var(--fw) * 4) 0%, calc(var(--fw) * 5) 0%, calc(var(--ofw) + var(--fw) * 5) 100%, calc(var(--ofw) + var(--fw) * 4) 100%);
+      animation-name: fade-rt;
+      animation-delay: calc(var(--delay-base) * 4);
+    }
+
+    /* 每个轮播图 */
+    .carousel-warpper > .carousel-item:nth-of-type(1) > .fragment {
+      background-color: var(--bg-color-1);
+      z-index: 2;
+    }
+    .carousel-warpper > .carousel-item:nth-of-type(2) > .fragment {
+      background-color: var(--bg-color-2);
+      animation-direction: alternate-reverse;
+      z-index: 1;
+    }
+    .carousel-warpper > .carousel-item:nth-of-type(2) > .fragment:nth-of-type(1) {
+      animation-name: fade-lb;
+    }
+    .carousel-warpper > .carousel-item:nth-of-type(2) > .fragment:nth-of-type(2) {
+      animation-name: fade-rt;
+    }
+    .carousel-warpper > .carousel-item:nth-of-type(2) > .fragment:nth-of-type(3) {
+      animation-name: fade-lb;
+    }
+    .carousel-warpper > .carousel-item:nth-of-type(2) > .fragment:nth-of-type(4) {
+      animation-name: fade-rt;
+    }
+    .carousel-warpper > .carousel-item:nth-of-type(2) > .fragment:nth-of-type(5) {
+      animation-name: fade-lb;
+    }
+
+    /* .carousel-warpper > .carousel-item:nth-of-type(3) > .fragment {
+      background-color: var(--bg-color-3);
+    } */
+
+    /* 右上淡入淡出 */
+    @keyframes fade-rt {
+      from, 20% {
+        transform: translate(0px, 0px);
+        opacity: 1;
+      }
+      80%, to {
+        transform: translate(var(--ttx), calc(var(--tty) * -1));
+        opacity: 0;
+      }
+    }
+    /* 左下淡入淡出 */
+    @keyframes fade-lb {
+      from, 20% {
+        transform: translate(0px, 0px);
+        opacity: 1;
+      }
+      80%, to {
+        transform: translate(calc(var(--ttx) * -1), var(--tty));
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="flex-center-h full">
+    <div class="carousel-container">
+      <div class="carousel-warpper">
+        <div class="carousel-item">
+          <div class="fragment"></div>
+          <div class="fragment"></div>
+          <div class="fragment"></div>
+          <div class="fragment"></div>
+          <div class="fragment"></div>
+        </div>
+        <div class="carousel-item">
+          <div class="fragment"></div>
+          <div class="fragment"></div>
+          <div class="fragment"></div>
+          <div class="fragment"></div>
+          <div class="fragment"></div>
+        </div>
+        <!-- <div class="carousel-item"></div> -->
+      </div>
+    </div>
+  </div>
+</body>
+</html>
