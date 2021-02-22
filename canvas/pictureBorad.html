@@ -216,7 +216,9 @@
           strokeStyle: '#000000',
           canvasWidth: 800,
           canvasHeight: 480,
-          eraseSize: 16
+          eraseSize: 16,
+          lineCap: 'round',
+          lineJoin: 'round'
         };
         this.ctrls = {
           lineWidth: document.getElementById('width'),
@@ -257,8 +259,8 @@
         if(index > 1) {
           const i = --this.history.index - 1;
           const data = list[i].data;
-          this.canvas.width = list[i].width;
-          this.canvas.height = list[i].height;
+          // this.canvas.width = list[i].width;
+          // this.canvas.height = list[i].height;
           this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
           this.ctx.putImageData(data, 0, 0);
         }
@@ -269,8 +271,8 @@
         if(index < list.length) {
           const item = list[this.history.index++];
           this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-          this.canvas.width = item.width;
-          this.canvas.height = item.height;
+          // this.canvas.width = item.width;
+          // this.canvas.height = item.height;
           this.ctx.putImageData(item.data, 0, 0);
         }
       }
@@ -382,12 +384,15 @@
         };
         this.saveHistory();
         this.initCtrls();
+        this.resetConfig();
       }
 
       // 重置
       resetConfig() {
         for(let key in this.defaultOptions) {
-          this.ctx[key] = this.defaultOptions[key];
+          if(key in this.ctx) {
+            this.ctx[key] = this.defaultOptions[key];
+          }
           if(this.ctrls[key]) {
             this.ctrls[key].value = this.defaultOptions[key];
           }
