@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Squares Spinning</title>
+  <link rel="stylesheet" href="../common/style/element.css">
+  <style>
+    :root {
+      --w: 15px;
+      --gap: calc(var(--w) / 3);
+      --h: 50px;
+      --duration: 1s;
+      --color1: #2f54eb;
+      --color2: #fa541c;
+      --color3: #722ed1;
+      --color4: #eb2f96;
+      --color5: #a0d911;
+      --color6: #52c41a;
+      --color7: #f5222d;
+      --color8: #1890ff;
+    }
+    html, body {
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    .container {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container > .square {
+      /* position: absolute; */
+      position: relative;
+      width: var(--w);
+      height: var(--h);
+      background-color: currentColor;
+      box-shadow: 2px 2px 1px 0px currentColor;
+      animation: rotate var(--duration);
+      animation-iteration-count: infinite;
+      animation-timing-function: ease;
+    }
+    .container > .square:not(:last-of-type) {
+      margin-right: var(--gap);
+    }
+    .container > .square:nth-of-type(8) {
+      animation-delay: 125ms;
+      z-index: 1;
+      color: var(--color1);
+    }
+    .container > .square:nth-of-type(7) {
+      animation-delay: 300ms;
+      z-index: 2;
+      color: var(--color2);
+    }
+    .container > .square:nth-of-type(6) {
+      animation-delay: 425ms;
+      z-index: 3;
+      color: var(--color3);
+    }
+    .container > .square:nth-of-type(5) {
+      animation-delay: 540ms;
+      z-index: 4;
+      color: var(--color4);
+    }
+
+    .container > .square:nth-of-type(4) {
+      animation-delay: 665ms;
+      z-index: 5;
+      color: var(--color5);
+    }
+    .container > .square:nth-of-type(3) {
+      animation-delay: 790ms;
+      z-index: 6;
+      color: var(--color6);
+    }
+    .container > .square:nth-of-type(2) {
+      animation-delay: 900ms;
+      z-index: 7;
+      color: var(--color7);
+    }
+    .container > .square:nth-of-type(1) {
+      animation-delay: 1000ms;
+      z-index: 8;
+      color: var(--color8);
+    }
+
+    @keyframes rotate {
+      /* 0% {
+        transform: rotateZ(0deg);
+        opacity: 1;
+      } */
+      50% {
+        opacity: 0.9;
+      }
+      75% {
+        transform: rotate(-90deg);
+      }
+      80% {
+        opacity: 1;
+      }
+      /* 100% {
+        transform: rotateZ(0deg);
+      } */
+    }
+  </style>
+</head>
+<body>
+  <div class="flex-center-h full">
+    <div class="container">
+      <div class="square"></div>
+      <div class="square"></div>
+      <div class="square"></div>
+      <div class="square"></div>
+      <div class="square"></div>
+      <div class="square"></div>
+      <div class="square"></div>
+      <div class="square"></div>
+    </div>
+  </div>
+</body>
+</html>
