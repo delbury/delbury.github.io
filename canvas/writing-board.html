@@ -536,8 +536,7 @@
         };
 
         // 导入图片
-        document.getElementById('import').onchange = ev => {
-          const file = ev.target.files[0];
+        const importImage = (file) => {
           const reg = /^image\//;
           if(!file.type || !reg.test(file.type)) {
             alert('error file type !')
@@ -558,6 +557,10 @@
           };
           reader.readAsDataURL(file);
         };
+        document.getElementById('import').onchange = ev => {
+          const file = ev.target.files[0];
+          importImage(file);
+        };
 
         // 移除图片
         document.getElementById('remove').onclick = ev => {
@@ -567,6 +570,21 @@
           this.canvas.height = this.defaultOptions.canvasHeight;
           this.setWhiteBackgrond();
         };
+
+        // 粘贴事件
+        document.addEventListener('paste', (ev) => {
+          const data = [];
+          const items = ev.clipboardData.items;
+          for(let i = 0; i < items.length; i++) {
+            if(/^image\//i.test(items[i].type)) {
+              data.push(items[i].getAsFile());
+            }
+          }
+          if(data.length) {
+            const file = data[0]; // 取第一张图片
+            importImage(file);
+          }
+        });
       }
     };
     const dp = new DrawPen();
