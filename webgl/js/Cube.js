@@ -1,3 +1,5 @@
+import * as tools from './tools.js';
+
 // 顶点坐标
 const vertices = new Float32Array([
   1, 1, 1, -1, 1, 1,-1, -1, 1, 1, -1, 1, // 前 0, 1, 2, 3
@@ -18,16 +20,6 @@ const textureCoords = new Float32Array([
   0.0, 0.0,   1.0, 0.0,   1.0, 1.0,   0.0, 1.0     // v4-v7-v6-v5 back
 ]);
 
-// 顶点颜色
-const colors = new Float32Array([
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-]);
-
 // 顶点法向量
 const normals = new Float32Array([
   0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
@@ -36,6 +28,16 @@ const normals = new Float32Array([
   -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
   0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
   0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1,
+]);
+
+// 顶点颜色
+const colors = new Float32Array([
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 ]);
 
 // 索引值
@@ -68,44 +70,49 @@ const arrays = {
 };
 
 export default class Cube {
-  constructor(gl) {
+  // 顶点颜色
+  #colors = arrays.colors;
+  constructor(gl, image) {
     if(!(gl instanceof WebGL2RenderingContext) && !(gl instanceof WebGLRenderingContext)) {
       throw new TypeError('param[0] is not a Webgl or Webgl2 rendering context');
     }
 
     this.gl = gl;
+    this.setColors(); // 设置颜色
     this.buffers = this.createBuffers();
+    this.texture = this.createTexture(image);
+    this.count = indices.length;
+  }
+
+  // 设置立方体颜色
+  // 3 个为一组，4 组为一个面
+  setColors() {
+    const arr = [];
+    for(let i = 0; i < 6; i++) {
+      for(let j = 0; j < 4; j++) {
+        arr.push(0.5, 0.5, 0.5);
+      }
+    }
+
+    this.#colors = new Float32Array(arr);
   }
 
   // 创建所需的 buffer
   createBuffers() {
     const buffers = {
-      verticeBuffer: this.initArrayBuffer(arrays.vertices, 3), // 顶点 buffer
-      textureBuffer: this.initArrayBuffer(arrays.textureCoords, 2), // 纹理 buffer
-      colorBuffer: this.initArrayBuffer(arrays.colors, 3), // 顶点颜色 buffer
-      normalBuffer: this.initArrayBuffer(arrays.normals, 3), // 顶点法向量 buffer
-      faceBuffer: this.initArrayBuffer(arrays.faces, 1), // 选中面编号 buffer
-      indiceBuffer: this.initArrayBuffer(arrays.indices), // 索引 buffer
+      verticeBuffer: tools.initArrayBuffer(this.gl, arrays.vertices, 3), // 顶点 buffer
+      textureBuffer: tools.initArrayBuffer(this.gl, arrays.textureCoords, 2), // 纹理 buffer
+      colorBuffer: tools.initArrayBuffer(this.gl, this.#colors, 3), // 顶点颜色 buffer
+      normalBuffer: tools.initArrayBuffer(this.gl, arrays.normals, 3), // 顶点法向量 buffer
+      faceBuffer: tools.initArrayBuffer(this.gl, arrays.faces, 1, this.gl.UNSIGNED_BYTE), // 选中面编号 buffer
+      indexBuffer: tools.initElementBuffer(this.gl, arrays.indices), // 索引 buffer
     };
 
     return buffers;
   }
 
-  // 初始化buffer
-  initBuffer(type, data, num) {
-    const buffer = this.gl.createBuffer();
-    this.gl.bindBuffer(type, buffer);
-    this.gl.bufferData(type, data, this.gl.STATIC_DRAW);
-
-    if(num !== undefined) {
-      buffer.num = num;
-    }
-    return buffer;
-  }
-  initArrayBuffer(data, num) {
-    return this.initBuffer(this.gl.ARRAY_BUFFER, data, num);
-  }
-  initElementBuffer(data, num) {
-    return this.initBuffer(this.gl.ELEMENT_ARRAY_BUFFER, data, num);
+  // 创建纹理
+  createTexture(image) {
+    return tools.loadTexture(this.gl, image); // 创建纹理
   }
 }

@@ -749,3 +749,5 @@ Vector4.prototype.dot = function(other) {
   var o = other.elements;
   return v[0] * o[0] + v[1] * o[1] + v[2] * o[2];
 };
+
+export { Matrix4, Vector3, Vector4 };
