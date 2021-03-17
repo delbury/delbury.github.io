@@ -118,14 +118,19 @@ export default class MouseCube extends BaseCanvasWebgl {
 
   // 绘制
   draw() {
+    this.clear();
+    this.setModelMatrix(); // 计算模型矩阵
+    this.setNormalMatrix(); // 计算法向量矩阵
+    this.gl.drawElements(this.gl.TRIANGLES, this.cube.count, this.cube.buffers.indexBuffer.type, 0);
+  }
+
+  // 节流绘制
+  throttleDraw() {
     if(this.raqId) return; // 节流
 
     this.raqId = requestAnimationFrame(() => {
       this.raqId = null;
-      this.clear();
-      this.setModelMatrix(); // 计算模型矩阵
-      this.setNormalMatrix(); // 计算法向量矩阵
-      this.gl.drawElements(this.gl.TRIANGLES, this.cube.count, this.cube.buffers.indexBuffer.type, 0);
+      this.draw();
     });
   }
 
@@ -140,7 +145,7 @@ export default class MouseCube extends BaseCanvasWebgl {
   translate(dx = 0, dy = 0, dz = 0) {
     const [ox, oy, oz] = this.modelParams.translate;
     this.modelParams.translate = [ox + dx, oy + dy, oz + dz];
-    this.draw();
+    this.throttleDraw();
   }
 
   // 旋转，相对角度
@@ -153,8 +158,8 @@ export default class MouseCube extends BaseCanvasWebgl {
 
     this.tempRotateMatrix.rotate(ydeg, ...this.modelParams.rotateXDir); // 绕 x 轴旋转
     this.tempRotateMatrix.rotate(xdeg, ...this.modelParams.rotateYDir); // 绕 y 轴旋转
-
-    this.draw();
+    
+    this.throttleDraw();
   }
 
   // 结束旋转
@@ -173,8 +178,8 @@ export default class MouseCube extends BaseCanvasWebgl {
     this.draw();
   }
 
-  // 判断是否选中
-  isSelected(offsetX, offsetY) {
+  // 判断是否选中，并高亮选中面
+  select(offsetX, offsetY) {
     let selected = false;
 
     this.setIsJudging(true);
@@ -183,18 +188,22 @@ export default class MouseCube extends BaseCanvasWebgl {
     const pickColor = new Uint8Array(4);
     const x = offsetX;
     const y = this.height - offsetY;
-    console.log(x, y);
     this.gl.readPixels(x, y, 1, 1, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pickColor);
-    console.log(pickColor)
     if(pickColor[2] > 0) {
       selected = true;
-      this.gl.uniform1i(u_PickedFace, pickColor[2]);
+      this.gl.uniform1i(this.locs.unifs.u_PickedFace, pickColor[2]);
     }
 
-    // this.setIsJudging(false);
-    // this.draw();
+    this.setIsJudging(false);
+    this.draw();
 
     return selected;
+  }
+
+  // 释放选中状态
+  unselect() {
+    this.gl.uniform1i(this.locs.unifs.u_PickedFace, 0);
+    this.draw();
   }
 
   // 开始 webgl 的部分功能特性

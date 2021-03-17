@@ -39,7 +39,7 @@
         prevPosition = [ev.screenX, ev.screenY];
         if(ev.button === 0) {
           // 左键
-          if(mc.isSelected(ev.offsetX, ev.offsetY)) {
+          if(mc.select(ev.offsetX, ev.offsetY)) {
             translating = true;
           }
         } else if(ev.button === 2) {
@@ -55,6 +55,7 @@
         if(ev.button === 0) {
           // 左键
           translating = false;
+          mc.unselect();
         } else if(ev.button === 2) {
           // 右键
           rotating = false;
