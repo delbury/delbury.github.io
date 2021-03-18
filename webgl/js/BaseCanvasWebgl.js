@@ -1,6 +1,8 @@
 import Events from './Events.js';
 
 export default class BaseCanvasWebgl extends Events {
+  static X_DIR = [1, 0, 0, 1];
+  static Y_DIR = [0, 1, 0, 1];
   constructor(canvas, params = {}) {
     if(!canvas || !(canvas instanceof HTMLCanvasElement)) throw new TypeError('param[0] is not a canvas element');
     if(params && typeof params !== 'object') throw new TypeError('param[1] is not a params object');
@@ -18,7 +20,28 @@ export default class BaseCanvasWebgl extends Events {
     if(!this.gl) throw new Error('can not get webgl context');
 
     // 设置参数
-    this.setParams(params);
+    this.setWebglParams(params);
+    // 开启功能
+    this.enableFuncs();
+  }
+
+  // 开始 webgl 的部分功能特性
+  enableFuncs() {
+    this.gl.enable(this.gl.DEPTH_TEST); // 开启隐面消除
+    this.gl.enable(this.gl.CULL_FACE); // 开启背面隐藏
+  }
+
+  // 初始化参数
+  initParams() {}
+  // 创建矩阵
+  initMatrixs() {}
+  // 设置变量数据
+  initData() {}
+  // 初始化
+  init() {
+    this.initParams();
+    this.initMatrixs();
+    this.initData();
   }
 
   // 清除缓冲区
@@ -27,7 +50,7 @@ export default class BaseCanvasWebgl extends Events {
   }
 
   // 设置参数
-  setParams({
+  setWebglParams({
     clearColor = [0.0, 0.0, 0.0, 1.0],
   } = {}) {
     this.gl.clearColor(...clearColor);

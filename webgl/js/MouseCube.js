@@ -3,8 +3,6 @@ import Cube from './Cube.js';
 import * as tools from './tools.js';
 import { Matrix4, Vector4 } from '../libs/cuon-matrix.js';
 
-const X_DIR = [1, 0, 0, 1];
-const Y_DIR = [0, 1, 0, 1];
 export default class MouseCube extends BaseCanvasWebgl {
   #vSource = `
     attribute vec4 a_Position; // 顶点位置
@@ -93,7 +91,7 @@ export default class MouseCube extends BaseCanvasWebgl {
     // 设置当前的 program
     this.useProgram(this.programs.get('cube'));
     // 创建立方体 buffers
-    this.cube = new Cube(this.gl, image);
+    this.cube = new Cube(this.gl, { textureImage: image });
     // 获取着色器变量
     this.locs = tools.getLocations(this.gl, this.currentProgram, {
       attrs: [
@@ -122,8 +120,6 @@ export default class MouseCube extends BaseCanvasWebgl {
     this.initParams();
     // 创建矩阵
     this.initMatrixs();
-    // 开启功能
-    this.enableFuncs();
     // 设置变量数据
     this.initData();
   }
@@ -198,8 +194,8 @@ export default class MouseCube extends BaseCanvasWebgl {
     this.tempRotateMatrix = null;
 
     this.tempMatrix.set(this.modelRotateMatrix).invert(); // 计算旋转矩阵的逆矩阵
-    const xdir = this.tempMatrix.multiplyVector4(new Vector4(X_DIR));
-    const ydir = this.tempMatrix.multiplyVector4(new Vector4(Y_DIR));
+    const xdir = this.tempMatrix.multiplyVector4(new Vector4(BaseCanvasWebgl.X_DIR));
+    const ydir = this.tempMatrix.multiplyVector4(new Vector4(BaseCanvasWebgl.Y_DIR));
     this.modelParams.rotateXDir = xdir.elements.slice(0, 3);
     this.modelParams.rotateYDir = ydir.elements.slice(0, 3);
 
@@ -234,13 +230,8 @@ export default class MouseCube extends BaseCanvasWebgl {
     this.draw();
   }
 
-  // 开始 webgl 的部分功能特性
-  enableFuncs() {
-    this.gl.enable(this.gl.DEPTH_TEST); // 开启隐面消除
-    this.gl.enable(this.gl.CULL_FACE); // 开启背面隐藏
-  }
-
   // 初始化变量数据
+  // @override
   initData() {
     tools.useArrayBuffer(this.gl, this.locs.attrs.a_Position, this.cube.buffers.verticeBuffer);
     tools.useArrayBuffer(this.gl, this.locs.attrs.a_Color, this.cube.buffers.colorBuffer);
@@ -267,14 +258,15 @@ export default class MouseCube extends BaseCanvasWebgl {
   }
 
   // 初始化视图、模型参数
+  // @override
   initParams() {
     // 模型参数
     this.modelParams = {
       // 绕视图的 x, y 轴旋转
       rotateX: 0, // 绕 x 轴旋转角度
-      rotateXDir: [...X_DIR.slice(0, 3)], // 绕 x 轴旋转轴向量
+      rotateXDir: [...BaseCanvasWebgl.X_DIR.slice(0, 3)], // 绕 x 轴旋转轴向量
       rotateY: 0, // 绕 y 轴旋转角度
-      rotateYDir: [...Y_DIR.slice(0, 3)], // 绕 y 轴旋转轴向量
+      rotateYDir: [...BaseCanvasWebgl.Y_DIR.slice(0, 3)], // 绕 y 轴旋转轴向量
       translate: [0, 0, 0], // 平移距离
       scale: [1, 1, 1], // 缩放系数
     };
@@ -301,6 +293,7 @@ export default class MouseCube extends BaseCanvasWebgl {
   }
 
   // 初始化矩阵变量
+  // @override
   initMatrixs() {
     this.viewMatrix = new Matrix4(); // 视图矩阵
     this.modelMatrix = new Matrix4(); // 模型矩阵
