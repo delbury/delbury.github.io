@@ -12,3 +12,17 @@ body, html {
   justify-content: center;
   align-items: center;
 }
+
+.relative {
+  position: relative;
+}
+
+.absolute-lt {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.none-events {
+  pointer-events: none;
+}

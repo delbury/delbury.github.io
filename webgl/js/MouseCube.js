@@ -16,12 +16,14 @@ export default class MouseCube extends BaseCanvasWebgl {
     uniform mat4 u_ModelMatrix; // 模型矩阵
     uniform mat4 u_ViewMatrix; // 视图矩阵
     uniform mat4 u_NormalMatrix; // 法向量变换矩阵
+    uniform vec3 u_ViewPoint; // 视点位置
 
     varying vec4 v_Color;
     varying vec3 v_Position;
     varying vec3 v_Normal;
     varying vec2 v_TexCoord;
     varying float v_Face;
+    varying float v_Distance; // 距离视点的距离
 
     void main() {
       gl_Position = u_ViewMatrix * u_ModelMatrix * a_Position;
@@ -30,6 +32,7 @@ export default class MouseCube extends BaseCanvasWebgl {
       v_Normal = normalize(vec3(u_NormalMatrix * a_Normal)); // 法向量归一化
       v_TexCoord = a_TexCoord;
       v_Face = a_Face;
+      v_Distance = distance(v_Position, u_ViewPoint);
     }
   `;
   #fSource = `
@@ -43,32 +46,38 @@ export default class MouseCube extends BaseCanvasWebgl {
     uniform sampler2D u_Sampler; // 纹理类型
     uniform bool u_IsJudging; // 是否处于判断选中面的模式
     uniform int u_PickedFace; // 被选中的表面编号
+    uniform vec4 u_FogColor; // 雾的颜色
+    uniform vec2 u_FogRange; // 雾的范围
 
     varying vec4 v_Color;
     varying vec3 v_Position;
     varying vec3 v_Normal;
     varying vec2 v_TexCoord;
     varying float v_Face;
+    varying float v_Distance;
 
     void main() {
       if(u_IsJudging) {
-        // 判断时
-        gl_FragColor = vec4(0.0, 0.0, v_Face / 255.0, 1.0);
+        gl_FragColor = vec4(0.0, 0.0, v_Face / 255.0, 1.0); // 判断时，选中面设置为不同颜色分量
 
       } else {
-        vec3 normal = normalize(v_Normal); // 法向量归一化，防止内插后不为 1.0
-        vec3 lightDirection = normalize(u_LightPosition - v_Position); // 计算光线方向并归一化
-        float nDotL = max(dot(lightDirection, normal), 0.0); // 光线方向和顶点法向量的点积
-        vec3 diffuse = u_LightColor * v_Color.rgb * nDotL; // 计算反射光
-        vec3 ambient = u_AmbientLightColor * v_Color.rgb; // 计算环境光
-        vec4 color = vec4(diffuse + ambient, v_Color.a); // 计算绘制的颜色
-        color = texture2D(u_Sampler, v_TexCoord) * color; // 与纹理颜色合并计算
+        vec4 color = texture2D(u_Sampler, v_TexCoord); // 计算纹理
 
         if(u_PickedFace > 0 && u_PickedFace == int(v_Face)) {
-          color = color * vec4(vec3(1.5), 1.0);
+          // color = color * vec4(vec3(1.5), 1.0);
         } else {
-          color = color;
+          vec3 normal = normalize(v_Normal); // 法向量归一化，防止内插后不为 1.0
+          vec3 lightDirection = normalize(u_LightPosition - v_Position); // 计算光线方向并归一化
+          float nDotL = max(dot(lightDirection, normal), 0.0); // 光线方向和顶点法向量的点积
+          vec3 diffuse = u_LightColor * v_Color.rgb * nDotL; // 计算反射光
+          vec3 ambient = u_AmbientLightColor * v_Color.rgb; // 计算环境光
+          vec4 lightColor = vec4(diffuse + ambient, v_Color.a); // 计算整体光照效果
+          color = color * lightColor; // 计算纹理
         }
+
+        float fogFactor = clamp((u_FogRange.y - v_Distance) / (u_FogRange.y - u_FogRange.x), 0.0, 1.0); // 雾化因子
+        // fogFactor = log2(fogFactor + 1.0); // 指数雾化
+        color = mix(u_FogColor, color, fogFactor);
 
         gl_FragColor = color;
       }
@@ -104,6 +113,9 @@ export default class MouseCube extends BaseCanvasWebgl {
         'u_Sampler',
         'u_IsJudging',
         'u_PickedFace',
+        'u_ViewPoint',
+        'u_FogColor',
+        'u_FogRange',
       ],
     });
     // 初始化参数
@@ -116,12 +128,28 @@ export default class MouseCube extends BaseCanvasWebgl {
     this.initData();
   }
 
+  // 事件，模型变换参数改变
+  transformChange() {
+    const translate = [...this.modelParams.translate]; // 位移分量
+    const scale = [...this.modelParams.scale]; // 缩放分量
+
+    const e = this.currentRotateMatrix.elements;
+    const degy = Math.atan2(-e[2], Math.sqrt(e[0] ** 2, e[1] ** 2));
+    const cosy = Math.cos(degy);
+    const degz = Math.atan2(e[1] / cosy, e[0] / cosy);
+    const degx = Math.atan2(e[6] / cosy, e[10] / cosy);
+    const rotate = [degx, degy, degz]; // 旋转分量
+
+    this.dispatch('transformchange', translate, scale, rotate);
+  }
+
   // 绘制
   draw() {
     this.clear();
     this.setModelMatrix(); // 计算模型矩阵
     this.setNormalMatrix(); // 计算法向量矩阵
     this.gl.drawElements(this.gl.TRIANGLES, this.cube.count, this.cube.buffers.indexBuffer.type, 0);
+    this.transformChange(); // 触发事件
   }
 
   // 节流绘制
@@ -225,6 +253,7 @@ export default class MouseCube extends BaseCanvasWebgl {
     this.setModelMatrix(); // 初始化模型矩阵
     this.setNormalMatrix(); // 初始化法向量矩阵
     this.setLightParams(); // 初始化光照参数
+    this.setFogParams(); // 设置雾化参数
 
     // 应用纹理
     this.setTexture(this.cube.texture, 0);
@@ -262,6 +291,11 @@ export default class MouseCube extends BaseCanvasWebgl {
       lightColor: [1, 1, 1], // 光线颜色
       ambientLightColor: [0.5, 0.5, 0.5], // 环境光颜色
     };
+    // 雾化参数
+    this.fogParams = {
+      fogColor: [0.05, 0.05, 0.05, 1.0],
+      fogRange: [15, 16],
+    };
     // 节流控制
     this.raqId = null;
   }
@@ -279,6 +313,13 @@ export default class MouseCube extends BaseCanvasWebgl {
     this.tempRotateMatrix = null; // 旋转开始前的旋转矩阵
 
     this.tempMatrix = new Matrix4(); // 临时矩阵
+  }
+
+  // 设置雾化参数
+  setFogParams() {
+    this.gl.uniform3fv(this.locs.unifs.u_ViewPoint, this.viewParams.lookAtFrom); // 设置视点
+    this.gl.uniform4fv(this.locs.unifs.u_FogColor, this.fogParams.fogColor); // 设置雾的颜色
+    this.gl.uniform2fv(this.locs.unifs.u_FogRange, this.fogParams.fogRange); // 设置雾的范围
   }
 
   // 切换渲染模式是否为判断选中面
@@ -323,13 +364,14 @@ export default class MouseCube extends BaseCanvasWebgl {
   // 设置模型矩阵
   setModelMatrix() {
     this.modelMatrix.setTranslate(...this.modelParams.translate);
-    if(this.tempRotateMatrix) {
-      this.modelMatrix.multiply(this.tempRotateMatrix);
-    } else {
-      this.modelMatrix.multiply(this.modelRotateMatrix);
-    }
+    this.modelMatrix.multiply(this.currentRotateMatrix);
     this.modelMatrix.scale(...this.modelParams.scale);
 
     this.gl.uniformMatrix4fv(this.locs.unifs.u_ModelMatrix, false, this.modelMatrix.elements);
+  }
+
+  // 当前使用的旋转矩阵
+  get currentRotateMatrix() {
+    return this.tempRotateMatrix ? this.tempRotateMatrix : this.modelRotateMatrix;
   }
 }

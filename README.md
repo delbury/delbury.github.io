@@ -32,3 +32,9 @@ Home: [https://delbury.github.io](https://delbury.github.io)
 + ### Jigsaw Verification
 + ### Loading Effects
 + ### Bezier Curve
++ ### Char Code
++ ### Performance Monitor
++ ### Animations
+
+## **WebGL Demos**
++ ### Mouse Cube

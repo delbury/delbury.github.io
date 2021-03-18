@@ -1,8 +1,12 @@
-export default class BaseCanvasWebgl {
+import Events from './Events.js';
+
+export default class BaseCanvasWebgl extends Events {
   constructor(canvas, params = {}) {
     if(!canvas || !(canvas instanceof HTMLCanvasElement)) throw new TypeError('param[0] is not a canvas element');
     if(params && typeof params !== 'object') throw new TypeError('param[1] is not a params object');
 
+    super();
+    
     const { width, height } = params;
     this.canvas = canvas;
     this.canvas.width = width ?? 800;

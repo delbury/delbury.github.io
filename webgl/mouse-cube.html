@@ -9,11 +9,34 @@
 </head>
 <body>
   <div class="flex-full-center">
-    <canvas id="canvas"></canvas>
+    <div class="relative">
+      <canvas id="canvas"></canvas>
+      <canvas class="absolute-lt none-events" id="hud"></canvas>
+    </div>
   </div>
 
   <script type="module">
     import MouseCube from './js/MouseCube.js';
+
+    const SIZE = 800;
+
+    // 初始化 hud canvas
+    const hud = document.getElementById('hud');
+    const ctx = hud.getContext('2d');
+    hud.width = SIZE;
+    hud.height = SIZE;
+    ctx.fillStyle = '#fff';
+    ctx.font = '24px consolas,"Liberation Mono",courier,monospace';
+    ctx.textBaseline = 'top';
+    // 绘制图形变换信息
+    const n2s = (n, ct = 5) => n.toFixed(2).padStart(ct, ' ');
+    const drawHudInfo = (translate = [0, 0, 0], scale = [1, 1, 1], rotate = [0, 0, 0]) => {
+      ctx.clearRect(0, 0, hud.width, hud.height);
+      ctx.fillText(`translate: (${n2s(translate[0])}, ${n2s(translate[1])}, ${n2s(translate[2])})`, 20, 20);
+      ctx.fillText(`scale: (${n2s(scale[0])}, ${n2s(scale[1])}, ${n2s(scale[2])})`, 20, 50);
+      ctx.fillText(`rotate: (${n2s(rotate[0])}, ${n2s(rotate[1])}, ${n2s(rotate[2])})`, 20, 80);
+    };
+    drawHudInfo(); // 初始化 hud
 
     const canvas = document.getElementById('canvas');
     const image = new Image();
@@ -22,8 +45,11 @@
     image.src = './assets/texture.jpg';
 
     function main(image) {
-      const mc = new MouseCube(canvas, {}, { image });
+      const mc = new MouseCube(canvas, { with: SIZE, height: SIZE }, { image });
       window.mc = mc;
+
+      // 绑定事件
+      mc.on('transformchange', drawHudInfo);
   
       // 状态
       let startPosition = null; // 记录鼠标开始点击的位置
@@ -52,11 +78,11 @@
       document.onmouseup = ev => {
         if(![0, 2].includes(ev.button)) return;
   
-        if(ev.button === 0) {
+        if(ev.button === 0 && translating) {
           // 左键
           translating = false;
           mc.unselect();
-        } else if(ev.button === 2) {
+        } else if(ev.button === 2 && rotating) {
           // 右键
           rotating = false;
           mc.rotateEnd(); // 旋转结束
