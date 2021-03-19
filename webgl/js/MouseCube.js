@@ -62,7 +62,7 @@ export default class MouseCube extends BaseCanvasWebgl {
         vec4 color = texture2D(u_Sampler, v_TexCoord); // 计算纹理
 
         if(u_PickedFace > 0 && u_PickedFace == int(v_Face)) {
-          // color = color * vec4(vec3(1.5), 1.0);
+          color = color * vec4(vec3(1.5), 1.0);
         } else {
           vec3 normal = normalize(v_Normal); // 法向量归一化，防止内插后不为 1.0
           vec3 lightDirection = normalize(u_LightPosition - v_Position); // 计算光线方向并归一化
@@ -91,7 +91,15 @@ export default class MouseCube extends BaseCanvasWebgl {
     // 设置当前的 program
     this.useProgram(this.programs.get('cube'));
     // 创建立方体 buffers
-    this.cube = new Cube(this.gl, { textureImage: image });
+    this.cube = new Cube(this.gl, { textureImage: image }, {
+      verticeFlag: true,
+      defaultColorFlag: true,
+      indexFlag: true,
+      textureFlag: true,
+      normalFlag: true,
+      faceFlag: true,
+      colorFlag: true,
+    });
     // 获取着色器变量
     this.locs = tools.getLocations(this.gl, this.currentProgram, {
       attrs: [
@@ -146,16 +154,6 @@ export default class MouseCube extends BaseCanvasWebgl {
     this.setNormalMatrix(); // 计算法向量矩阵
     this.gl.drawElements(this.gl.TRIANGLES, this.cube.count, this.cube.buffers.indexBuffer.type, 0);
     this.transformChange(); // 触发事件
-  }
-
-  // 节流绘制
-  throttleDraw() {
-    if(this.raqId) return; // 节流
-
-    this.raqId = requestAnimationFrame(() => {
-      this.raqId = null;
-      this.draw();
-    });
   }
 
   // 缩放
@@ -288,8 +286,6 @@ export default class MouseCube extends BaseCanvasWebgl {
       fogColor: [0.05, 0.05, 0.05, 1.0],
       fogRange: [15, 16],
     };
-    // 节流控制
-    this.raqId = null;
   }
 
   // 初始化矩阵变量

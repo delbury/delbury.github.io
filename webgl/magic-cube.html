@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magic Cube</title>
+  <link rel="stylesheet" href="./css/common.css">
+</head>
+<body>
+  <div class="flex-full-center">
+    <div class="relative">
+      <canvas id="canvas"></canvas>
+    </div>
+  </div>
+
+  <script type="module">
+    import MagicCube from './js/MagicCube.js';
+  
+    const canvas = document.getElementById('canvas');
+    const mc = new MagicCube(canvas);
+    window.mc = mc;
+    
+    main();
+
+    // 主函数
+    function main() {
+      let startRightPosition = null; // 记录鼠标右键开始点击的位置
+      let startLeftPosition = null; // 记录鼠标左键开始点击的位置
+      let rotating = false; // 是否处于旋转状态
+      let selecting = false; // 选中状态中
+
+      // 鼠标按下事件
+      canvas.onmousedown = ev => {
+        if(![0, 2].includes(ev.button)) return;
+        
+        if(ev.button === 0 && !selecting) {
+          // 左键
+          if(mc.select(ev.offsetX, ev.offsetY)) {
+            startLeftPosition = [ev.screenX, ev.screenY];
+            selecting = true;
+          }
+        } else if(ev.button === 2 || !rotating) {
+          // 右键
+          startRightPosition = [ev.screenX, ev.screenY];
+          rotating = true;
+        }
+      };
+  
+      // 鼠标抬起事件
+      document.onmouseup = ev => {
+        if(![0, 2].includes(ev.button)) return;
+  
+        if(ev.button === 0 && selecting) {
+          // 左键
+          mc.unselect();
+          mc.rotatePlainEnd();
+          selecting = false;
+          startLeftPosition = null;
+        } else if(ev.button === 2 && rotating) {
+          // 右键
+          mc.rotateEnd(); // 旋转结束
+          rotating = false;
+          startRightPosition = null;
+        }
+      };
+  
+      // 鼠标移动事件
+      document.onmousemove = ev => {
+        if(!rotating && !selecting) return;
+
+        if(rotating) {
+          // 旋转
+          const dx = ev.screenX - startRightPosition[0];
+          const dy = ev.screenY - startRightPosition[1];
+          const ratio = 0.2;
+          mc.rotate(dx * ratio, dy * ratio);
+        }
+        if(selecting) {
+          // 选中状态下
+          const dx = ev.screenX - startLeftPosition[0];
+          const dy = ev.screenY - startLeftPosition[1];
+          const ratio = 0.2;
+          mc.rotatePlain(dx * ratio, dy * -ratio);
+
+          startLeftPosition = [ev.screenX, ev.screenY];
+        }
+      };
+
+      // 鼠标右键选择框
+      canvas.oncontextmenu = ev => ev.preventDefault();
+    }
+  </script>
+</body>
+</html>

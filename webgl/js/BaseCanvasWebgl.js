@@ -3,6 +3,7 @@ import Events from './Events.js';
 export default class BaseCanvasWebgl extends Events {
   static X_DIR = [1, 0, 0, 1];
   static Y_DIR = [0, 1, 0, 1];
+  static Z_DIR = [0, 0, 1, 1];
   constructor(canvas, params = {}) {
     if(!canvas || !(canvas instanceof HTMLCanvasElement)) throw new TypeError('param[0] is not a canvas element');
     if(params && typeof params !== 'object') throw new TypeError('param[1] is not a params object');
@@ -16,6 +17,7 @@ export default class BaseCanvasWebgl extends Events {
     this.gl = this.canvas.getContext('webgl2') ?? this.canvas.getContext('webgl');
     this.programs = new Map(); // 着色器程序 map
     this.currentProgram = null; // 当前使用的着色其程序数组
+    this.raqId = null; // 节流控制
 
     if(!this.gl) throw new Error('can not get webgl context');
 
@@ -60,6 +62,18 @@ export default class BaseCanvasWebgl extends Events {
   useProgram(program) {
     this.currentProgram = program;
     this.gl.useProgram(program);
+  }
+
+  // 绘制
+  draw() {}
+  // 节流绘制
+  throttleDraw() {
+    if(this.raqId) return; // 节流
+
+    this.raqId = requestAnimationFrame(() => {
+      this.raqId = null;
+      this.draw();
+    });
   }
 
   // canvas的宽度
