@@ -84,7 +84,8 @@ export default class MagicCube extends BaseCanvasWebgl {
         'u_PickedCube',
       ],
     });
-    this.cubePositionArray = []; // 立方体位置三维数组
+    this.cubePositionIdMap = new Map(); // 立方体位置 => id
+    this.cubeIdPositionMap = new Map(); // 立方体 id => 位置
     this.cubes = this.createCubes();
     this.commonCube = new Cube(this.gl, {
       defaultColor: Array(3).fill(0.15),
@@ -99,10 +100,8 @@ export default class MagicCube extends BaseCanvasWebgl {
       borderColorFlag: true,
       borderIndexFlag: true,
     });
-    this.currentSelectedCubeId = null; // 当前选中的立方体 id
     this.currentPlainCubeIds = new Set(); // 当前旋转的立方体 id 列表
     this.init();
-    console.log(this.cubePositionArray);
   }
 
   // 开始 webgl 的部分功能特性
@@ -119,8 +118,8 @@ export default class MagicCube extends BaseCanvasWebgl {
     this.clear();
 
     // 绘制所有立方体
-    for(let { cube, id } of this.cubes.values()) {
-      this.setModelMatrix(id); // 计算模型矩阵
+    for(let { cube, matrix } of this.cubes.values()) {
+      this.setModelMatrix(matrix); // 计算模型矩阵
 
       // 绑定索引
       tools.useArrayBuffer(this.gl, this.locs.attrs.a_Id, cube.buffers.idBuffer);
@@ -149,6 +148,7 @@ export default class MagicCube extends BaseCanvasWebgl {
 
   // 判断是否选中，并高亮选中面
   select(offsetX, offsetY) {
+    if(this._rotatePlainAnimating) return false;
     let selected = false;
 
     this.gl.uniform1i(this.locs.unifs.u_IsJudging, true);
@@ -162,8 +162,7 @@ export default class MagicCube extends BaseCanvasWebgl {
       selected = true;
       this.gl.uniform1i(this.locs.unifs.u_PickedFace, pickColor[2]);
       this.gl.uniform1i(this.locs.unifs.u_PickedCube, pickColor[0]);
-      this.currentSelectedCubeId = pickColor[0];
-      console.log('selected id: ', this.currentSelectedCubeId);
+      this.setRotatePlain(pickColor[0], pickColor[2]);
     }
 
     this.gl.uniform1i(this.locs.unifs.u_IsJudging, false);
@@ -211,26 +210,107 @@ export default class MagicCube extends BaseCanvasWebgl {
   }
 
   // 判断要旋转的平面
-  setRotatePlain() {
-    console.log(this.currentSelectedCubeId);
+  setRotatePlain(cubeId, face) {
+    // console.log(this.cubePositionIdMap);
+    // console.log(this.cubeIdPositionMap);
+    console.log('selected: ', cubeId, face);
+
+    // 获取点击的方块当前坐标
+    const position = this.cubeIdPositionMap.get(cubeId).split(',');
+    // 获取以该点为中心的三个平面的坐标集合
+    const plains = [];
+    position.forEach((pos, ind) => {
+      const plain = [];
+      for(let i = this.positionRange[0]; i <= this.positionRange[1]; i++) {
+        const pp = [];
+        pp[ind] = pos;
+
+        if(pp[0] === undefined) {
+          pp[0] = i;
+        } else if(pp[1] === undefined) {
+          pp[1] = i;
+        } else {
+          pp[2] = i;
+        }
+        for(let j = this.positionRange[0]; j <= this.positionRange[1]; j++) {
+          if(pp[0] === undefined) {
+            pp[0] = j;
+          } else if(pp[1] === undefined) {
+            pp[1] = j;
+          } else {
+            pp[2] = j;
+          }
+          plain.push(pp.join(','));
+        }
+      }
+      plains.push(plain);
+    });
+    
+    console.log(position);
+    console.log(plains);
+    this.currentPlainCubeIds.clear();
+    const currentPlain = plains[1];
+    currentPlain.forEach(p => {
+      this.currentPlainCubeIds.add(this.cubePositionIdMap.get(p));
+    });
   }
 
   // 旋转平面
   rotatePlain(dx, dy) {
-    if(!this.currentSelectedCubeId.size) {
-      this.setRotatePlain();
-    }
-    console.log(dx, dy);
-    // for(let id of this.currentPlainCubeIds) {
-    //   const cube = this.cubes.get(id);
-    //   cube.matrix.rotate(dx, ...BaseCanvasWebgl.Y_DIR);
-    // }
+    if(this._rotatePlainAnimating) return; // 等待动画播放
 
+    if(this._diffRotateDeg === undefined || this._diffRotateDeg === null) {
+      this._diffRotateDeg = 0;
+    }
+    this._diffRotateDeg += dx;
+    for(let id of this.currentPlainCubeIds) {
+      const cube = this.cubes.get(id);
+      cube.matrix.rotate(dx, ...BaseCanvasWebgl.Y_DIR);
+    }
     this.throttleDraw();
   }
 
   // 旋转平面结束
   rotatePlainEnd() {
+    if(!this._diffRotateDeg) return;
+
+    const reset = this._diffRotateDeg % 90;
+    const resetDeg1 = reset >= 0 ? reset : reset + 90; // 需要多转动的角度，原方向逆向
+    const resetDeg2 = 90 - resetDeg1; // 需要多转动的角度，原方向正向
+    const deg = resetDeg1 >= resetDeg2 ? resetDeg2 : -resetDeg1; // 转到正 90 度需要多偏移的角度
+
+    // 旋转至
+    this.rotatePlainTo(deg);
+    this._diffRotateDeg = null;
+  }
+
+  // 旋转平面至
+  rotatePlainTo(deg) {
+    if(this._rotatePlainAnimating && Math.abs(this._rotatePlainEndDeg) <= 0.1) {
+      // 结束动画
+      this._rotatePlainAnimating = false;
+      const ddeg = this._rotatePlainEndDeg;
+      for(let id of this.currentPlainCubeIds) {
+        const cube = this.cubes.get(id);
+        cube.matrix.rotate(ddeg, ...BaseCanvasWebgl.Y_DIR);
+      }
+      this.draw();
+      return;
+    }
+    if(!this._rotatePlainAnimating) {
+      this._rotatePlainAnimating = true;
+      this._rotatePlainEndDeg = deg;
+    }
+    const ddeg = this._rotatePlainEndDeg * 0.3;
+    this._rotatePlainEndDeg -= ddeg;
+    
+    for(let id of this.currentPlainCubeIds) {
+      const cube = this.cubes.get(id);
+      cube.matrix.rotate(ddeg, ...BaseCanvasWebgl.Y_DIR);
+    }
+    this.draw();
+
+    requestAnimationFrame(() => this.rotatePlainTo());
   }
 
   // 创建立方体
@@ -251,31 +331,31 @@ export default class MagicCube extends BaseCanvasWebgl {
       }
       return k * size + k * gap + offset;
     };
+    this.order = order; // 设置魔方阶数
+    this.positionRange = [start, end]; // 坐标范围
 
     let dx = 0, dy = 0, dz = 0; // 偏移量
     let id = 1; // 立方体 id
     for(let k = start; k <= end; k++) {
       // y 轴
       dy = dd(k);
-      const plain = [];
 
       for(let j = start; j <= end; j++) {
-        // x 轴
-        dx = dd(j);
-        const line = [];
+        // z 轴
+        dz = dd(j);
 
         for(let i = start; i <= end; i++) {
-          // z 轴
-          dz = dd(i);
-          line.push(id);
+          // x 轴
+          dx = dd(i);
           
           const colorObj = {};
           if(k === start) colorObj.bottom = bottom;
           if(k === end) colorObj.top = top;
-          if(j === start) colorObj.left = left;
-          if(j === end) colorObj.right = right;
-          if(i === start) colorObj.back = back;
-          if(i === end) colorObj.front = front;
+          if(i === start) colorObj.left = left;
+          if(i === end) colorObj.right = right;
+          if(j === start) colorObj.back = back;
+          if(j === end) colorObj.front = front;
+          const location = [i, k, j];
           cubes.set(id, {
             cube: new Cube(this.gl, {
               size: size,
@@ -289,15 +369,16 @@ export default class MagicCube extends BaseCanvasWebgl {
               paddingVerticeFlag: true,
               idFlag: true,
             }),
-            location: [j, k, i],
+            location,
             id,
             matrix: new Matrix4(),
           });
+          const pos = location.join(',');
+          this.cubePositionIdMap.set(pos, id);
+          this.cubeIdPositionMap.set(id, pos);
           id++;
         }
-        plain.push(line);
       }
-      this.cubePositionArray.push(plain);
     }
 
     return cubes;
@@ -358,14 +439,10 @@ export default class MagicCube extends BaseCanvasWebgl {
   }
 
   // 设置模型矩阵
-  setModelMatrix(id) {
+  setModelMatrix(selfMatrix) {
     this.modelMatrix.setTranslate(...this.modelParams.translate);
     this.modelMatrix.multiply(this.currentRotateMatrix);
-
-    if(this.currentPlainCubeIds.has(id)) {
-      const cube = this.cubes.get(id);
-      this.modelMatrix.multiply(cube.matrix);
-    }
+    this.modelMatrix.multiply(selfMatrix);
 
     this.gl.uniformMatrix4fv(this.locs.unifs.u_ModelMatrix, false, this.modelMatrix.elements);
   }
