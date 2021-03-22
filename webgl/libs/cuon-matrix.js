@@ -695,6 +695,16 @@ Matrix4.prototype.dropShadowDirectionally = function(normX, normY, normZ, planeX
   return this.dropShadow([normX, normY, normZ, -a], [lightX, lightY, lightZ, 0]);
 };
 
+/*
+ * 四舍五入
+ */
+Matrix4.prototype.round = function() {
+  for(let index in this.elements) {
+    this.elements[index] = Math.round(this.elements[index]);
+  }
+  return this;
+}
+
 /**
  * Constructor of Vector3
  * If opt_src is specified, new vector is initialized by opt_src.

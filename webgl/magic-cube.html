@@ -27,8 +27,10 @@
     function main() {
       let startRightPosition = null; // 记录鼠标右键开始点击的位置
       let startLeftPosition = null; // 记录鼠标左键开始点击的位置
+      let prevLeftPosition = null; // 记录鼠标左键上一次的位置
       let rotating = false; // 是否处于旋转状态
       let selecting = false; // 选中状态中
+      let selectOpen = false; // 旋转平面防抖
 
       // 鼠标按下事件
       canvas.onmousedown = ev => {
@@ -38,6 +40,7 @@
           // 左键
           if(mc.select(ev.offsetX, ev.offsetY)) {
             startLeftPosition = [ev.screenX, ev.screenY];
+            prevLeftPosition = [ev.screenX, ev.screenY];
             selecting = true;
           }
         } else if(ev.button === 2 || !rotating) {
@@ -56,7 +59,9 @@
           mc.unselect();
           mc.rotatePlainEnd();
           selecting = false;
+          selectOpen = false;
           startLeftPosition = null;
+          prevLeftPosition = null;
         } else if(ev.button === 2 && rotating) {
           // 右键
           mc.rotateEnd(); // 旋转结束
@@ -78,12 +83,21 @@
         }
         if(selecting) {
           // 选中状态下
-          const dx = ev.screenX - startLeftPosition[0];
-          const dy = ev.screenY - startLeftPosition[1];
+          if(!selectOpen) {
+            const dx0 = ev.screenX - startLeftPosition[0];
+            const dy0 = ev.screenY - startLeftPosition[1];
+            if(Math.abs(Math.abs(dx0) - Math.abs(dy0)) > 5) {
+              selectOpen = true;
+            }
+          }
+
+          if(!selectOpen) return;
+          const dx = ev.screenX - prevLeftPosition[0];
+          const dy = ev.screenY - prevLeftPosition[1];
           const ratio = 0.3;
           mc.rotatePlain(dx * ratio, dy * -ratio);
 
-          startLeftPosition = [ev.screenX, ev.screenY];
+          prevLeftPosition = [ev.screenX, ev.screenY];
         }
       };
 

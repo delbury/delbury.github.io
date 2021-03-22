@@ -143,3 +143,66 @@ export const createTextureBySrc = (gl, src) => {
     image.src = src;
   });
 }
+
+// 弧度转换为角度
+const r2d = (r) => Math.round(r / Math.PI * 180);
+// 根据旋转矩阵计算旋转的角度
+export const calcRotateByMatrix = (matrix) => {
+  const e = matrix.elements;
+  const degx = Math.atan2(e[6], e[10]);
+  const degy = Math.atan2(-e[2], Math.sqrt(e[6] ** 2 + e[10] ** 2));
+  const degz = Math.atan2(e[1], e[0]);
+
+  const rotate = [r2d(degx), r2d(degy), r2d(degz)]; // 旋转分量
+  return rotate;
+}
+
+// 双向循环链表
+export class DoubleCircularLinkedList {
+  constructor(arr) {
+    this.head = null;
+    this.size = 0;
+
+    let p = null;
+    arr.forEach(val => {
+      const node = {
+        val,
+        next: null,
+        prev: p,
+      };
+      if(!this.head) {
+        this.head = node;
+      } else {
+        p.next = node;
+      }
+      p = node;
+      this.size++;
+    });
+    p.next = this.head;
+    this.head.prev = p;
+  }
+
+  // 查找到当前节点，与相对的节点偏移，查找到目标的节点
+  getStateFromBy(from, by) {
+    if(by === 0) return from;
+    let node = this.head
+    while(true) {
+      if(node.val === from) break; // 找到当前的起始节点 
+      if(node.next === this.head) return from; // 在当前状态循环中不存在
+      node = node.next;
+    }
+
+    while(by) {
+      if(by > 0) {
+        // 前找
+        node = node.next;
+        by--;
+      } else if(by < 0) {
+        // 后找
+        node = node.prev;
+        by++;
+      }
+    }
+    return node.val;
+  }
+};

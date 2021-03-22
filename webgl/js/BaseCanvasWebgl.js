@@ -4,6 +4,7 @@ export default class BaseCanvasWebgl extends Events {
   static X_DIR = [1, 0, 0, 1];
   static Y_DIR = [0, 1, 0, 1];
   static Z_DIR = [0, 0, 1, 1];
+  static Z_DIR_REVERSE = [0, 0, -1, 1];
   constructor(canvas, params = {}) {
     if(!canvas || !(canvas instanceof HTMLCanvasElement)) throw new TypeError('param[0] is not a canvas element');
     if(params && typeof params !== 'object') throw new TypeError('param[1] is not a params object');
