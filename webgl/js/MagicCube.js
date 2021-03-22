@@ -14,11 +14,27 @@ const CUBE_COLORS = {
   back: [0, 0, 1],
 }
 
+// 面 => 法向量 map
+const FACE_NORMAL = new Map([
+  [1, BaseCanvasWebgl.Z_DIR],
+  [2, BaseCanvasWebgl.X_DIR],
+  [3, BaseCanvasWebgl.Y_DIR],
+  [4, BaseCanvasWebgl.X_DIR_REVERSE],
+  [5, BaseCanvasWebgl.Y_DIR_REVERSE],
+  [6, BaseCanvasWebgl.Z_DIR_REVERSE],
+]);
+
+// 法向量 => 面 map
+const NORMAL_FACE = new Map();
+for(let [key, val] of FACE_NORMAL.entries()) {
+  NORMAL_FACE.set(val.join(','), key);
+}
+
 // 每个面旋转的状态转移
-const statesX = new tools.DoubleCircularLinkedList([1, 5, 6, 3]);
-const statesY = new tools.DoubleCircularLinkedList([1, 2, 6, 4]);
-const statesZ = new tools.DoubleCircularLinkedList([2, 3, 4, 5]);
-const STATES = [statesX, statesY, statesZ];
+// const statesX = new tools.DoubleCircularLinkedList([1, 5, 6, 3]);
+// const statesY = new tools.DoubleCircularLinkedList([1, 2, 6, 4]);
+// const statesZ = new tools.DoubleCircularLinkedList([2, 3, 4, 5]);
+// const STATES = [statesX, statesY, statesZ];
 export default class MagicCube extends BaseCanvasWebgl {
   #vSource = `
     attribute vec4 a_Position;
@@ -256,23 +272,17 @@ export default class MagicCube extends BaseCanvasWebgl {
     this._willRotatePlains = plains; // 保存可能旋转的平面
 
     const tcube = this.cubes.get(cubeId);
-    const rd = tools.calcRotateByMatrix(tcube.matrix);
+    // const rd = tools.calcRotateByMatrix(tcube.matrix);
     console.log('*'.repeat(40));
     console.log('position: ', this.cubeIdPositionMap.get(cubeId));
     console.log('selected: ', cubeId, face);
     console.log(tcube.matrix);
-    console.log(rd);
 
-    console.log(tcube.matrix.multiplyVector4(new Vector4([0, 0, 1, 1])).elements)
+    console.log()
 
-    // 计算点击的实际面
-    let currentFace = face; // 当前点击的立方体的面
-    for(let index in rd) {
-      const offstep = parseInt(rd[index] / 90);
-      const states = STATES[index];
-      currentFace = states.getStateFromBy(currentFace, offstep)
-    }
-    console.log('real face: ', currentFace);
+    const currentFaceNormal = tcube.matrix.multiplyVector4(new Vector4(FACE_NORMAL.get(face))).elements; // 旋转过后的面法向量
+    const currentFace = NORMAL_FACE.get(currentFaceNormal.join(','));
+    console.log(currentFace);
     this._currentFace = currentFace;
   }
 
