@@ -108,7 +108,6 @@ export default class MagicCube extends BaseCanvasWebgl {
     });
     this.cubePositionIdMap = new Map(); // 立方体位置 => id
     this.cubeIdPositionMap = new Map(); // 立方体 id => 位置
-    this.cubes = this.createCubes();
     this.commonCube = new Cube(this.gl, {
       defaultColor: Array(3).fill(0.15),
     }, {
@@ -123,7 +122,14 @@ export default class MagicCube extends BaseCanvasWebgl {
       borderIndexFlag: true,
     });
     this.currentPlainCubeIds = new Set(); // 当前旋转的立方体 id 列表
+    this.cubes = this.createCubes();
     this.init();
+  }
+
+  changeOrder(size, order) {
+    if(this._rotatePlainAnimating) return;
+    this.cubes = this.createCubes(size, order);
+    this.draw();
   }
 
   // 开始 webgl 的部分功能特性
@@ -171,7 +177,6 @@ export default class MagicCube extends BaseCanvasWebgl {
   // 判断是否选中，并高亮选中面
   select(offsetX, offsetY) {
     if(this._rotatePlainAnimating) {
-      // this._rotatePlainImmed = true; // 立即结束
       return;
     }
     let selected = false;
@@ -210,6 +215,8 @@ export default class MagicCube extends BaseCanvasWebgl {
       this.tempRotateMatrix.set(this.modelRotateMatrix);
     }
 
+    this._rotateX = ydeg;
+    this._rotateY = xdeg;
     this.tempRotateMatrix.rotate(ydeg, ...this.modelParams.rotateXDir); // 绕 x 轴旋转
     this.tempRotateMatrix.rotate(xdeg, ...this.modelParams.rotateYDir); // 绕 y 轴旋转
     
@@ -232,6 +239,91 @@ export default class MagicCube extends BaseCanvasWebgl {
     this.modelParams.rotateZDir = zdir.elements.slice(0, 3);
 
     this.draw();
+  }
+
+  // 旋转回
+  rotateBack() {
+    if(!this._rotateBackRate) {
+      this._rotateBackRate = 1;
+    }
+    const dx = this._rotateX * this._rotateBackRate;
+    const dy = this._rotateY * this._rotateBackRate;
+    this._rotateBackRate *= 0.7;
+
+    if(!this.tempRotateMatrix) {
+      this.tempRotateMatrix = new Matrix4();
+    }
+    this.tempRotateMatrix.setRotate(dx, ...this.modelParams.rotateXDir); // 绕 x 轴旋转
+    this.tempRotateMatrix.rotate(dy, ...this.modelParams.rotateYDir); // 绕 y 轴旋转
+    this.draw();
+
+    if(Math.max(Math.abs(dx), Math.abs(dy)) < 1) {
+      this._rotateBackRate = 0;
+      this.tempRotateMatrix = null;
+      return;
+    };
+    requestAnimationFrame(this.rotateBack.bind(this));
+  }
+
+  // 命令式地旋转平面
+  rotatePlainCommand(axis, index, reverse) {
+    return new Promise((resolve, reject) => {
+      if(this._rotatePlainAnimating) return reject();
+      if(this.order !== 3) return reject(); // 暂只支持三阶魔方
+      const position = Array(this.order).fill(this.positionRange[1]);
+      position[axis] -= index; // 计算虚拟点击方块的位置
+
+      // 计算当前旋转面的方块坐标集合
+      this.currentPlainCubeIds.clear();
+      for(let i = this.positionRange[0]; i <= this.positionRange[1]; i++) {
+        const pp = [];
+        pp[axis] = position[axis];
+
+        if(pp[0] === undefined) {
+          pp[0] = i;
+        } else if(pp[1] === undefined) {
+          pp[1] = i;
+        } else if(pp[2] === undefined) {
+          pp[2] = i;
+        }
+        for(let j = this.positionRange[0]; j <= this.positionRange[1]; j++) {
+          const ppp = [...pp];
+          if(ppp[0] === undefined) {
+            ppp[0] = j;
+          } else if(ppp[1] === undefined) {
+            ppp[1] = j;
+          } else if(ppp[2] === undefined) {
+            ppp[2] = j;
+          }
+          this.currentPlainCubeIds.add(this.cubePositionIdMap.get(ppp.join(',')));
+        }
+      }
+
+      // 设置旋转方向
+      switch(axis) {
+        case 0: this._rotatePlainDir = BaseCanvasWebgl.X_DIR; break;
+        case 1: this._rotatePlainDir = BaseCanvasWebgl.Y_DIR; break;
+        case 2: this._rotatePlainDir = BaseCanvasWebgl.Z_DIR_REVERSE; break;
+        default: break;
+      }
+      const dDeg = 90 * (reverse ? 1 : -1);
+      // for(let id of this.currentPlainCubeIds) {
+      //   const cube = this.cubes.get(id);
+      //   cube.matrix.rotate(dDeg, ...cube.dirMatrix.multiplyVector4(new Vector4(this._rotatePlainDir)).elements).round();
+      // }
+      // this.draw();
+      this._totalRotatePlainDeg = dDeg;
+      this.rotatePlainTo(dDeg, () => {
+        resolve();
+      });
+   });
+  }
+
+  // 播放一组平面旋转
+  async playRotatePlains(arr) {
+    for await(let { axis, index, reverse } of arr) {
+      await this.rotatePlainCommand(axis, index, reverse);
+    }
   }
 
   // 判断要旋转的平面
@@ -272,29 +364,19 @@ export default class MagicCube extends BaseCanvasWebgl {
     this._willRotatePlains = plains; // 保存可能旋转的平面
 
     const tcube = this.cubes.get(cubeId);
-    // const rd = tools.calcRotateByMatrix(tcube.matrix);
-    console.log('*'.repeat(40));
+    // console.log('*'.repeat(40));
     console.log('position: ', this.cubeIdPositionMap.get(cubeId));
-    console.log('selected: ', cubeId, face);
-    console.log(tcube.matrix);
-
-    console.log()
+    // console.log('selected: ', cubeId, face);
+    // console.log(tcube.matrix);
 
     const currentFaceNormal = tcube.matrix.multiplyVector4(new Vector4(FACE_NORMAL.get(face))).elements; // 旋转过后的面法向量
     const currentFace = NORMAL_FACE.get(currentFaceNormal.join(','));
-    console.log(currentFace);
     this._currentFace = currentFace;
   }
 
   // 旋转平面
   rotatePlain(dx, dy) {
     if(this._rotatePlainAnimating) return; // 等待动画播放
-
-    // 将 canvas 的上的偏移量转换为视图的偏移量
-    // const vector = this.currentMvpMatrix.invert().multiplyVector4(new Vector4([dx, dy, 0, 1]));
-    // const ddx = +vector.elements[0].toFixed(2);
-    // const ddy = +vector.elements[1].toFixed(2);
-    // console.log(`(${dx}, ${dy})`, ' => ', `(${ddx}, ${ddy})`);
     
     // 判断旋转的面
     if(this._willRotatePlains && !this.currentPlainCubeIds.size) {
@@ -319,20 +401,21 @@ export default class MagicCube extends BaseCanvasWebgl {
       });
     }
 
+    const dDeg = this._rotatePlainDir === BaseCanvasWebgl.Y_DIR ? dx : -dy; // 转动角度
+    // 一次旋转中累计偏转角度
     if(this._diffRotateDeg === undefined || this._diffRotateDeg === null) {
       this._diffRotateDeg = 0;
     }
-    this._diffRotateDeg += (this._rotatePlainDir === BaseCanvasWebgl.Y_DIR ? dx : -dy);
+    this._diffRotateDeg += dDeg;
 
     // 设置自身旋转矩阵
     for(let id of this.currentPlainCubeIds) {
       const cube = this.cubes.get(id);
-      cube.matrix.rotate(
-        this._rotatePlainDir === BaseCanvasWebgl.Y_DIR ? dx : -dy, 
-        ...cube.dirMatrix.multiplyVector4(new Vector4(this._rotatePlainDir)).elements,
-      );
+      cube.matrix.rotate(dDeg, ...cube.dirMatrix.multiplyVector4(new Vector4(this._rotatePlainDir)).elements);
     }
     this.throttleDraw();
+
+    console.log(this._rotatePlainDir)
   }
 
   // 旋转平面结束
@@ -350,7 +433,7 @@ export default class MagicCube extends BaseCanvasWebgl {
   }
 
   // 旋转平面至
-  rotatePlainTo(deg) {
+  rotatePlainTo(deg, cb) {
     if(this._rotatePlainAnimating && Math.abs(this._rotatePlainEndDeg) <= 0.2) {
       // 结束动画
       const ddeg = this._rotatePlainEndDeg;
@@ -363,11 +446,12 @@ export default class MagicCube extends BaseCanvasWebgl {
       }
       this.draw();
 
-      // this._rotatePlainImmed = false;
       this._rotatePlainAnimating = false;
       this._willRotatePlains = null;
       this.rotatePlainPosition(this.currentPlainCubeIds); // 旋转平面坐标
       this.currentPlainCubeIds.clear();
+
+      cb && cb(); // 回调
       return;
     }
     if(!this._rotatePlainAnimating) {
@@ -386,7 +470,7 @@ export default class MagicCube extends BaseCanvasWebgl {
     }
     this.draw();
 
-    requestAnimationFrame(() => this.rotatePlainTo());
+    requestAnimationFrame(() => this.rotatePlainTo(null, cb));
   }
 
   // 旋转平面坐标
@@ -410,7 +494,7 @@ export default class MagicCube extends BaseCanvasWebgl {
       const posString = pos.join(',');
       this.cubePositionIdMap.set(posString, id);
       this.cubeIdPositionMap.set(id, posString);
-
+      
       // 设置旋转后的旋转轴旋转矩阵
       this.cubes.get(id).dirMatrix.rotate(-this._totalRotatePlainDeg, ...this._rotatePlainDir).round();
     }
@@ -419,6 +503,8 @@ export default class MagicCube extends BaseCanvasWebgl {
   // 创建立方体
   createCubes(size = 1, order = 3, { gap = 0, padding = size * 0.05 } = {}) {
     if(order < 2) return;
+    this.cubePositionIdMap.clear();
+    this.cubeIdPositionMap.clear();
     const cubes = new Map();
     const { left, right, top, bottom, front, back } = CUBE_COLORS;
     const half = Math.floor(order / 2); // 阶数的一半
