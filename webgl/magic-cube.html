@@ -7,6 +7,9 @@
   <title>Magic Cube</title>
   <link rel="stylesheet" href="./css/common.css">
   <style>
+    :root {
+      --exam-size: 120px;
+    }
     .operation {
       margin-left: 2em;
     }
@@ -43,13 +46,13 @@
       perspective-origin: center;
       transform-style: preserve-3d;
     }
-    .container-3d:not(:last-of-type) {
-      margin-right: 25%;
+    .container-3d {
+      padding-right: 25%;
     }
     .exam {
       position: relative;
-      width: 120px;
-      height: 120px;
+      width: var(--exam-size);
+      height: var(--exam-size);
       transform-style: preserve-3d;
       transform: rotate3d(-0.5, -1.4, 0.2, 45deg);
     }
@@ -160,14 +163,10 @@
           <div class="container-3d">
             <div class="exam exam1">
               <div class="exam-f">
-                <div class="col"><span>R3</span><span>R3'</span></div>
-                <div class="col"><span>R2</span><span>R2'</span></div>
-                <div class="col"><span>R1</span><span>R1'</span></div>
+                <!-- R, R' -->
               </div>
               <div class="exam-r">
-                <div class="col"><span>F1'</span><span>F1</span></div>
-                <div class="col"><span>F2'</span><span>F2</span></div>
-                <div class="col"><span>F3'</span><span>F3</span></div>
+                <!-- F, F' -->
               </div>
               <div class="exam-u">U</div>
             </div>
@@ -175,33 +174,23 @@
           <div class="container-3d">
             <div class="exam exam2">
               <div class="exam-f">
-                <div class="col"><span>U1</span></div>
-                <div class="col"><span>U2</span></div>
-                <div class="col"><span>U3</span></div>
+                <!-- U -->
               </div>
               <div class="exam-r">
-                <div class="col"><span>U1'</span></div>
-                <div class="col"><span>U2'</span></div>
-                <div class="col"><span>U3'</span></div>
+                <!-- U' -->
               </div>
               <div class="exam-u">U</div>
             </div>
           </div>
         </div>
         <div class="btn-table">
-          <button>F1</button><button>F1'</button>
-          <button>F2</button><button>F2'</button>
-          <button>F3</button><button>F3'</button>
+          <!-- F -->
         </div>
         <div class="btn-table">
-          <button>R1</button><button>R1'</button>
-          <button>R2</button><button>R2'</button>
-          <button>R3</button><button>R3'</button>
+          <!-- R -->
         </div>
         <div class="btn-table">
-          <button>U1</button><button>U1'</button>
-          <button>U2</button><button>U2'</button>
-          <button>U3</button><button>U3'</button>
+          <!-- U -->
         </div>
       </div>
 
@@ -215,6 +204,7 @@
         <div>
           <button id="btn-order-confirm">重置</button>
           <button id="btn-random">随机</button>
+          <button id="btn-recovery">还原</button>
         </div>
       </div>
     </div>
@@ -223,25 +213,21 @@
   <script type="module">
     import MagicCube from './js/MagicCube.js';
   
+    const order = document.getElementById('order');
+    const size = document.getElementById('size');
+
     const canvas = document.getElementById('canvas');
-    const mc = new MagicCube(canvas);
+    const mc = new MagicCube(canvas, {}, +order.value);
     window.mc = mc;
     
     main();
+    createOperationArea(mc.order);
     
     // 改变阶数
-    const third = document.querySelector('.third-operation');
-    const order = document.getElementById('order');
-    const size = document.getElementById('size');
     document.getElementById('btn-order-confirm').onclick = ev => {
       const orderNum = parseInt(order.value)
-      mc.changeOrder(parseFloat(size.value), orderNum);
-
-      if(orderNum !== 3) {
-        third.style.display = 'none';
-      } else {
-        third.style.display = '';
-      }
+      mc.changeOrder(orderNum, parseFloat(size.value));
+      createOperationArea(orderNum);
     };
 
     // 旋转按钮
@@ -254,28 +240,54 @@
 
     // 随机化
     document.getElementById('btn-random').onclick = ev => {
-      const count = Math.floor(Math.random() * 5 + 5);
-      const list = [];
-      const axs = [0, 1, 2];
-      const ind = [0, 1, 2];
-      const rev = [true, false];
-      for(let i = 0; i < count; i++) {
-        list.push({
-          axis: axs[Math.floor(Math.random() * 3)],
-          index: ind[Math.floor(Math.random() * 3)],
-          reverse: rev[Math.floor(Math.random() * 2)],
-        });
-      }
-      mc.playRotatePlains(list);
-      // mc.playRotatePlains(['R1', 'U1', 'F1', 'R1\'', 'U1\'', 'F1\''].map(text => {
-      //   const [face, index, reverse] = text;
-      //   return {
-      //     axis: axisObj[face],
-      //     index: (+index - 1),
-      //     reverse: !!reverse,
-      //   };
-      // }));
+      const count = Math.floor(Math.random() * 10 + 5);
+      mc.randomRotatePlains(count);
     };
+
+    // 还原
+    document.getElementById('btn-recovery').onclick = ev => {
+      mc.recoveryPlains();
+    };
+
+    // 创建右侧操作区
+    function createOperationArea(order) {
+      // 图例区
+      const leftF = document.querySelector('.exam1 .exam-f');
+      const leftR = document.querySelector('.exam1 .exam-r');
+      const rightF = document.querySelector('.exam2 .exam-f');
+      const rightR = document.querySelector('.exam2 .exam-r');
+
+      let lft = '', lrt = '', rft = '', rrt = '';
+      for(let i = 1; i <= order; i++) {
+        lft += `<div class="col"><span>R${i}</span><span>R${i}'</span></div>`;
+        lrt += `<div class="col"><span>F${i}'</span><span>F${i}</span></div>`;
+        rft += `<div class="col"><span>U${i}</span></div>`;
+        rrt += `<div class="col"><span>U${i}'</span></div>`;
+      }
+      leftF.innerHTML = lft;
+      leftR.innerHTML = lrt;
+      rightF.innerHTML = rft;
+      rightR.innerHTML = rrt;
+
+      // 图例区大小
+      // const style = getComputedStyle(document.documentElement);
+      const size = Math.max(120, order * 30);
+      document.documentElement.style.setProperty('--exam-size', size + 'px');
+
+      // 按钮区
+      const btnTables = document.querySelectorAll('.btn-table');
+      const btnMainKey = ['F', 'R', 'U'];
+      btnTables.forEach((bt, btIndex) => {
+        bt.innerHTML = '';
+        for(let i = 1; i <= order; i++) {
+          const btn1 = document.createElement('button');
+          const btn2 = document.createElement('button');
+          btn1.innerText = btnMainKey[btIndex] + i;
+          btn2.innerText = btnMainKey[btIndex] + i + '\'';
+          bt.append(btn1, btn2);
+        }
+      });
+    }
 
     // 主函数
     function main() {
