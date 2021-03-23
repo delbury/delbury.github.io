@@ -38,3 +38,4 @@ Home: [https://delbury.github.io](https://delbury.github.io)
 
 ## **WebGL Demos**
 + ### Mouse Cube
++ ### Magic Cube
