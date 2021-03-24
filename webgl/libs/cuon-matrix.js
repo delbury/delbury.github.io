@@ -760,4 +760,14 @@ Vector4.prototype.dot = function(other) {
   return v[0] * o[0] + v[1] * o[1] + v[2] * o[2];
 };
 
+/*
+ * 四舍五入
+ */
+Vector4.prototype.round = function() {
+  for(let index in this.elements) {
+    this.elements[index] = Math.round(this.elements[index]);
+  }
+  return this;
+}
+
 export { Matrix4, Vector3, Vector4 };

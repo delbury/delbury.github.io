@@ -1,0 +1,273 @@
+:root {
+  --exam-size: 120px;
+  --abs-btn-size: 60px;
+}
+.operation {
+  margin-left: 2em;
+}
+.operation>*:not(:last-child),
+.third-operation>*:not(:last-child) {
+  margin-bottom: 2em;
+}
+.btns {
+  display: flex;
+  flex-direction: column;
+}
+.btns>*:not(:last-child) {
+  margin-bottom: 0.5em;
+}
+input[type="number"] {
+  margin-left: 0.5em;
+  width: 160px;
+}
+label {
+  display: flex;
+  align-items: center;
+}
+.btn-table {
+  display: grid;
+  grid-template-columns: 100px 100px;
+  gap: 0.5em;
+  user-select: none;
+}
+.boxes {
+  display: flex;
+}
+.container-3d {
+  perspective: 800px;
+  perspective-origin: center;
+  transform-style: preserve-3d;
+}
+.container-3d {
+  padding-right: 25%;
+}
+.exam {
+  position: relative;
+  width: var(--exam-size);
+  height: var(--exam-size);
+  transform-style: preserve-3d;
+  transform: rotate3d(-0.5, -1.4, 0.2, 45deg);
+}
+.exam>* {
+  position: absolute;
+  border: 1px solid #000;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+.exam-f {
+  background-color: rgb(0, 255, 0);
+  /* transform: translateX(-50%) rotateY(-90deg); */
+  /* transform-origin: right center; */
+}
+.exam-r {
+  background-color: rgb(255, 128, 0);
+  transform: translateX(100%) rotateY(90deg);
+  transform-origin: left center;
+}
+.exam-u {
+  background-color: rgb(255, 255, 0);
+  transform: translateY(-100%) rotateX(90deg);
+  transform-origin: center bottom;
+}
+.exam1 .exam-f,
+.exam1 .exam-r {
+  display: flex;
+  align-items: stretch;
+}
+.exam1 .col {
+  position: relative;
+  padding: 1em 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+.exam1 .col:not(:last-of-type) {
+  border-right: 1px solid #000;
+}
+.exam1 .col::before {
+  position: absolute;
+  display: block;
+  content: "↑";
+  top: 0;
+}
+.exam1 .col::after {
+  position: absolute;
+  display: block;
+  content: "↓";
+  bottom: 0;
+}
+.exam2 .exam-f,
+.exam2 .exam-r {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.exam2 .col {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.exam2 .col:not(:last-of-type) {
+  border-bottom: 1px solid #000;
+}
+.exam2 .exam-f .col {
+  padding-left: 1.4em;
+}
+.exam2 .exam-f .col::before {
+  position: absolute;
+  display: block;
+  content: "←";
+  left: 0.2em;
+}
+.exam2 .exam-r .col {
+  padding-right: 1.8em;
+  align-items: flex-end;
+}
+.exam2 .exam-r .col::after {
+  position: absolute;
+  display: block;
+  content: "→";
+  right: 0.4em;
+}
+
+/* 悬浮旋转按钮 */
+.abs-btns {
+  display: flex;
+  position: absolute;
+  pointer-events: none;
+  justify-content: center;
+  align-items: center;
+}
+.btn-wrapper {
+  position: relative;
+  width: var(--abs-btn-size);
+  height: var(--abs-btn-size);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+}
+.btn-hotkey {
+  position: absolute;
+  font-size: 12px;
+  user-select: none;
+}
+.btn-hotkey.mg-t {
+  margin-top: 1em;
+}
+.btn-hotkey.mg-b {
+  margin-bottom: 1em;
+}
+.abs-btns .btn {
+  width: var(--abs-btn-size);
+  height: var(--abs-btn-size);
+  background-image: url("../assets/icon-rotate.svg");
+  background-repeat: no-repeat;
+  background-size: contain;
+  cursor: pointer;
+  pointer-events: all;
+}
+.abs-btns.btns-l {
+  left: 1em;
+  top: 0;
+  bottom: 0;
+  flex-direction: column;
+}
+.abs-btns.btns-r {
+  right: 1em;
+  top: 0;
+  bottom: 0;
+  flex-direction: column;
+}
+.abs-btns.btns-b {
+  bottom: 1em;
+  left: 0;
+  right: 0;
+}
+.abs-btns.btns-l>*:not(:last-child),
+.abs-btns.btns-r>*:not(:last-child) {
+  margin-bottom: calc(var(--abs-btn-size) / 2);
+}
+.abs-btns.btns-b>*:not(:last-child) {
+  margin-right: calc(var(--abs-btn-size) / 2);
+}
+
+/* 底部按钮 */
+.abs-btns.btns-b .btn-wrapper:nth-of-type(1) .btn {
+  transform: rotateX(180deg) rotateY(180deg);
+}
+.abs-btns.btns-b .btn-wrapper:nth-of-type(1) .btn:hover {
+  filter: drop-shadow(-5px -5px 6px #fff);
+}
+.abs-btns.btns-b .btn-wrapper:nth-of-type(1) .btn:active,
+.abs-btns.btns-b .btn-wrapper:nth-of-type(1) .btn.actived {
+  filter: drop-shadow(-4px -4px 3px #fff);
+  transform: rotateX(180deg) rotateY(180deg) translate(-1px, -1px);
+}
+.abs-btns.btns-b .btn-wrapper:nth-of-type(2) .btn {
+  transform: rotateX(180deg);
+}
+.abs-btns.btns-b .btn-wrapper:nth-of-type(2) .btn:hover {
+  filter: drop-shadow(5px -5px 6px #fff);
+}
+.abs-btns.btns-b .btn-wrapper:nth-of-type(2) .btn:active,
+.abs-btns.btns-b .btn-wrapper:nth-of-type(2) .btn.actived {
+  filter: drop-shadow(4px -4px 3px #fff);
+  transform: rotateX(180deg) translate(1px, -1px);
+}
+
+/* 左侧按钮 */
+.abs-btns.btns-l .btn-wrapper:nth-of-type(1) .btn:hover {
+  filter: drop-shadow(5px 5px 6px #fff);
+}
+.abs-btns.btns-l .btn-wrapper:nth-of-type(1) .btn:active,
+.abs-btns.btns-l .btn-wrapper:nth-of-type(1) .btn.actived {
+  filter: drop-shadow(4px 4px 3px #fff);
+  transform: translate(1px, 1px);
+}
+.abs-btns.btns-l .btn-wrapper:nth-of-type(2) .btn {
+  transform: rotateX(180deg);
+}
+.abs-btns.btns-l .btn-wrapper:nth-of-type(2) .btn:hover {
+  filter: drop-shadow(5px -5px 6px #fff);
+}
+.abs-btns.btns-l .btn-wrapper:nth-of-type(2) .btn:active,
+.abs-btns.btns-l .btn-wrapper:nth-of-type(2) .btn.actived {
+  filter: drop-shadow(4px -4px 3px #fff);
+  transform: rotateX(180deg) translate(1px, -1px);
+}
+
+/* 右侧按钮 */
+.abs-btns.btns-r .btn-wrapper:nth-of-type(1) .btn {
+  transform: rotateY(180deg);
+}
+.abs-btns.btns-r .btn-wrapper:nth-of-type(1) .btn:hover {
+  filter: drop-shadow(-5px 5px 6px #fff);
+}
+.abs-btns.btns-r .btn-wrapper:nth-of-type(1) .btn:active,
+.abs-btns.btns-r .btn-wrapper:nth-of-type(1) .btn.actived {
+  filter: drop-shadow(-4px 4px 3px #fff);
+  transform: rotateY(180deg) translate(-1px, 1px);
+}
+.abs-btns.btns-r .btn-wrapper:nth-of-type(2) .btn {
+  transform: rotateY(180deg) rotateX(180deg);
+}
+.abs-btns.btns-r .btn-wrapper:nth-of-type(2) .btn:hover {
+  filter: drop-shadow(-5px -5px 6px #fff);
+}
+.abs-btns.btns-r .btn-wrapper:nth-of-type(2) .btn:active,
+.abs-btns.btns-r .btn-wrapper:nth-of-type(2) .btn.actived {
+  filter: drop-shadow(-4px -4px 3px #fff);
+  transform: rotateY(180deg) rotateX(180deg) translate(-1px, -1px);
+}
