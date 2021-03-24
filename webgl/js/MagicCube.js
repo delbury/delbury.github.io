@@ -31,10 +31,10 @@ for(let [key, val] of FACE_NORMAL.entries()) {
 }
 
 // 每个面旋转的状态转移
-const statesX = new tools.DoubleCircularLinkedList([1, 5, 6, 3]);
-const statesY = new tools.DoubleCircularLinkedList([1, 2, 6, 4]);
-const statesZ = new tools.DoubleCircularLinkedList([2, 5, 4, 3]);
-const STATES = [statesX, statesY, statesZ];
+// const statesX = new tools.DoubleCircularLinkedList([1, 5, 6, 3]);
+// const statesY = new tools.DoubleCircularLinkedList([1, 2, 6, 4]);
+// const statesZ = new tools.DoubleCircularLinkedList([2, 5, 4, 3]);
+// const STATES = [statesX, statesY, statesZ];
 export default class MagicCube extends BaseCanvasWebgl {
   #vSource = `
     attribute vec4 a_Position;
@@ -226,13 +226,23 @@ export default class MagicCube extends BaseCanvasWebgl {
   // 整体绕轴旋转 90 度
   rotateWhole(axis, reverse) {
     if(this._rotateAnimating || ![0, 1, 2].includes(axis)) return;
-    this._rotateAnimating = true;
-    const dir = [this.currentDirs.x, this.currentDirs.y, this.currentDirs.z][axis];
-    this.animateRotateWhole(0, 90, reverse, dir, axis);
+
+    return new Promise((resolve, reject) => {
+      this._rotateAnimating = true;
+      const dir = [this.currentDirs.x, this.currentDirs.y, this.currentDirs.z][axis];
+      this.animateRotateWhole(0, 90, reverse, dir, axis, resolve);
+      if(!this._recoveryingHistory) {
+        this.history.push({
+          type: 'total',
+          axis,
+          reverse,
+        });
+      }
+    });
   }
 
   // 整体旋转动画
-  animateRotateWhole(curDeg, tolDeg, reverse, dir, axis) {
+  animateRotateWhole(curDeg, tolDeg, reverse, dir, axis, cb) {
     const rk = reverse ? -1 : 1; // 是否反向
     // 临时的旋转矩阵
     if(!this.tempRotateMatrix) this.tempRotateMatrix = new Matrix4();
@@ -256,18 +266,20 @@ export default class MagicCube extends BaseCanvasWebgl {
       this.rotatePlainPosition([...this.cubePositionIdMap.values()], false);
 
       // 朝向面变更，F:z, R:x, U:y
-      console.log(rk);
       for(let key in this.currentFaces) {
-        this.currentFaces[key] = STATES[axis].getStateFromBy(this.currentFaces[key], -rk)
+        const normal = FACE_NORMAL.get(key === 'F' ? 1 : key === 'R' ? 2 : 3);
+        const currentNormal = mat.multiplyVector4(new Vector4(normal)).round().elements;
+        const currentFace = NORMAL_FACE.get(currentNormal.join(','));
+        this.currentFaces[key] = currentFace;
       }
-      console.log(this.currentFaces);
+      cb();
       return;
     }
 
     // 继续动画
     let nexDeg = (tolDeg - curDeg) * 0.3 + curDeg; // 下一次的旋转角度
     nexDeg = Math.abs(nexDeg - tolDeg) < 1 ? tolDeg : nexDeg;
-    return requestAnimationFrame(() => this.animateRotateWhole.call(this, nexDeg, tolDeg, reverse, dir, axis));
+    return requestAnimationFrame(() => this.animateRotateWhole.call(this, nexDeg, tolDeg, reverse, dir, axis, cb));
   }
 
   // 旋转，相对角度
@@ -404,13 +416,19 @@ export default class MagicCube extends BaseCanvasWebgl {
   }
 
   // 还原魔方，历史数组
-  async recoveryPlains() {
+  async recovery() {
     if(this._rotateAnimating) return;
 
     this._recoveryingHistory = true; // 恢复历史中
     while(this.history.length) {
-      const { axis, index, reverse } = this.history.pop();
-      await this.rotatePlainCommand(axis, index, !reverse);
+      const state = this.history.pop();
+      if(state.type === 'plain') {
+        const { axis, index, reverse } = state;
+        await this.rotatePlainCommand(axis, index, !reverse);
+      } else if(state.type === 'total') {
+        const { axis, reverse } = state;
+        await this.rotateWhole(axis, !reverse);
+      }
     }
     this._recoveryingHistory = false; // 恢复历史完成
   }
@@ -457,10 +475,10 @@ export default class MagicCube extends BaseCanvasWebgl {
     const currentFace = NORMAL_FACE.get(currentFaceNormal.join(','));
     this._currentFace = currentFace;
 
-    console.log('*'.repeat(40));
-    console.log('position: ', this.cubeIdPositionMap.get(cubeId));
-    console.log('selected: ', cubeId, face);
-    console.log('face: ', face, 'currentFace', currentFace);
+    // console.log('*'.repeat(40));
+    // console.log('position: ', this.cubeIdPositionMap.get(cubeId));
+    // console.log('selected: ', cubeId, face);
+    // console.log('face: ', face, 'currentFace', currentFace);
   }
 
   // 旋转平面
@@ -478,9 +496,6 @@ export default class MagicCube extends BaseCanvasWebgl {
           // 正面
           this._rotatePlainDir = this.currentDirs.x;
           dir = 0;
-          console.log('xxxxx');
-          console.log(this.currentDirs.x);
-          console.log('xxxxx');
         } else if(this._currentFace === this.currentFaces.R) {
           // 右面
           this._rotatePlainDir = this.currentDirs.z;
@@ -545,6 +560,7 @@ export default class MagicCube extends BaseCanvasWebgl {
         const index = this.positionRange[1] - +this.cubeIdPositionMap.get(cubeId).split(',')[axis]; // 面的 index
         for(let i = 0; i < count; i++) {
           this.history.push({
+            type: 'plain',
             axis,
             index,
             reverse: this._totalRotatePlainDeg > 0,
