@@ -41,19 +41,25 @@ export default class MagicCube extends BaseCanvasWebgl {
     attribute vec4 a_Color;
     attribute float a_Face; // 表面编号
     attribute float a_Id; // 立方体编号
+    attribute vec4 a_Normal; // 表面法向量
 
     uniform mat4 u_ModelMatrix;
     uniform mat4 u_ViewMatrix;
+    uniform mat4 u_NormalMatrix; // 法向量变换矩阵
 
     varying vec4 v_Color;
     varying float v_Face;
     varying float v_Id;
+    varying vec3 v_Normal;
+    varying vec3 v_Position;
 
     void main() {
       gl_Position = u_ViewMatrix * u_ModelMatrix * a_Position;
       v_Color = a_Color;
       v_Face = a_Face;
       v_Id = a_Id;
+      v_Normal = normalize(vec3(u_NormalMatrix * a_Normal)); // 法向量归一化
+      v_Position = vec3(u_ModelMatrix * a_Position); // 计算顶点的世界坐标
     }
   `;
   #fSource = `
@@ -64,17 +70,35 @@ export default class MagicCube extends BaseCanvasWebgl {
     uniform bool u_IsJudging; // 是否处于判断选中面的模式
     uniform int u_PickedFace; // 被选中的表面编号
     uniform int u_PickedCube; // 被选中的立方体编号
+    uniform vec3 u_AmbientLightColor; // 环境光颜色
+    uniform vec3 u_LightColor; // 光线颜色
+    uniform vec3 u_LightPosition; // 光源位置
+    uniform vec2 u_LightRange; // 光源光照的范围
 
     varying vec4 v_Color;
     varying float v_Face;
     varying float v_Id;
+    varying vec3 v_Normal;
+    varying vec3 v_Position;
 
     void main() {
       if(u_IsJudging) {
         gl_FragColor = vec4(v_Id / 255.0, 0.0, v_Face / 255.0, 1.0); // 判断时，选中面设置为不同颜色分量
 
       } else {
-        vec4 color = v_Color;
+        vec3 normal = normalize(v_Normal); // 法向量归一化，防止内插后不为 1.0
+        vec3 lightDirection = normalize(u_LightPosition - v_Position); // 计算光线方向并归一化
+
+        // 计算当前片元与光源的距离按比例的光强衰减
+        float lpd = distance(v_Position, u_LightPosition);
+        float decay = 1.0 - clamp((lpd - u_LightRange.x) / (u_LightRange.y - u_LightRange.x), 0.0, 1.0);
+
+        float nDotL = max(dot(lightDirection, normal), 0.0); // 光线方向和顶点法向量的点积
+        vec3 diffuse = u_LightColor * v_Color.rgb * nDotL; // 计算反射光
+        vec3 ambient = u_AmbientLightColor * v_Color.rgb; // 计算环境光
+        vec4 lightColor = vec4((diffuse + ambient) * decay, v_Color.a); // 计算整体光照效果
+        vec4 color = v_Color * lightColor;
+
         if(u_PickedFace > 0 && u_PickedFace == int(v_Face) && u_PickedCube == int(v_Id)) {
           color *= vec4(vec3(0.5), 1.0);
         }
@@ -97,6 +121,7 @@ export default class MagicCube extends BaseCanvasWebgl {
         'a_Color', 
         'a_Face',
         'a_Id',
+        'a_Normal',
       ],
       unifs: [
         'u_ModelMatrix', 
@@ -104,6 +129,11 @@ export default class MagicCube extends BaseCanvasWebgl {
         'u_IsJudging',
         'u_PickedFace',
         'u_PickedCube',
+        'u_AmbientLightColor',
+        'u_LightColor',
+        'u_LightPosition',
+        'u_NormalMatrix',
+        'u_LightRange',
       ],
     });
     this.cubePositionIdMap = new Map(); // 立方体位置 => id
@@ -115,7 +145,7 @@ export default class MagicCube extends BaseCanvasWebgl {
       colorFlag: false,
       defaultColorFlag: true,
       indexFlag: true,
-      textureFlag: true,
+      textureFlag: false,
       normalFlag: true,
       faceFlag: true,
       borderColorFlag: true,
@@ -762,6 +792,13 @@ export default class MagicCube extends BaseCanvasWebgl {
       lookAtTo: [0, 0, 0], // 摄像机观察点
       lookAtDir: [0, 1, 0], // 摄像机正方向
     };
+    // 光照参数
+    this.lightParams = {
+      lightPosition: [4, 4, 8], // 光源位置
+      lightColor: [1, 1, 1], // 光线颜色
+      ambientLightColor: [0.5, 0.5, 0.5], // 环境光颜色
+      lightRange: [5, 25], // 光照范围
+    };
     // 动画参数
     this.animateParams = {
       speed: 0.3, // 一般速度
@@ -795,6 +832,7 @@ export default class MagicCube extends BaseCanvasWebgl {
     this.modelRotateMatrix = new Matrix4(); // 模型旋转矩阵
     this.tempRotateMatrix = null; // 旋转开始前的旋转矩阵
     this.tempMatrix = new Matrix4(); // 临时矩阵
+    this.normalMatrix = new Matrix4(); // 法向量矩阵
 
     this.modelRotateMatrix.rotate(this.modelParams.rotateX, ...this.modelParams.rotateXDir);
     this.modelRotateMatrix.rotate(this.modelParams.rotateY, ...this.modelParams.rotateYDir);
@@ -804,9 +842,21 @@ export default class MagicCube extends BaseCanvasWebgl {
   // 初始化数据
   // @override
   initData() {
+    this.setLightParams(); // 设置光照参数
+
     tools.useArrayBuffer(this.gl, this.locs.attrs.a_Face, this.commonCube.buffers.faceBuffer);
     this.setViewMatrix();
     this.draw();
+  }
+
+  // 设置光源参数
+  setLightParams() {
+    tools.useArrayBuffer(this.gl, this.locs.attrs.a_Normal, this.commonCube.buffers.normalBuffer); // 设置面的法向量
+
+    this.gl.uniform3fv(this.locs.unifs.u_AmbientLightColor, this.lightParams.ambientLightColor); // 设置环境光颜色
+    this.gl.uniform3fv(this.locs.unifs.u_LightColor, this.lightParams.lightColor); // 设置光线颜色
+    this.gl.uniform3fv(this.locs.unifs.u_LightPosition, this.lightParams.lightPosition); // 设置光源位置
+    this.gl.uniform2fv(this.locs.unifs.u_LightRange, this.lightParams.lightRange); // 设置光源光照范围
   }
 
   // 设置视图矩阵
@@ -828,6 +878,16 @@ export default class MagicCube extends BaseCanvasWebgl {
     this.modelMatrix.multiply(selfMatrix);
 
     this.gl.uniformMatrix4fv(this.locs.unifs.u_ModelMatrix, false, this.modelMatrix.elements);
+
+    this.setNormalMatrix();
+  }
+
+  // 设置法向量矩阵
+  setNormalMatrix() {
+    this.normalMatrix.set(this.modelMatrix); // 设置为模型矩阵
+    this.normalMatrix.invert().transpose(); // 模型矩阵的逆转置矩阵
+
+    this.gl.uniformMatrix4fv(this.locs.unifs.u_NormalMatrix, false, this.normalMatrix.elements);
   }
 
   // 当前使用的旋转矩阵
