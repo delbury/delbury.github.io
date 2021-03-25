@@ -154,7 +154,7 @@ export default class MagicCube extends BaseCanvasWebgl {
         // 合并去除两次反向操作
         pushFlag = false;
         this.history.pop();
-        
+
       } else if(this.history.length >= 3) {
         // 合并去除四次同向操作
         pushFlag = false;
@@ -181,7 +181,7 @@ export default class MagicCube extends BaseCanvasWebgl {
 
   // 阶数变换
   changeOrder(order, size) {
-    if(this._states.animating) return;
+    if(this._states.animating || order < 2 || order > 6) return;
     this.resetData();
     this.cubes = this.createCubes(order, size);
     this.draw();
@@ -457,11 +457,11 @@ export default class MagicCube extends BaseCanvasWebgl {
   }
 
   // 还原魔方，历史数组
-  async recovery() {
+  async recovery(counts = Infinity) {
     if(this._states.animating) return;
 
     this._states.recoverying = true; // 恢复历史中
-    while(this.history.length) {
+    while(this.history.length && (counts--) > 0) {
       const state = this.history.pop();
       if(state.type === 'plain') {
         const { axis, index, reverse } = state;
@@ -669,7 +669,7 @@ export default class MagicCube extends BaseCanvasWebgl {
 
   // 创建立方体
   createCubes(order = 3, size = 1, { gap = 0, padding = size * 0.05 } = {}) {
-    if(order < 2) return;
+    if(order < 2 || order > 6) return;
     this.cubePositionIdMap.clear();
     this.cubeIdPositionMap.clear();
     const cubes = new Map();

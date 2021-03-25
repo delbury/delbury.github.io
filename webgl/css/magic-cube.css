@@ -7,7 +7,7 @@
 }
 .operation>*:not(:last-child),
 .third-operation>*:not(:last-child) {
-  margin-bottom: 2em;
+  margin-bottom: 1.5em;
 }
 .btns {
   display: flex;
@@ -29,6 +29,12 @@ label {
   grid-template-columns: 100px 100px;
   gap: 0.5em;
   user-select: none;
+}
+.btn-row+.btn-row {
+  margin-top: 0.25em;
+}
+.btn-row button {
+  width: 150px;
 }
 .boxes {
   display: flex;
