@@ -123,7 +123,8 @@
 
   <script type="module">
     import MagicCube from './js/MagicCube.js';
-  
+
+    const axisObj = { F: 2, R: 0, U: 1 };
     const order = document.getElementById('order');
     const size = document.getElementById('size');
     const formula3 = document.getElementById('formula-third');
@@ -137,22 +138,19 @@
     createOperationArea(mc.order);
     
     // 改变阶数
-    document.getElementById('btn-order-confirm').onclick = ev => {
+    const changeOrder = ev => {
       const orderNum = parseInt(order.value);
       if(orderNum < 2 || orderNum > 6) return;
       mc.changeOrder(orderNum, parseFloat(size.value));
       createOperationArea(orderNum);
       toggleElement(formula3, +order.value === 3);
     };
-
-    // 旋转按钮
-    const axisObj = { F: 2, R: 0, U: 1 };
-    const commandFn = (text) => {
-      const [face, index, reverse] = text;
-      const axis = axisObj[face];
-      mc.rotatePlainCommand(axis, (+index - 1), axis === 2 ? !reverse : !!reverse);
+    document.getElementById('btn-order-confirm').onclick = changeOrder;
+    order.onkeydown = ev => {
+      if(ev.key === 'Enter') {
+        changeOrder();
+      }
     };
-    document.querySelectorAll('.btn-table>button').forEach(button => button.onclick = ev => commandFn(ev.target.innerText));
 
     // 随机化
     document.getElementById('btn-random').onclick = ev => {
@@ -205,7 +203,7 @@
     // 调用旋转公式
     const formulaFn = ev => {
       const list = ev.target.dataset.value.replaceAll(' ', '').split(',').filter(s => !!s).map(s => resolveCommand(s));
-      mc.playRotatePlains(list);
+      mc.playGroupRotates(list);
     };
     document.querySelectorAll('.formula-btn').forEach(btn => {
       btn.onclick = formulaFn;
@@ -217,7 +215,7 @@
       const axis = { F: 2, R: 0, U: 1 }[keys[0]];
       const index = +keys[1] - 1;
       const reverse = keys[2] === '\'';
-      return { axis, index, reverse: axis === 2 ? !reverse : reverse };
+      return { type: 'plain', axis, index, reverse: axis === 2 ? !reverse : reverse };
     }
 
     // 创建右侧操作区
@@ -248,6 +246,13 @@
       // 按钮区
       const btnTables = document.querySelectorAll('.btn-table');
       const btnMainKey = ['F', 'R', 'U'];
+      // 旋转按钮
+      const commandFn = (ev) => {
+        const text = ev.target.innerText
+        const [face, index, reverse] = text;
+        const axis = axisObj[face];
+        mc.rotatePlainCommand(axis, (+index - 1), axis === 2 ? !reverse : !!reverse);
+      };
       btnTables.forEach((bt, btIndex) => {
         bt.innerHTML = '';
         for(let i = 1; i <= order; i++) {
@@ -255,6 +260,8 @@
           const btn2 = document.createElement('button');
           btn1.innerText = btnMainKey[btIndex] + i;
           btn2.innerText = btnMainKey[btIndex] + i + '\'';
+          btn1.onclick = commandFn;
+          btn2.onclick = commandFn;
           bt.append(btn1, btn2);
         }
       });

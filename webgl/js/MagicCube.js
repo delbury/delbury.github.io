@@ -9,7 +9,7 @@ const CUBE_COLORS = {
   top: [1, 1, 0],
   bottom: [1, 1, 1],
   left: [1, 0, 0],
-  right: [1, 0.502, 0],
+  right: [1, 0.6, 0],
   front: [0, 1, 0],
   back: [0, 0, 1],
 }
@@ -138,6 +138,7 @@ export default class MagicCube extends BaseCanvasWebgl {
     });
     this.cubePositionIdMap = new Map(); // 立方体位置 => id
     this.cubeIdPositionMap = new Map(); // 立方体 id => 位置
+    this.currentPlainCubeIds = new Set(); // 当前旋转的立方体 id 列表
     this.commonCube = new Cube(this.gl, {
       defaultColor: Array(3).fill(0.15),
     }, {
@@ -151,7 +152,6 @@ export default class MagicCube extends BaseCanvasWebgl {
       borderColorFlag: true,
       borderIndexFlag: true,
     });
-    this.currentPlainCubeIds = new Set(); // 当前旋转的立方体 id 列表
     this.cubes = this.createCubes(order);
     this.resetData();
     this.init();
@@ -160,14 +160,33 @@ export default class MagicCube extends BaseCanvasWebgl {
   // 重置数据
   resetData() {
     this.history = []; // 清除历史
+    // 当前朝向的每个面的 id
     this.currentFaces = {
       F: 1, R: 2, U: 3,
-    }; // 当前朝向的每个面的 id
+    };
+
+    // 当前的旋转轴方向
     this.currentDirs = {
       x: BaseCanvasWebgl.X_DIR,
       y: BaseCanvasWebgl.Y_DIR,
       z: BaseCanvasWebgl.Z_DIR_REVERSE,
-    }; // 当前的旋转轴方向
+    };
+
+    // 当前状态
+    this._states = {
+      animating: false, // 播放动画中
+      recoverying: false, // 恢复历史中
+      playing: false, // 播放一组旋转中
+      totalRotatePlainDeg: null, // 当前旋转面当次总的旋转角度
+      currentRotatePlainDir: null, // 当前旋转面的旋转轴
+      relativeRotateX: null, // 相对旋转绕 x 轴的角度分量
+      relativeRotateY: null, // 相对旋转绕 y 轴的角度分量
+      rotateBackRate: null, // 旋转回之前的朝向的比率值
+      willRotatePlains: null, // 选中的方块可能将要旋转的平面
+      currentFace: null, // 选中的当前的实践面
+      diffRotateDeg: null, // 一次旋转中累计的旋转角度
+      rotatePlainEndDeg: null, // 旋转结束的角度
+    }
   }
 
   pushHistory(state) {
@@ -213,6 +232,7 @@ export default class MagicCube extends BaseCanvasWebgl {
   changeOrder(order, size) {
     if(this._states.animating || order < 2 || order > 6) return;
     this.resetData();
+    this.initMatrixs();
     this.cubes = this.createCubes(order, size);
     this.draw();
   }
@@ -463,10 +483,14 @@ export default class MagicCube extends BaseCanvasWebgl {
   }
 
   // 播放一组平面旋转
-  async playRotatePlains(list) {
+  async playGroupRotates(list) {
     this._states.playing = true;
-    for await(let { axis, index, reverse } of list) {
-      await this.rotatePlainCommand(axis, index, reverse);
+    for await(let { type, axis, index, reverse } of list) {
+      if(type === 'plain') {
+        await this.rotatePlainCommand(axis, index, reverse);
+      } else if(type === 'total') {
+        await this.rotateWhole(axis, reverse);
+      }
     }
     this._states.playing = false;
   }
@@ -477,13 +501,23 @@ export default class MagicCube extends BaseCanvasWebgl {
 
     const list = [];
     for(let i = 0; i < count; i++) {
-      list.push({
-        axis: Math.floor(Math.random() * 3),
-        index: Math.floor(Math.random() * this.order),
-        reverse: !!Math.floor(Math.random() * 2),
-      });
+      const type = Math.random() < 0.5 ? 'plain' : 'total';
+      if(type === 'plain') {
+        list.push({
+          type,
+          axis: Math.floor(Math.random() * 3),
+          index: Math.floor(Math.random() * this.order),
+          reverse: !!Math.floor(Math.random() * 2),
+        });
+      } else if(type === 'total') {
+        list.push({
+          type,
+          axis: Math.floor(Math.random() * 3),
+          reverse: !!Math.floor(Math.random() * 2),
+        });
+      }
     }
-    this.playRotatePlains(list);
+    this.playGroupRotates(list);
   }
 
   // 还原魔方，历史数组
@@ -796,7 +830,7 @@ export default class MagicCube extends BaseCanvasWebgl {
     this.lightParams = {
       lightPosition: [4, 4, 8], // 光源位置
       lightColor: [1, 1, 1], // 光线颜色
-      ambientLightColor: [0.5, 0.5, 0.5], // 环境光颜色
+      ambientLightColor: [0.75, 0.75, 0.75], // 环境光颜色
       lightRange: [5, 25], // 光照范围
     };
     // 动画参数
@@ -807,21 +841,6 @@ export default class MagicCube extends BaseCanvasWebgl {
       backSpeed: 0.25, // 右键旋转转会速度
       wholeRotateSpeed: 0.25, // 整体旋转速度 
     };
-    // 当前状态
-    this._states = {
-      animating: false, // 播放动画中
-      recoverying: false, // 恢复历史中
-      playing: false, // 播放一组旋转中
-      totalRotatePlainDeg: null, // 当前旋转面当次总的旋转角度
-      currentRotatePlainDir: null, // 当前旋转面的旋转轴
-      relativeRotateX: null, // 相对旋转绕 x 轴的角度分量
-      relativeRotateY: null, // 相对旋转绕 y 轴的角度分量
-      rotateBackRate: null, // 旋转回之前的朝向的比率值
-      willRotatePlains: null, // 选中的方块可能将要旋转的平面
-      currentFace: null, // 选中的当前的实践面
-      diffRotateDeg: null, // 一次旋转中累计的旋转角度
-      rotatePlainEndDeg: null, // 旋转结束的角度
-    }
   }
 
   // 初始化矩阵变量
