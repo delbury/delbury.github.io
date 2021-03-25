@@ -228,16 +228,19 @@ label {
 }
 
 /* 左侧按钮 */
+.abs-btns.btns-l .btn-wrapper:nth-of-type(1) .btn {
+  transform: rotateZ(-45deg);
+}
 .abs-btns.btns-l .btn-wrapper:nth-of-type(1) .btn:hover {
   filter: drop-shadow(5px 5px 6px #fff);
 }
 .abs-btns.btns-l .btn-wrapper:nth-of-type(1) .btn:active,
 .abs-btns.btns-l .btn-wrapper:nth-of-type(1) .btn.actived {
   filter: drop-shadow(4px 4px 3px #fff);
-  transform: translate(1px, 1px);
+  transform: rotateZ(-45deg) translate(1px, 1px);
 }
 .abs-btns.btns-l .btn-wrapper:nth-of-type(2) .btn {
-  transform: rotateX(180deg);
+  transform: rotateX(180deg) rotateZ(-45deg);
 }
 .abs-btns.btns-l .btn-wrapper:nth-of-type(2) .btn:hover {
   filter: drop-shadow(5px -5px 6px #fff);
@@ -245,12 +248,12 @@ label {
 .abs-btns.btns-l .btn-wrapper:nth-of-type(2) .btn:active,
 .abs-btns.btns-l .btn-wrapper:nth-of-type(2) .btn.actived {
   filter: drop-shadow(4px -4px 3px #fff);
-  transform: rotateX(180deg) translate(1px, -1px);
+  transform: rotateX(180deg) rotateZ(-45deg) translate(1px, -1px);
 }
 
 /* 右侧按钮 */
 .abs-btns.btns-r .btn-wrapper:nth-of-type(1) .btn {
-  transform: rotateY(180deg);
+  transform: rotateY(180deg) rotateZ(-45deg);
 }
 .abs-btns.btns-r .btn-wrapper:nth-of-type(1) .btn:hover {
   filter: drop-shadow(-5px 5px 6px #fff);
@@ -258,10 +261,10 @@ label {
 .abs-btns.btns-r .btn-wrapper:nth-of-type(1) .btn:active,
 .abs-btns.btns-r .btn-wrapper:nth-of-type(1) .btn.actived {
   filter: drop-shadow(-4px 4px 3px #fff);
-  transform: rotateY(180deg) translate(-1px, 1px);
+  transform: rotateY(180deg) rotateZ(-45deg) translate(-1px, 1px);
 }
 .abs-btns.btns-r .btn-wrapper:nth-of-type(2) .btn {
-  transform: rotateY(180deg) rotateX(180deg);
+  transform: rotateY(180deg) rotateX(180deg) rotateZ(-45deg);
 }
 .abs-btns.btns-r .btn-wrapper:nth-of-type(2) .btn:hover {
   filter: drop-shadow(-5px -5px 6px #fff);
@@ -269,5 +272,5 @@ label {
 .abs-btns.btns-r .btn-wrapper:nth-of-type(2) .btn:active,
 .abs-btns.btns-r .btn-wrapper:nth-of-type(2) .btn.actived {
   filter: drop-shadow(-4px -4px 3px #fff);
-  transform: rotateY(180deg) rotateX(180deg) translate(-1px, -1px);
+  transform: rotateY(180deg) rotateX(180deg) rotateZ(-45deg) translate(-1px, -1px);
 }
