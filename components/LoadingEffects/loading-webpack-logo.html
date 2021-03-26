@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Webpack Logo</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    :root {
+      --border-color: #000;
+      --border-t: 1px solid var(--border-color);
+      --border-b: 5px solid var(--border-color);
+      --outer-color: rgb(135, 206, 235, 0.25);
+      --inner-color: skyblue;
+      --outer-size: 100px;
+      --inner-size: 50px;
+      --duration: 2000ms;
+      --count: infinite;
+      --direction: alternate;
+    }
+    .loader {
+      width: 0;
+      height: 0;
+      position: relative;
+      transform-style: preserve-3d;
+    }
+    .loader * {
+      box-sizing: border-box;
+    }
+    .outer, .inner {
+      width: 1em;
+      height: 1em;
+      position: absolute;
+      transform-style: preserve-3d;
+      /* perspective-origin: center;
+      perspective: 800px; */
+    }
+    .outer {
+      font-size: var(--outer-size);
+      transform: translate(-50%, -50%);
+    }
+    .inner {
+      font-size: var(--inner-size);
+      transform: translate(-50%, -50%) translateZ(-0.5em);
+    }
+    .face-wrapper {
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transform-origin: center center -0.5em;
+      transform: rotateX(-35.5deg) rotateY(-45deg);
+      animation-duration: var(--duration);
+      animation-iteration-count: var(--count);
+      animation-direction: var(--direction);
+      animation-timing-function: ease-in-out;
+    }
+    .outer .face:nth-of-type(n) {
+      animation-duration: var(--duration);
+      animation-iteration-count: var(--count);
+      animation-direction: var(--direction);
+      animation-timing-function: ease-in-out;
+    }
+    .outer .face-wrapper {
+      animation-name: rotate-outer;
+    }
+    .inner .face-wrapper {
+      animation-name: rotate-inner;
+    }
+    .face {
+      width: 1em;
+      height: 1em;
+      position: absolute;
+      border: var(--border-t);
+    }
+    /* 各个面，前，后，左，右，上，下 */
+    /* .face:nth-of-type(1) {
+    } */
+    .face:nth-of-type(2) {
+      transform: translateZ(-1em);
+    }
+    .face:nth-of-type(3) {
+      transform-origin: center right;
+      transform: translateX(-100%) rotateY(-90deg);
+    }
+    .face:nth-of-type(4) {
+      transform-origin: center left;
+      transform: translateX(100%) rotateY(90deg);
+    }
+    .face:nth-of-type(5) {
+      transform-origin: bottom center;
+      transform: translateY(-100%) rotateX(90deg);
+    }
+    .face:nth-of-type(6) {
+      transform-origin: top center;
+      transform: translateY(100%) rotateX(-90deg);
+    }
+    .outer .face {
+      background-color: var(--outer-color);
+    }
+    .inner .face {
+      background-color: var(--inner-color);
+    }
+
+    /* 边框 */
+    .outer .face:nth-of-type(1) {
+      border-left: var(--border-b);
+      border-bottom: var(--border-b);
+      border-right: var(--border-t);
+      animation-name: border1;
+    }
+    .outer .face:nth-of-type(2) {
+      border-top: var(--border-b);
+      border-right: var(--border-b);
+      border-left: var(--border-t);
+      animation-name: border2;
+    }
+    .outer .face:nth-of-type(5) {
+      border-left: var(--border-b);
+      border-right: var(--border-t);
+      animation-name: border5;
+    }
+    .outer .face:nth-of-type(6) {
+      border-right: var(--border-b);
+      border-left: var(--border-t);
+      animation-name: border6;
+    }
+
+    @keyframes rotate-outer {
+      0% {
+        transform: rotateX(-35.5deg) rotateY(-45deg);
+      }
+      100% {
+        transform: rotateX(-35.5deg) rotateY(45deg);
+      }
+    }
+    @keyframes rotate-inner {
+      0% {
+        transform: rotateX(-35.5deg) rotateY(-45deg);
+      }
+      100% {
+        transform: rotateX(-35.5deg) rotateY(-135deg);
+      }
+    }
+    @keyframes border1 {
+      0%, 49.9% {
+        border-left: var(--border-b);
+        border-bottom: var(--border-b);
+        border-right: var(--border-t);
+      }
+      50%, 100% {
+        border-left: var(--border-t);
+        border-bottom: var(--border-b);
+        border-right: var(--border-b);
+      }
+    }
+    @keyframes border2 {
+      0%, 49.9% {
+        border-top: var(--border-b);
+        border-right: var(--border-b);
+        border-left: var(--border-t);
+      }
+      50%, 100% {
+        border-top: var(--border-b);
+        border-right: var(--border-t);
+        border-left: var(--border-b);
+      }
+    }
+    @keyframes border5 {
+      0%, 49.9% {
+        border-left: var(--border-b);
+        border-right: var(--border-t);
+      }
+      50%, 100% {
+        border-left: var(--border-t);
+        border-right: var(--border-b);
+      }
+    }
+    @keyframes border6 {
+      0%, 49.9% {
+        border-right: var(--border-b);
+        border-left: var(--border-t);
+      }
+      50%, 100% {
+        border-right: var(--border-t);
+        border-left: var(--border-b);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="loader">
+      <div class="outer">
+        <div class="face-wrapper">
+          <div class="face"></div>
+          <div class="face"></div>
+          <div class="face"></div>
+          <div class="face"></div>
+          <div class="face"></div>
+          <div class="face"></div>
+        </div>
+      </div>
+      <div class="inner">
+        <div class="face-wrapper">
+          <div class="face"></div>
+          <div class="face"></div>
+          <div class="face"></div>
+          <div class="face"></div>
+          <div class="face"></div>
+          <div class="face"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
