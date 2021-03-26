@@ -501,7 +501,7 @@ export default class MagicCube extends BaseCanvasWebgl {
 
     const list = [];
     for(let i = 0; i < count; i++) {
-      const type = Math.random() < 0.5 ? 'plain' : 'total';
+      const type = Math.random() < 0.9 ? 'plain' : 'total';
       if(type === 'plain') {
         list.push({
           type,
