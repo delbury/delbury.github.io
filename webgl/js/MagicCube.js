@@ -812,6 +812,12 @@ export default class MagicCube extends BaseCanvasWebgl {
     return cubes;
   }
 
+  // 判断魔方是否还原状态
+  isOrderly() {
+    // const mat = new Matrix4();
+    // return [...this.cubes.values()].map(it => mat.set(it.matrix).multiply(it.dirMatrix).elements.join(',')).every((str, i, arr) => str === arr[0]);
+  }
+
   // 初始化视图、模型参数
   // @override
   initParams() {
