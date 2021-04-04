@@ -154,7 +154,6 @@ export default class MagicCube extends BaseCanvasWebgl {
     });
     this.cubes = this.createCubes(order);
     this.resetData();
-    this.init();
   }
 
   // 重置数据
@@ -187,6 +186,8 @@ export default class MagicCube extends BaseCanvasWebgl {
       diffRotateDeg: null, // 一次旋转中累计的旋转角度
       rotatePlainEndDeg: null, // 旋转结束的角度
     }
+
+    this.init();
   }
 
   pushHistory(state) {
@@ -309,6 +310,14 @@ export default class MagicCube extends BaseCanvasWebgl {
   // 释放选中状态
   unselect() {
     this.gl.uniform1i(this.locs.unifs.u_PickedFace, 0);
+    this.draw();
+  }
+
+  // 缩放
+  scaleBy(k) {
+    if(Math.min.apply(null, this.modelParams.scale) + k < 0.2) return; // 限制最小缩放比例
+    if(Math.max.apply(null, this.modelParams.scale) + k > 2) return; // 限制最大缩放比例
+    this.modelParams.scale = this.modelParams.scale.map(it => it += k);
     this.draw();
   }
 
@@ -438,7 +447,7 @@ export default class MagicCube extends BaseCanvasWebgl {
   rotatePlainCommand(axis, index, reverse) {
       if(this._states.animating) return;
       return new Promise((resolve, reject) => {
-      const position = Array(this.order).fill(this.positionRange[1]);
+      const position = Array(3).fill(this.positionRange[1]);
       position[axis] -= index; // 计算虚拟点击方块的位置
 
       // 计算当前旋转面的方块坐标集合
@@ -466,7 +475,6 @@ export default class MagicCube extends BaseCanvasWebgl {
           this.currentPlainCubeIds.add(this.cubePositionIdMap.get(ppp.join(',')));
         }
       }
-
       // 设置旋转方向
       switch(axis) {
         case 0: this._states.currentRotatePlainDir = this.currentDirs.x; break;
@@ -895,6 +903,7 @@ export default class MagicCube extends BaseCanvasWebgl {
     this.modelMatrix.setTranslate(...this.modelParams.translate);
     this.modelMatrix.multiply(this.currentRotateMatrix);
     this.modelMatrix.multiply(selfMatrix);
+    this.modelMatrix.scale(...this.modelParams.scale);
 
     this.gl.uniformMatrix4fv(this.locs.unifs.u_ModelMatrix, false, this.modelMatrix.elements);
 
@@ -917,5 +926,10 @@ export default class MagicCube extends BaseCanvasWebgl {
   // 当前的 mvp 矩阵
   get currentMvpMatrix() {
     return new Matrix4(this.viewMatrix).multiply(this.modelMatrix).multiply(this.currentRotateMatrix);
+  }
+
+  // 正在动画中
+  get animating() {
+    return this._states.animating;
   }
 }

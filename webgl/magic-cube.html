@@ -84,7 +84,7 @@
 
       <div class="btns">
         <label for="order">魔方阶数
-          <input id="order" type="number" min="2" max="6" step="1" value="3" placeholder="魔方阶数">
+          <input id="order" type="number" min="2" max="6" step="1" value="2" placeholder="魔方阶数">
         </label>
         <label for="order">方块大小
           <input id="size" type="number" min="0.2" step="0.1" value="1" placeholder="方块大小">
@@ -139,6 +139,7 @@
     
     // 改变阶数
     const changeOrder = ev => {
+      if(mc.animating) return;
       const orderNum = parseInt(order.value);
       if(orderNum < 2 || orderNum > 6) return;
       mc.changeOrder(orderNum, parseFloat(size.value));
@@ -348,6 +349,13 @@
 
       // 鼠标右键选择框
       canvas.oncontextmenu = ev => ev.preventDefault();
+
+      // 滚动缩放
+      canvas.addEventListener('wheel', (ev) => {
+        // 缩放
+        const k = ev.deltaY / -1000;
+        mc.scaleBy(k);
+      }, { passive: true });
     }
 
     function toggleElement(el, show) {
