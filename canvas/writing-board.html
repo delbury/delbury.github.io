@@ -585,6 +585,20 @@
             importImage(file);
           }
         });
+
+        // 拖拽事件
+        canvas.addEventListener('dragover', (ev) => ev.preventDefault());
+        document.addEventListener('drop', (ev) => {
+          ev.preventDefault();
+
+          const files = ev.dataTransfer.files;
+          for(let i = 0; i < files.length; i++) {
+            if(/^image\//i.test(files[i].type)) {
+              importImage(files[i]);
+              break;
+            }
+          }
+        });
       }
     };
     const dp = new DrawPen();
