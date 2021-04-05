@@ -95,6 +95,9 @@
           <button id="btn-recovery">还原</button>
           <button id="btn-revert">撤销</button>
         </div>
+        <div>
+          <button id="btn-test">测试</button>
+        </div>
       </div>
 
       <div id="formula-third">
@@ -209,6 +212,10 @@
     document.querySelectorAll('.formula-btn').forEach(btn => {
       btn.onclick = formulaFn;
     });
+
+    // 测试用
+    const btnTest = document.getElementById('btn-test');
+    if(btnTest) btnTest.onclick = ev => console.log(mc.isOrderly());
 
     // 解析操作命令字符串
     function resolveCommand(str) {

@@ -190,6 +190,12 @@ export default class MagicCube extends BaseCanvasWebgl {
     this.init();
   }
 
+  // 获取历史
+  getHistory() {
+    return this.history;
+  }
+
+  // 新增历史
   pushHistory(state) {
     // 去除冗余的操作
     let pushFlag = true;
@@ -685,7 +691,7 @@ export default class MagicCube extends BaseCanvasWebgl {
       this._states.willRotatePlains = null;
       this.rotatePlainPosition(this.currentPlainCubeIds); // 旋转平面坐标
       this.currentPlainCubeIds.clear();
-
+      this.doIfOrderly(); // 检测是否完成
       cb && cb(); // 回调
       return;
     }
@@ -777,12 +783,13 @@ export default class MagicCube extends BaseCanvasWebgl {
           dx = dd(i);
           
           const colorObj = {};
-          if(k === start) colorObj.bottom = bottom;
-          if(k === end) colorObj.top = top;
-          if(i === start) colorObj.left = left;
-          if(i === end) colorObj.right = right;
-          if(j === start) colorObj.back = back;
-          if(j === end) colorObj.front = front;
+          const faces = new Set(); // 顺序：1前、2右、3上、4左、5下、6后
+          if(k === start) { colorObj.bottom = bottom; faces.add(5); }
+          if(k === end) { colorObj.top = top; faces.add(3); }
+          if(i === start) { colorObj.left = left; faces.add(4); }
+          if(i === end) { colorObj.right = right; faces.add(2); }
+          if(j === start) { colorObj.back = back; faces.add(6); }
+          if(j === end) { colorObj.front = front; faces.add(1); }
           const location = [i, k, j];
           cubes.set(id, {
             cube: new Cube(this.gl, {
@@ -800,6 +807,7 @@ export default class MagicCube extends BaseCanvasWebgl {
             id,
             matrix: new Matrix4(), // 自身的旋转矩阵
             dirMatrix: new Matrix4(), // 旋转轴的变换矩阵
+            faces, // 当前方块占据的面
           });
           const pos = location.join(',');
           this.cubePositionIdMap.set(pos, id);
@@ -814,8 +822,48 @@ export default class MagicCube extends BaseCanvasWebgl {
 
   // 判断魔方是否还原状态
   isOrderly() {
-    // const mat = new Matrix4();
-    // return [...this.cubes.values()].map(it => mat.set(it.matrix).multiply(it.dirMatrix).elements.join(',')).every((str, i, arr) => str === arr[0]);
+    let intersection = null; // 交集
+    const [start, end] = this.positionRange;
+    // 循环判断六个面
+    for(let i = 0; i < 3; i++) {
+      const ind0 = i;
+      let ind1, ind2;
+      if(i === 0) { ind1 = 1; ind2 = 2; }
+      if(i === 1) { ind1 = 0; ind2 = 2; }
+      if(i === 2) { ind1 = 0; ind2 = 1; }
+
+      for(let j = 0; j < 2; j++) {
+        const lockedPlain = this.positionRange[j]; // 锁定的分量坐标的值
+        
+        // 每个平面
+        for(let pi = start; pi <= end; pi++) {
+          for(let pj = start; pj <= end; pj++) {
+            const pos = [];
+            pos[ind0] = lockedPlain;
+            pos[ind1] = pi;
+            pos[ind2] = pj;
+            const cube = this.cubes.get(this.cubePositionIdMap.get(pos.join(',')));
+
+            // 取交集
+            if(pi === start && pj === start) {
+              intersection = new Set(cube.faces);
+            } else {
+              intersection = new Set([...intersection].filter(x => cube.faces.has(x)));
+            }
+            if(!intersection.size) return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  // 完成后回调
+  doIfOrderly() {
+    if(this.isOrderly()) {
+      // 清除旋转的历史
+      this.history = this.history.filter(item => item.type === 'total');
+    }
   }
 
   // 初始化视图、模型参数
