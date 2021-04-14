@@ -1,8 +1,8 @@
 export default class CharCode {
-  static regTestUtf8 = /^(\\x[0-9a-f]{2})+$/i; // 验证是否是utf-8编码字符串
   static regMatchUtf8 = /\\x(?<code>[0-9a-f]{2})/ig; // 解析utf-8字符串的编码
-  static regTestUnicode = /^(\\u{[0-9a-f]{1,8}})+$/i; // 验证是否是Unicode编码字符串
-  static regMatchUnicode = /\\u{(?<code>[0-9a-f]{1,8})}/ig; // 解析Unicode字符串编码
+  static regMatchUtf8Longest = /^(\\x[0-9a-f]{2})+/i; // 匹配最长有效的utf-8字符串的编码
+  static regMatchUnicode = /\\u{(?<code>([0-9a-f]{1,5}|10[0-9a-f]{4}))}/ig; // 解析Unicode字符串编码
+  static regMatchUnicodeLongest = /^(\\u{([0-9a-f]{1,5}|10[0-9a-f]{4})})+/i; // 匹配最长有效的Unicode字符串编码
 
   constructor() { }
 
@@ -15,8 +15,8 @@ export default class CharCode {
   // 接续unicode字符串 exp: \u{xxxx}
   parseUnicodeString(string) {
     const tempArr = [];
-    if (CharCode.regTestUnicode.test(string) && string) {
-      const matches = string.matchAll(CharCode.regMatchUnicode);
+    if (string && CharCode.regMatchUnicodeLongest.test(string)) {
+      const matches = CharCode.regMatchUnicodeLongest.exec(string)[0].matchAll(CharCode.regMatchUnicode);
       for (let item of matches) {
         tempArr.push(+parseInt(item.groups.code, 16));
       }
@@ -49,9 +49,9 @@ export default class CharCode {
 
   // utf-8转unicode
   utf8ToUnicode(string) {
-    if (string && CharCode.regTestUtf8.test(string)) {
+    if (string && CharCode.regMatchUtf8Longest.test(string)) {
       // 编码转换
-      const matches = Array.from(string.matchAll(CharCode.regMatchUtf8));
+      const matches = Array.from(CharCode.regMatchUtf8Longest.exec(string)[0].matchAll(CharCode.regMatchUtf8));
       const transfers = [];
       const multiBytesArr = [];
 
@@ -186,7 +186,7 @@ export default class CharCode {
     }
 
     return {
-      string: utf8Arr.map(str => '\\x' + str).join(''),
+      string: utf8Arr.map(str => '\\x' + str.padStart(2, '0')).join(''),
     };
   }
 

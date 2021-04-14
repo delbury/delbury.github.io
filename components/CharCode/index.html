@@ -75,7 +75,7 @@
 
 		// 输入字符
 		elChars.oninput = ev => {
-			const string = ev.target.value.trim();
+			const string = ev.target.value;
 			ev.target.value = string;
 
 			const res = charCode.charsToUnicode(string);
