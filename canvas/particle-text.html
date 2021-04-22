@@ -9,28 +9,31 @@
     .canvas {
       display: flex;
       align-items: center;
+      flex-direction: column;
       margin: auto;
       width: fit-content;
     }
 
     .border {
-      margin-left: 20px;
       border: 1px dashed skyblue;
       font-size: 0;
+    }
+    .control {
+      margin-top: 10px;
     }
   </style>
 </head>
 
 <body>
   <div class="canvas">
-    <div class="control">
-      <input id="input-text" type="text" placeholder="输入文本" value="ABCD">
-      <button id="btn-change">改变</button>
-    </div>
     <div class="border">
       <canvas id="canvas" width="800" height="480">
         <p>your browser do not support canvas</p>
       </canvas>
+    </div>
+    <div class="control">
+      <input id="input-text" type="text" placeholder="输入文本" value="ABCD">
+      <button id="btn-change">改变</button>
     </div>
   </div>
 

@@ -8,8 +8,27 @@
       super();
       const temp = document.getElementById('temp-li-item');
       const tempContent = temp.content.cloneNode(true);
+      
+      // 获取 img 元素
+      this.img = tempContent.querySelector('img');
+
       const shadowRoot = this.attachShadow({ mode: 'open' });
       shadowRoot.append(tempContent); 
+    }
+
+    // 懒加载
+    lazyLoadImg() {
+      this.observer = new IntersectionObserver((records) => {
+        if(records[records.length - 1].isIntersecting) {
+          // 显示
+          this.img.src = this.img.dataset.src;
+          this.img.dataset.src = '';
+          this.img.classList.remove('hidden');
+          this.observer.unobserve(this.img);
+          this.observer = null;
+        }
+      });
+      this.observer.observe(this.img);
     }
 
     // 属性变化回调
@@ -21,7 +40,13 @@
           this.shadowRoot.querySelector('a').href = newVal;
           break;
         case 1:
-          this.shadowRoot.querySelector('img').src = newVal ?? './assets/img/nothing.svg';
+          if(newVal) {
+            this.img.dataset.src = newVal ?? './assets/img/nothing.svg';
+            this.lazyLoadImg();
+          } else {
+            this.img.dataset.src = '';
+            this.img.src = './assets/img/nothing.svg';
+          }
           break;
         case 2:
           const desc = this.shadowRoot.querySelector('.desc');

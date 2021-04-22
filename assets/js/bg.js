@@ -139,7 +139,7 @@ self.onmessage = ev => {
     const ranges = {
       width: [0, width],
       height: [0, height],
-      radius: [5, plainSize * 0.04],
+      radius: [10, plainSize * 0.04],
       blur: [5, plainSize * 0.04],
       hue: [hue - 45, hue + 45],
       saturation: [70, 90],

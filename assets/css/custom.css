@@ -1,10 +1,12 @@
 * {
   box-sizing: border-box;
 }
+
 list-item {
   height: 100%;
   width: 100%;
 }
+
 .wrapper {
   display: flex;
   flex-direction: column;
@@ -18,12 +20,15 @@ list-item {
   box-shadow: none;
   text-decoration: none;
 }
+
 .wrapper:visited {
   color: currentColor;
 }
+
 .wrapper:hover {
   box-shadow: 0 0 10px 3px rgba(255, 255, 255, 0.8);
 }
+
 .title {
   margin-top: 0;
   margin-bottom: 10px;
@@ -33,24 +38,34 @@ list-item {
   line-height: 1.2em;
   height: 1.2em;
 }
+
 .content {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
+
 .content .snap {
   flex: 1;
   flex-basis: 0;
   border-radius: 3px;
   overflow: hidden;
   font-size: 0;
+  display: flex;
+  align-items: center;
 }
+
 .content .snap img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  /* height: 100%; */
+  /* object-fit: scale-down; */
 }
+
+.content .snap img.hidden {
+  visibility: hidden;
+}
+
 .content .desc {
   margin-top: 0.5em;
   font-size: 14px;
@@ -59,6 +74,7 @@ list-item {
   white-space: nowrap;
   line-height: 1.2em;
 }
+
 /* @supports (display: -webkit-box) and (-webkit-line-clamp: 2) and (-webkit-box-orient: vertical) {
   .content .desc {
     display: -webkit-box;

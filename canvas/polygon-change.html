@@ -9,6 +9,7 @@
     .canvas {
       display: flex;
       align-items: center;
+      flex-direction: column;
       margin: auto;
       width: fit-content;
     }
@@ -18,20 +19,23 @@
       border: 1px dashed skyblue;
       font-size: 0;
     }
+    .control {
+      margin-top: 10px;
+    }
   </style>
 </head>
 
 <body>
   <div class="canvas">
-    <div class="control">
-      <input id="input-text" type="number" placeholder="N边形" min="3" value="8">
-      <button id="btn-change">改变</button>
-      <button id="btn-random">随机</button>
-    </div>
     <div class="border">
       <canvas id="canvas" width="800" height="480">
         <p>your browser do not support canvas</p>
       </canvas>
+    </div>
+    <div class="control">
+      <input id="input-text" type="number" placeholder="N边形" min="3" value="8">
+      <button id="btn-change">改变</button>
+      <button id="btn-random">随机</button>
     </div>
   </div>
 
