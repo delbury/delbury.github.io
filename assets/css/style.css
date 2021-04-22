@@ -1,13 +1,94 @@
+:root {
+  --items-box-width: clamp(600px, 960px, 60vw);
+  --item-cols: 3; /* 列数 */
+  --item-gap-rate: 0.1;
+  --item-size: calc(var(--items-box-width) / (var(--item-cols) + (var(--item-cols) - 1) * var(--item-gap-rate))); /* 长宽大小 */
+  --item-gap: calc(var(--item-gap-rate) * var(--item-size)); /* 间距 */
+}
 body {
-  /* background: #000; */
-  overflow: hidden;
+  background: #000;
+  margin: 0;
+  /* overflow-x: hidden; */
+  /* overflow-y: auto; */
 }
 
 .bg-canvas {
   bottom: 0;
   left: 0;
-  position: absolute;
+  position: fixed;
   right: 0;
   top: 0;
   z-index: -1;
+  background-color: #000;
 }
+.navbar>* {
+  color: #fff;
+}
+.navbar>*:not(:last-child) {
+  margin-right: 1em;
+}
+.page-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 130px;
+  text-align: center;
+  overflow: hidden;
+  background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.8) 100%);
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.2);
+  color: #fff;
+  transition: all 200ms;
+}
+.page-header-title {
+  height: 42px;
+  transition: all 200ms;
+  overflow: hidden;
+}
+.page-header.folded {
+  height: 68px;
+}
+.page-header.folded .page-header-title {
+  margin: 0;
+  height: 0;
+}
+.page-container {
+  margin-top: 130px;
+}
+section * {
+  color: #000;
+  box-sizing: border-box;
+}
+section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.section-title {
+  margin: 0;
+  padding: 20px 0;
+  width: var(--items-box-width);
+  color: #fff;
+  border-bottom: 1px solid #fff;
+}
+ul {
+  padding: 0;
+  width: var(--items-box-width);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--item-size));
+  /* grid-template-rows: 15vw; */
+  grid-auto-rows: var(--item-size);
+  gap: var(--item-gap);
+  justify-content: center;
+}
+ul li {
+  list-style: none;
+}
+
+section:nth-of-type(even)>ul>li:nth-of-type(2),
+section:nth-of-type(odd)>ul>li:nth-of-type(1),
+section:nth-of-type(odd)>ul>li:nth-of-type(8) {
+  grid-column-start: span 2;
+  grid-row-start: span 2;
+}
+
