@@ -47,6 +47,7 @@ list-item {
 }
 
 .content .snap {
+  position: relative;
   flex: 1;
   flex-basis: 0;
   border-radius: 3px;
@@ -54,6 +55,20 @@ list-item {
   font-size: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
+}
+
+.content .snap .loading {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background-image: url('../img/loading.svg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  animation: rotate 2000ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
 }
 
 .content .snap img {
@@ -87,4 +102,14 @@ list-item {
 } */
 .none {
   display: none !important;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(-360deg);
+  }
 }

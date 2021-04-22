@@ -11,6 +11,8 @@
       
       // 获取 img 元素
       this.img = tempContent.querySelector('img');
+      this.loading = tempContent.querySelector('.loading');
+      this.img.onload = ev => this.loading.classList.add('none');
 
       const shadowRoot = this.attachShadow({ mode: 'open' });
       shadowRoot.append(tempContent); 
@@ -42,6 +44,7 @@
         case 1:
           if(newVal) {
             this.img.dataset.src = newVal ?? './assets/img/nothing.svg';
+            this.loading.classList.remove('none')
             this.lazyLoadImg();
           } else {
             this.img.dataset.src = '';
