@@ -6,7 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="demo，canvas，webgl，动效，小游戏，webaudio">
   <title>DelBury的工具箱</title>
-
+  <link rel="preload" as="image" href="./assets/img/loading.svg">
+  <link rel="prefetch" href="./assets/img/nothing.svg">
   <link rel="stylesheet" href="./assets/css/style.css">
 </head>
 <body>
@@ -25,12 +26,15 @@
   <template id="temp-li-item">
     <link rel="stylesheet" href="./assets/css/custom.css">
     <div class="wrapper">
-      <h3 class="title" title=""></h3>
+      <h3 class="title" title="">
+        <span></span>
+      </h3>
       <div class="content">
         <a class="snap" href="" target="_self">
           <div class="loading none">
             <div class="icon"></div>
           </div>
+          <video class="hidden" preload="metadata" muted="true" playsinline="true" loop="true"></video>
           <img class="hidden" src="" alt="">
         </a>
         <div class="desc none" title=""></div>

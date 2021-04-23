@@ -13,61 +13,61 @@ const sections = [
       {
         href: './canvas/writing-board.html',
         title: 'Writing Board',
-        img: './assets/img/writing-board.gif',
+        cover: './assets/cover/writing-board.mp4',
         desc: '写字板',
       },
       {
         href: './canvas/clock.html',
         title: 'Clock',
-        img: './assets/img/clock.gif',
+        cover: './assets/cover/clock.mp4',
         desc: '简单的时钟',
       },
       {
         href: './canvas/infinity-picture.html',
         title: 'Infinity Picture',
-        img: './assets/img/infinity-picture.gif',
+        cover: './assets/cover/infinity-picture.mp4',
         desc: '可以无限拖动的图片',
       },
       {
         href: './canvas/particles.html',
         title: 'Radio Particles',
-        img: './assets/img/particles.gif',
+        cover: './assets/cover/particles.mp4',
         desc: '放射性粒子动画',
       },
       {
         href: './canvas/random-move.html',
         title: 'Random Move',
-        img: './assets/img/random-move.gif',
+        cover: './assets/cover/random-move.mp4',
         desc: '随机移动的粒子动画',
       },
       {
         href: './canvas/ease-animation.html',
         title: 'Ease Animation',
-        img: './assets/img/ease-animation.gif',
+        cover: './assets/cover/ease-animation.mp4',
         desc: '缓动的粒子动画',
       },
       {
         href: './canvas/spring-animation.html',
         title: 'Spring Animation',
-        img: './assets/img/spring-animation.gif',
+        cover: './assets/cover/spring-animation.mp4',
         desc: '弹性移动的粒子动画',
       },
       {
         href: './canvas/balls-collision.html',
         title: 'Ball Collision',
-        img: './assets/img/balls-collision.gif',
+        cover: './assets/cover/balls-collision.mp4',
         desc: '多边形碰撞动画',
       },
       {
         href: './canvas/polygon-change.html',
         title: 'Polygon Change',
-        img: './assets/img/polygon-change.gif',
+        cover: './assets/cover/polygon-change.mp4',
         desc: '多边形变形动画',
       },
       {
         href: './canvas/particle-text.html',
         title: 'Particle Text',
-        img: './assets/img/particle-text.gif',
+        cover: './assets/cover/particle-text.mp4',
         desc: '粒子文本动画',
       },
     ],
@@ -78,25 +78,25 @@ const sections = [
       {
         href: './myGames/Snake/snake.html',
         title: 'Snake',
-        img: './assets/img/snake.gif',
+        cover: './assets/cover/snake.mp4',
         desc: '贪吃蛇',
       },
       {
         href: './canvasGameDemos/index.html',
         title: 'Jump Jump',
-        img: './assets/img/jump-jump.gif',
+        cover: './assets/cover/jump-jump.mp4',
         desc: '障碍跳',
       },
       {
         href: './myGames/Minesweeper/minesweeper.html',
         title: 'Mineswepper',
-        img: './assets/img/minesweeper.gif',
+        cover: './assets/cover/minesweeper.mp4',
         desc: '扫雷',
       },
       {
         href: './myGames/Tetris/tetris.html',
         title: 'Tetris',
-        img: './assets/img/tetris.gif',
+        cover: './assets/cover/tetris.mp4',
         desc: '俄罗斯方块',
       },
     ],
@@ -107,19 +107,19 @@ const sections = [
       {
         href: './audio/audio-analyser.html',
         title: 'Audio Analyser',
-        img: './assets/img/audio-analyser.gif',
+        cover: './assets/cover/audio-analyser.mp4',
         desc: '音频分析器',
       },
       {
         href: './audio/song-play.html',
         title: 'Song Play',
-        img: './assets/img/song-play.png',
+        cover: './assets/img/song-play.png',
         desc: '自定义音符序列播放器',
       },
       {
         href: './audio/piano.html',
         title: 'Piano',
-        img: './assets/img/piano.png',
+        cover: './assets/img/piano.png',
         desc: '简单的钢琴',
       },
     ],
@@ -130,37 +130,37 @@ const sections = [
       {
         href: './components/JigsawVerification/index.html',
         title: 'Jigsaw Verification',
-        img: './assets/img/jigsaw-verification.gif',
+        cover: './assets/cover/jigsaw-verification.mp4',
         desc: '滑块验证',
       },
       {
         href: './components/LoadingEffects/index.html',
         title: 'Loading Effects',
-        img: './assets/img/loading-effects.gif',
+        cover: './assets/cover/loading-effects.mp4',
         desc: 'loading动画 (css)',
       },
       {
         href: './components/BezierCurve/index.html',
         title: 'Bezier Curve',
-        img: './assets/img/bezier-curve.gif',
+        cover: './assets/cover/bezier-curve.mp4',
         desc: '贝塞尔函数生成器',
       },
       {
         href: './components/CharCode/index.html',
         title: 'Char Code',
-        img: './assets/img/char-code.gif',
+        cover: './assets/cover/char-code.mp4',
         desc: '字符编码转换器',
       },
       {
         href: './components/PerformanceMonitor/index.html',
         title: 'Performance Monitor',
-        img: './assets/img/performance-monitor.png',
+        cover: './assets/img/performance-monitor.png',
         desc: '代码性能测试工具',
       },
       {
         href: './components/Animations/index.html',
         title: 'Animations',
-        img: './assets/img/animations.gif',
+        cover: './assets/cover/animations.mp4',
         desc: '动画效果 (js)',
       },
     ],
@@ -171,13 +171,13 @@ const sections = [
       {
         href: './webgl/magic-cube.html',
         title: 'Magic Cube',
-        img: './assets/img/magic-cube.gif',
+        cover: './assets/cover/magic-cube.mp4',
         desc: '魔方',
       },
       {
         href: './webgl/mouse-cube.html',
         title: 'Mouse Cube',
-        img: './assets/img/mouse-cube.gif',
+        cover: './assets/cover/mouse-cube.mp4',
         desc: '单个立方体',
       },
     ],
@@ -239,7 +239,7 @@ const sections = [
       liItem.dataset.href = it.href;
       liItem.dataset.desc = it.desc;
       liItem.dataset.title = it.title;
-      liItem.dataset.img = it.img;
+      liItem.dataset.cover = it.cover;
 
       li.append(liItem);
       ul.append(li);
@@ -272,4 +272,13 @@ const sections = [
     });
   });
   observer.observe(document.documentElement);
+
+  // 页面不可见时停止背景动画
+  document.onvisibilitychange = ev => {
+    if(document.hidden) {
+      worker.postMessage({ type: 'stop' });
+    } else {
+      worker.postMessage({ type: 'play' });
+    }
+  };
 }());

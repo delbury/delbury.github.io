@@ -118,6 +118,9 @@ function draw(ctx, parts) {
 let backCanvas = null;
 let bctx = null;
 let backParts = [];
+let raf = null;
+let tick = null;
+
 self.onmessage = ev => {
   if(ev.data.type === 'init') {
     // main
@@ -151,9 +154,9 @@ self.onmessage = ev => {
     backParts = create(count, ranges); // 背景粒子数组
     
     // 动画
-    const tick = function() {
+    tick = function() {
       draw(bctx, backParts);
-      requestAnimationFrame(tick);
+      raf = requestAnimationFrame(tick);
     };
     tick();
   } else if(ev.data.type === 'resize') {
@@ -164,5 +167,14 @@ self.onmessage = ev => {
     backCanvas.width = rewidth;
     backCanvas.height = reheight;
     backParts.forEach(p => p.scale(kx, ky));
+  } else if(ev.data.type === 'stop') {
+    if(raf) {
+      cancelAnimationFrame(raf);
+      raf = null;
+    }
+  } else if(ev.data.type === 'play') {
+    if(!raf) {
+      tick();
+    }
   }
 };

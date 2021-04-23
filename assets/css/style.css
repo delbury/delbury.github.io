@@ -39,7 +39,7 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 999;
+  z-index: 9;
   height: 130px;
   text-align: center;
   overflow: hidden;
@@ -121,4 +121,5 @@ section:nth-of-type(odd)>ul>li:nth-of-type(1),
 section:nth-of-type(odd)>ul>li:nth-of-type(8) {
   grid-column-start: span 2;
   grid-row-start: span 2;
+  font-size: 2em;
 }
