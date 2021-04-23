@@ -231,7 +231,10 @@ const sections = [
   for(const sec of sections) {
     const section = document.createElement('section');
     section.innerHTML = `<h2 class="section-title">${sec.sectionTitle}</h2>`;
-    section.id = sec.id;
+    const bp = document.createElement('div'); // 创建埋点
+    bp.classList.add('section-bp');
+    bp.id = sec.id;
+    section.prepend(bp);
     const ul = document.createElement('ul');
     for(const it of sec.items) {
       const li = document.createElement('li');

@@ -1,12 +1,14 @@
 :root {
   --items-box-width: clamp(600px, 960px, 60vw);
-  --item-cols: 3;
   /* 列数 */
+  --item-cols: 3;
   --item-gap-rate: 0.1;
-  --item-size: calc(var(--items-box-width) / (var(--item-cols) + (var(--item-cols) - 1) * var(--item-gap-rate)));
   /* 长宽大小 */
-  --item-gap: calc(var(--item-gap-rate) * var(--item-size));
+  --item-size: calc(var(--items-box-width) / (var(--item-cols) + (var(--item-cols) - 1) * var(--item-gap-rate)));
   /* 间距 */
+  --item-gap: calc(var(--item-gap-rate) * var(--item-size));
+  /* header高度 */
+  --header-h: 130px;
 }
 
 body {
@@ -40,7 +42,7 @@ body {
   left: 0;
   right: 0;
   z-index: 9;
-  height: 130px;
+  height: var(--header-h);
   text-align: center;
   overflow: hidden;
   background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.8) 100%);
@@ -65,7 +67,7 @@ body {
 }
 
 .page-container {
-  margin-top: 130px;
+  margin-top: var(--header-h);
 }
 
 .page-footer {
@@ -88,11 +90,15 @@ section * {
 }
 
 section {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-
+.section-bp {
+  position: absolute;
+  top: calc(var(--header-h) * -1);
+}
 .section-title {
   margin: 0;
   padding: 20px 0;
