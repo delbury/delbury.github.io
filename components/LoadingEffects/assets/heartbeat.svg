@@ -1,0 +1,20 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg t="1619077221278"
+  class="icon" viewBox="-64 0 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="10075"
+  xmlns:xlink="http://www.w3.org/1999/xlink" width="256" height="256"
+>
+  <defs>
+    <style type="text/css">
+      path {
+        stroke-width: 4px;
+      }
+    </style>
+  </defs>
+  <path
+    id="hbp"
+    d="M-64,128 l80,0 l16,-64 l16,144 l16,-176 l16,128 l16,-64 l8,40 l8,-8 l80,0"
+    fill="none"
+    stroke="#000"
+  ></path>
+</svg>

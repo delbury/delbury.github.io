@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Heartbeat</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    .loader {
+      --h: 200px;
+      --dur: 4s;
+      position: relative;
+      width: 400px;
+      height: var(--h);
+      border: 1px solid skyblue;
+      background-image: url(./assets/heartbeat.svg);
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      border-image-source: url(./assets/heartbeat.svg);
+      border-image-slice: 0 20%;
+      border-image-width: 0 calc((100% - var(--h)) / 2);
+      animation: none var(--dur) ease 0s infinite;
+    }
+    .loader::before,
+    .loader::after {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      display: block;
+      content: "";
+      animation: none var(--dur) ease 0s infinite;
+    }
+    /* hover */
+    .loader {
+      animation-name: fade;
+    }
+    .loader::before {
+      animation-name: beatl;
+    }
+    .loader::after {
+      animation-name: beatr;
+    }
+    .loader::before {
+      left: -5px;
+      right: calc(100% + 5px);
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%);
+      /* background-color: #fff; */
+    }
+    .loader::after {
+      background-color: #fff;
+      left: -1px;
+      right: -1px;
+    }
+
+    @keyframes beatl {
+      from {
+        right: calc(100% + 1px);
+      }
+      80% {
+        right: 0;
+      }
+      100% {
+        right: 0;
+      }
+    }
+    @keyframes beatr {
+      from {
+        left: 4px;
+      }
+      80% {
+        left: calc(100% + 5px);
+      }
+      100% {
+        left: calc(100% + 5px);
+      }
+    }
+    @keyframes fade {
+      from {
+        opacity: 1;
+      }
+      to {
+        right: 0;
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="loader"></div>
+  </div>
+</body>
+</html>

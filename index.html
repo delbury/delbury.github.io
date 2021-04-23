@@ -7,6 +7,7 @@
   <meta name="description" content="demo，canvas，webgl，动效，小游戏，webaudio">
   <title>DelBury的工具箱</title>
   <link rel="preload" as="image" href="./assets/img/loading.svg">
+  <link rel="preload" as="image" href="./assets/img/heartbeat.svg">
   <link rel="prefetch" href="./assets/img/nothing.svg">
   <link rel="stylesheet" href="./assets/css/style.css">
 </head>
@@ -25,9 +26,11 @@
 
   <template id="temp-li-item">
     <link rel="stylesheet" href="./assets/css/custom.css">
+    <link rel="stylesheet" href="./assets/css/animate.css">
     <div class="wrapper">
       <h3 class="title" title="">
-        <span></span>
+        <div class="text"><span></span></div>
+        <div class="loader"></div>
       </h3>
       <div class="content">
         <a class="snap" href="" target="_self">

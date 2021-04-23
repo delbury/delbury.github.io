@@ -12,6 +12,8 @@
 (function() {
   'use strict';
 
+  if(!document.head || !document.body) return;
+
   const moveScale = 1.5; // 拖动距离与滚动距离的系数
 
   let originPosition = null; // 开始原点位置

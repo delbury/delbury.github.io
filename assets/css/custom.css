@@ -35,16 +35,20 @@ list-item {
   position: relative;
   margin-top: 0;
   padding-bottom: 10px;
+}
+.title .text {
+  padding-right: 2em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.title>span {
+.title .text>span {
+  position: relative;
+  z-index: 1;
   cursor: pointer;
 }
 
-.title::before {
+/* .title::before {
   display: block;
   content: "";
   position: absolute;
@@ -63,7 +67,7 @@ list-item {
 .wrapper:hover .title::after,
 .wrapper:hover .title::before {
   animation-name: hint;
-}
+} */
 
 .content {
   flex: 1;

@@ -110,7 +110,7 @@
           desc.title = newVal ?? '';
           break;
         case 3:
-          const title = this.shadowRoot.querySelector('.title>span');
+          const title = this.shadowRoot.querySelector('.title .text>span');
           title.innerText = newVal ?? '';
           title.title = newVal ?? '';
           break;
