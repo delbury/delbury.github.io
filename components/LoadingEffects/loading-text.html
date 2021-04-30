@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Heartbeat</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    :root {
+      --fs: 30px;
+      --w: 200px;
+    }
+    .loader {
+      position: relative;
+      user-select: none;
+    }
+    .text {
+      font-family: Consolas, 'Courier New', monospace;
+      font-size: var(--fs);
+      font-weight: bold;
+    }
+    .left,
+    .right {
+      position: absolute;
+      top: 0;
+      width: var(--w);
+      left: calc(-1 * var(--w) / 2);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: center;
+      border-radius: 10px;
+      background-image: linear-gradient(to right, #1890ff 0%, #0050b3 100%);
+      animation: none 4s;
+      animation-iteration-count: infinite;
+      animation-timing-function: ease-in-out;
+    }
+    .left {
+      background-clip: text;
+      -webkit-background-clip: text;
+      /* animation-name: left; */
+    }
+    .left .text {
+      color: transparent;
+    }
+    .left.half {
+      animation-name: left-half;
+    }
+    .right {
+      animation-name: right;
+    }
+    .right .text {
+      color: #fff;
+    }
+    .test {
+      text-align: center;
+    }
+    .dot {
+      font-size: 40px;
+      animation: dot 1.7s step-end 0s infinite;
+    }
+    .text .dot:nth-of-type(1) {
+      animation-name: dot1;
+    }
+    .text .dot:nth-of-type(2) {
+      animation-name: dot2;
+
+    }
+    .text .dot:nth-of-type(3) {
+      animation-name: dot3;
+    }
+
+    @keyframes dot1 {
+      from {
+        visibility: hidden;
+      }
+      25% {
+        visibility: visible;
+      }
+      to {
+        visibility: hidden;
+      }
+    }
+
+    @keyframes dot2 {
+      from {
+        visibility: hidden;
+      }
+      50% {
+        visibility: visible;
+      }
+      to {
+        visibility: hidden;
+      }
+    }
+
+    @keyframes dot3 {
+      from {
+        visibility: hidden;
+      }
+      75% {
+        visibility: visible;
+      }
+      to {
+        visibility: hidden;
+      }
+    }
+
+    @keyframes left {
+      from {
+        clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+      }
+      50%, to {
+        clip-path: polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%);
+      }
+    }
+
+    @keyframes left-half {
+      from, 50% {
+        clip-path: polygon(0% 0%, 0% 0%, 0% 100%, 0% 100%);
+      }
+      to {
+        clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+      }
+    }
+
+    @keyframes right {
+      from {
+        clip-path: polygon(0% 0%, 0% 0%, 0% 100%, 0% 100%);
+      }
+      50%{
+        clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+      }
+      to {
+        clip-path: polygon(100% 0%, 100% 0%, 100% 100%, 100% 100%);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="loader">
+      <div class="left">
+        <span class="text">Loading<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></span>
+      </div>
+      <div class="left half">
+        <span class="text">Loading<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></span>
+      </div>
+      <div class="right">
+        <span class="text">Loading<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
