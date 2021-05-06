@@ -136,13 +136,13 @@ self.onmessage = ev => {
     bctx = backCanvas.getContext('2d');
     
     const plainSize = width + height; // 窗口背景大小基准
-    const count = 100; // 粒子数量
+    const count = 60; // 粒子数量
     const hue = getRandom(220, 260); // 色相
     // 参数
     const ranges = {
       width: [0, width],
       height: [0, height],
-      radius: [10, plainSize * 0.04],
+      radius: [16, plainSize * 0.06],
       blur: [5, plainSize * 0.04],
       hue: [hue - 45, hue + 45],
       saturation: [70, 90],

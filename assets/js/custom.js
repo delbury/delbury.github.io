@@ -76,6 +76,7 @@
       switch(keyIndex) {
         case 0:
           this.shadowRoot.querySelector('a').href = newVal;
+          this.shadowRoot.querySelector('.title .text>a').href = newVal;
           break;
         case 1:
           if(newVal) {
@@ -110,7 +111,7 @@
           desc.title = newVal ?? '';
           break;
         case 3:
-          const title = this.shadowRoot.querySelector('.title .text>span');
+          const title = this.shadowRoot.querySelector('.title .text>a');
           title.innerText = newVal ?? '';
           title.title = newVal ?? '';
           break;

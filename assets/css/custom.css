@@ -42,10 +42,14 @@ list-item {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.title .text>span {
+.title .text>a {
   position: relative;
   z-index: 1;
-  cursor: pointer;
+  text-decoration: none;
+  color: #000;
+}
+.title .text>a:visited {
+  color: currentColor;
 }
 
 /* .title::before {
