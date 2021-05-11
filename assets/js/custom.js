@@ -75,8 +75,7 @@
       const keyIndex = LiItem.observedAttributes.indexOf(key);
       switch(keyIndex) {
         case 0:
-          this.shadowRoot.querySelector('a').href = newVal;
-          this.shadowRoot.querySelector('.title .text>a').href = newVal;
+          this.shadowRoot.querySelectorAll('a').forEach(el => el.href = newVal)
           break;
         case 1:
           if(newVal) {
