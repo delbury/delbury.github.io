@@ -6,6 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Performance Monitor</title>
   <link rel="stylesheet" href="../common/style/element.css">
+  <link rel="stylesheet" href="../common/codemirror/codemirror.css">
+  <link rel="stylesheet" href="../common/codemirror/addon/hint/show-hint.css">
+  <link rel="stylesheet" href="../common/codemirror/theme/darcula.css">
   <style>
     :root {
       --bg-color: #262626;
@@ -20,38 +23,8 @@
     .column {
       display: flex;
       flex-direction: column;
-      width: 640px;
+      width: 800px;
       height: 640px;
-    }
-
-    .codes {
-      flex: 1;
-      padding: 10px;
-      font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
-      font-size: 14px;
-      overflow: auto;
-      background-color: var(--bg-color);
-      /* border: 1px dashed skyblue; */
-      border-radius: 5px;
-      color: var(--code-color-normal);
-      outline: none;
-
-      counter-reset: count 0;
-    }
-
-    .codes>div {
-      white-space: pre;
-      counter-increment: count 1;
-    }
-
-    .codes>div::before {
-      display: inline-block;
-      margin-right: 1em;
-      padding-right: 1em;
-      width: 2em;
-      border-right: 1px dashed #bfbfbf;
-      text-align: right;
-      content: counter(count);
     }
   </style>
 </head>
@@ -63,11 +36,10 @@
         <span>执行代码：只能运行单个函数</span>
         <button id="btn-run">Run</button>
       </h4>
-      <code id="codes" class="codes" contenteditable="true">
+      <code id="codes" class="codes" contenteditable="true" style="display: none;">
         <div>/*</div>
         <div> * 入口函数</div>
         <div> */</div>
-        <!-- <div>function main(name, age = 233) {</div> -->
         <div>const main = (nums, k) => {</div>
         <div>  k = k % nums.length;</div>
         <div>  nums.unshift(...nums.splice(nums.length - k, k));</div>
@@ -75,12 +47,30 @@
         <div>}</div>
         <div><br></div>
       </code>
+      <div id="editor" class="editor"></div>
     </div>
   </div>
+  
+  <script src="../common/codemirror/codemirror.js"></script>
+  <script src="../common/codemirror/mode/javascript.js"></script>
+  <script src="../common/codemirror/addon/hint/show-hint.js"></script>
+  <script src="../common/codemirror/addon/hint/javascript-hint.js"></script>
+  <script src="../common/codemirror/addon/edit/closebrackets.js"></script>
   <script type="module">
     import PerformanceMonitor from './PerformanceMonitor.js'
     const pm = new PerformanceMonitor();
-    const codes = document.getElementById('codes');
+
+    // 编辑器初始化
+    const editor = CodeMirror(document.getElementById('editor'), {
+      value: '// entry\nconst main = (nums, k) => {\n  const arr = [];\n  arr.push(666);\n  return;\n};',
+      mode: 'javascript',
+      tabSize: 2,
+      lineNumbers: true,
+      theme: 'darcula',
+      autoCloseBrackets: true,
+    });
+    window.editor = editor;
+    console.log(editor);
 
     // 测试用例
     const cases = [
@@ -90,11 +80,7 @@
     ]; 
 
     document.getElementById('btn-run').onclick = ev => {
-      const res = pm.runCode(mergeCodeString(codes), cases);
-      console.log(res);
-    };
-    codes.onpaste = ev => {
-      // console.log(ev);
+      pm.runCode(editor.getValue(), cases);
     };
     function mergeCodeString(ele) {
       return Array.from(ele.querySelectorAll('div')).map(line => line.innerText).join('\n');

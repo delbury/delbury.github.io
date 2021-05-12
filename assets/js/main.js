@@ -151,12 +151,12 @@ const sections = [
         cover: './assets/cover/char-code.mp4',
         desc: '字符编码转换器',
       },
-      {
-        href: './components/PerformanceMonitor/index.html',
-        title: 'Performance Monitor',
-        cover: './assets/img/performance-monitor.png',
-        desc: '代码性能测试工具',
-      },
+      // {
+      //   href: './components/PerformanceMonitor/index.html',
+      //   title: 'Performance Monitor',
+      //   cover: './assets/img/performance-monitor.png',
+      //   desc: '代码性能测试工具',
+      // },
       {
         href: './components/Animations/index.html',
         title: 'Animations',
