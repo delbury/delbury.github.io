@@ -22,10 +22,11 @@
       overflow: hidden;
     }
     .border {
+      width: 100%;
+      height: 100%;
       box-sizing: border-box;
       margin: auto;
       padding: 5px;
-      width: fit-content;
       border: 2px dashed;
       color: skyblue;
       border-radius: 5px;
@@ -176,8 +177,8 @@
         </li>
       </ul>
       <ul class="tools">
-          <li><label>宽：<input id="bgw" type="number" min="800" step="1" value="800"></label></li>
-          <li><label>高：<input id="bgh" type="number" min="480" step="1" value="480"></label></li>
+          <li><label>宽：<input id="bgw" type="number" min="800" step="1" value="800" disabled></label></li>
+          <li><label>高：<input id="bgh" type="number" min="480" step="1" value="480" disabled></label></li>
           <!-- <li><label>拖动：<input id="manualbg" type="checkbox"></label></li> -->
           <li><input id="resetbg" type="button" value="默认"></li>
       </ul>
@@ -223,6 +224,8 @@
       constructor() {
         this.canvas = document.getElementById('canvas');
         this.ctx = this.canvas.getContext('2d');
+        const rect = this.canvas.parentElement.getBoundingClientRect();
+        this.resizeCanvas(rect.width - 15, rect.height - 15)
         this.defaultOptions = {
           lineWidth: 1,
           fillStyle: '#000000',
@@ -292,8 +295,14 @@
 
       // resize canvas画布大小
       resizeCanvas(w, h) {
-        w && (this.canvas.width = w);
-        h && (this.canvas.height = h);
+        if(w) {
+          this.canvas.width = w;
+          document.getElementById('bgw').value = w;
+        }
+        if(h) {
+          this.canvas.height = h;
+          document.getElementById('bgh').value = h;
+        }
         this.setWhiteBackgrond();
       }
 
