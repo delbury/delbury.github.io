@@ -9,13 +9,15 @@
 		.box {
 			display: flex;
 			justify-content: center;
+			align-items: center;
+			flex-direction: column;
 		}
 
 		.container {
 			position: relative;
 			height: 100%;
 			display: flex;
-			flex-direction: column;
+			/* flex-direction: column; */
 			align-items: center;
 			justify-content: center;
 			width: fit-content;
@@ -33,35 +35,49 @@
 			right: -15px;
 			border-right: 1px dashed skyblue;
 		}
-
+		h4 {
+			text-align: center;
+		}
 		textarea {
 			resize: vertical;
 			padding: 5px 10px;
 			width: 500px;
-			height: 160px;
+			height: 240px;
 			font-size: 12px;
+		}
+		.col+.col {
+			margin-left: 2em;
 		}
 	</style>
 </head>
 
 <body>
 	<div class="box">
+		<header>
+			<h3>字符/UTF-8/Unicode 转换</h3>
+		</header>
 		<div class="container">
-			<header>
-				<h3>字符/UTF-8/Unicode 转换</h3>
-			</header>
-			<section>
-				<h4>字符</h4>
-				<textarea id="chars" placeholder="字符"></textarea>
-			</section>
-			<section>
-				<h4>UTF-8</h4>
-				<textarea id="utf8" placeholder="UTF-8编码"></textarea>
-			</section>
-			<section>
-				<h4>Unicode</h4>
-				<textarea id="unicode" placeholder="Unicode编码"></textarea>
-			</section>
+			<div class="col">
+				<section>
+					<h4>字符</h4>
+					<textarea id="chars" placeholder="字符"></textarea>
+				</section>
+				<section>
+					<h4>UTF-8</h4>
+					<textarea id="utf8" placeholder="UTF-8编码"></textarea>
+				</section>
+			</div>
+			
+			<div class="col">
+				<section>
+					<h4>Unicode</h4>
+					<textarea id="unicode" placeholder="Unicode编码"></textarea>
+				</section>
+				<section>
+					<h4>URL encoded</h4>
+					<textarea id="url" placeholder="URL encoded"></textarea>
+				</section>
+			</div>
 		</div>
 	</div>
 
@@ -72,6 +88,7 @@
 		const elUtf8 = document.getElementById('utf8');
 		const elUnicode = document.getElementById('unicode');
 		const elChars = document.getElementById('chars');
+		const elUrl = document.getElementById('url');
 
 		// 输入字符
 		elChars.oninput = ev => {
@@ -81,6 +98,7 @@
 			const res = charCode.charsToUnicode(string);
 			elUnicode.value = res.string;
 			elUtf8.value = charCode.unicodeToUtf8(res.codes).string;
+			elUrl.value = encodeURIComponent(string);
 		};
 
 		// 输入utf-8编码
@@ -91,6 +109,7 @@
 			const res = charCode.utf8ToUnicode(string);
 			elUnicode.value = res.string;
 			elChars.value = charCode.unicodeToChars(res.codes).string;
+			elUrl.value = encodeURIComponent(elChars.value);
 		};
 
 		// 输入unicode
@@ -98,9 +117,23 @@
 			const string = ev.target.value.trim();
 			ev.target.value = string;
 
-			const res = charCode.unicodeToChars(string)
+			const res = charCode.unicodeToChars(string);
 			elUtf8.value = charCode.unicodeToUtf8(res.codes).string;
 			elChars.value = res.string;
+			elUrl.value = encodeURIComponent(elChars.value);
+		};
+
+		// 输入 url 编码后的字符
+		elUrl.oninput = ev => {
+			const string = ev.target.value.trim();
+			ev.target.value = string;
+			
+			try {
+				elChars.value = decodeURIComponent(string)
+				const res = charCode.charsToUnicode(elChars.value);
+				elUnicode.value = res.string;
+				elUtf8.value = charCode.unicodeToUtf8(res.codes).string;
+			} catch (err) {}
 		};
 	</script>
 </body>
