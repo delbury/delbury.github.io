@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>No Console</title>
+  <style>
+    .text {
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="text" class="text">
+    你难以 copy 的一段文字
+  </div>
+  <script>
+    // 适用 chrome/edge
+    // 不适用 firefox
+
+    // 禁止右键
+    document.addEventListener('contextmenu', ev => ev.preventDefault());
+
+    // 禁止按键
+    document.addEventListener('keydown', ev => {
+      // console.log(ev, ev.keyCode)
+      if(ev.ctrlKey && (ev.keyCode === 85 || ev.keyCode === 83 || ev.keyCode === 67)) {
+        // 禁止查看源码，禁止另存为，禁止复制
+        ev.preventDefault();
+      } else if(ev.ctrlKey && ev.shiftKey && ev.keyCode === 73) {
+        // 禁止检查
+        ev.preventDefault();
+      } else if(ev.keyCode === 123) {
+        // 禁止 F12
+        // ev.preventDefault();
+      }
+    });
+
+    // 禁止打开控制台
+    let count = 0;
+    const tool = new Date();
+    tool.toString = function() {
+      count++;
+      if(count > 1) {
+        location.href = '/404.html';
+      }
+    };
+    console.log('', tool);
+  </script>
+</body>
+</html>

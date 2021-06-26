@@ -163,6 +163,12 @@ const sections = [
         cover: './assets/cover/animations.mp4',
         desc: '动画效果 (js)',
       },
+      {
+        href: './components/NoConsole/index.html',
+        title: 'No Console',
+        cover: '',
+        desc: '禁止复制',
+      },
     ],
   },
   {
