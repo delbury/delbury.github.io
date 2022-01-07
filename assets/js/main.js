@@ -1,5 +1,5 @@
 // 是否绘制背景
-const hasBg = true;
+const hasBg = false;
 // 是否创建内容
 const hasContent = true;
 // 是否创建导航栏
