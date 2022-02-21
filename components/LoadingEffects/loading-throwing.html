@@ -17,6 +17,7 @@
       --moveDistanceZ: calc(var(--baseSize) * 5 * -1);
       --moveDistanceY: calc(var(--baseSize) / 4 * -1);
       --perspective: 300px;
+      --boardColor: #f56c6c;
     }
     .loader {
       position: relative;
@@ -32,7 +33,7 @@
     .loader > .action {
       width: 100%;
       height: 100%;
-      animation: parabola var(--duration) infinite alternate;
+      animation: parabola var(--duration) infinite;
       transform-style: preserve-3d;
       perspective: var(--perspective);
     }
@@ -40,7 +41,7 @@
       width: 100%;
       height: 100%;
       /* transform: rotateX(var(--initDegreeX)) rotateY(var(--initDegreeY)) rotateZ(var(--initDegreeZ)); */
-      animation: moveZ var(--duration) linear infinite alternate ;
+      animation: moveZ var(--duration) linear infinite ;
     }
     .loader > .action > .content::before {
       content: "";
@@ -50,7 +51,7 @@
       background-image: url(./assets/knife.svg);
       background-repeat: no-repeat;
       background-size: cover;
-      animation: rotate var(--duration) linear infinite alternate;
+      animation: rotate var(--duration) linear infinite;
     }
 
     .loader::before {
@@ -66,11 +67,11 @@
       /* background-clip: content-box; */
       background: radial-gradient(
         closest-side,
-        red 0%, red 10%,
+        var(--boardColor) 0%, var(--boardColor) 10%,
         #fff 10%, #fff 40%,
-        red 40%, red 55%,
+        var(--boardColor) 40%, var(--boardColor) 55%,
         #fff 55%, #fff 85%,
-        red 85%, red 100%
+        var(--boardColor) 85%, var(--boardColor) 100%
       );
       /* border: 3px solid rgba(255, 0, 0, 0.5); */
       border-radius: 50%;
@@ -82,7 +83,7 @@
       from {
         transform: rotate(0deg);
       }
-      to {
+      80%, to {
         transform: rotate(calc(var(--times) * 360deg + 90deg));
       }
     }
@@ -92,7 +93,7 @@
       from {
         transform: translateZ(0px) rotateX(var(--initDegreeX)) rotateY(var(--initDegreeY)) rotateZ(var(--initDegreeZ));
       }
-      to {
+      80%, to {
         transform: translateZ(var(--moveDistanceZ)) rotateX(var(--initDegreeX)) rotateY(var(--initDegreeY)) rotateZ(var(--initDegreeZ));
       }
     }
@@ -107,8 +108,8 @@
         animation-timing-function: ease-in;
         transform: translateY(var(--moveDistanceY));
       }
-      to {
-        transform: translateY(0px);
+      80%, to {
+        transform: translateY(-3%);
       }
     }
   </style>
