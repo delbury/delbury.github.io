@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Circle Spin</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    :root {
+      --size: 200px;
+      --circle-color: skyblue;
+      --border-width: 2px;
+
+      --fish-size: calc(var(--border-width) * 12);
+      --fish-size-half: calc(var(--fish-size) / 4);
+      --fish-color: deepskyblue;
+    }
+    .loader {
+      /* perspective-origin: center -25%; */
+      /* perspective: 700px; */
+      transform-style: preserve-3d;
+    }
+    .circle {
+      position: relative;
+      width: var(--size);
+      height: var(--size);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: var(--border-width) solid var(--circle-color);
+      border-radius: 50%;
+
+      transform: rotateX(45deg);
+      transform-style: preserve-3d;
+      animation: spinZ 5000ms linear infinite;
+    }
+    .fish {
+      position: absolute;
+      left: calc(-1.5 * var(--fish-size));
+      width: var(--fish-size);
+      height: var(--fish-size);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--fish-color);
+      background-color: currentColor;
+      border-radius: 50%;
+      border: 1px solid blue;
+
+      transform-style: preserve-3d;
+      animation: spinBorder 1700ms linear infinite;
+      transform-origin: calc(var(--fish-size) * 1.5) center;
+    }
+    .fish::before {
+      position: absolute;
+      display: block;
+      content: "";
+      width: 60%;
+      height: 60%;
+      background-color: currentColor;
+      border-radius: 50%;
+      border: 1px solid blue;
+
+      transform: translateZ(var(--fish-size-half));
+    }
+    .fish::after {
+      position: absolute;
+      display: block;
+      content: "";
+      width: 60%;
+      height: 60%;
+      background-color: currentColor;
+      border-radius: 50%;
+      border: 1px solid blue;
+
+      transform: translateZ(calc(var(--fish-size-half) * -1));
+    }
+
+    @keyframes spinZ {
+      from {
+        transform: rotateX(45deg) rotateZ(0deg);
+      }
+      to {
+        transform: rotateX(45deg) rotateZ(360deg);
+      }
+    }
+    @keyframes spinBorder {
+      from {
+        transform: rotateY(0deg);
+      }
+      to {
+        transform: rotateY(360deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="loader">
+      <div class="circle">
+        <div class="fish"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
