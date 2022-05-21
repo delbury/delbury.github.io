@@ -10,15 +10,15 @@
     :root {
       --size: 200px;
       --circle-color: skyblue;
-      --border-width: 2px;
+      --border-width: 6px;
 
-      --fish-size: calc(var(--border-width) * 12);
+      --fish-size: calc(var(--border-width) * 6);
       --fish-size-half: calc(var(--fish-size) / 4);
       --fish-color: deepskyblue;
     }
     .loader {
-      /* perspective-origin: center -25%; */
-      /* perspective: 700px; */
+      perspective-origin: center -25%;
+      perspective: 700px;
       transform-style: preserve-3d;
     }
     .circle {
@@ -31,7 +31,7 @@
       border: var(--border-width) solid var(--circle-color);
       border-radius: 50%;
 
-      transform: rotateX(45deg);
+      transform: rotateX(0);
       transform-style: preserve-3d;
       animation: spinZ 5000ms linear infinite;
     }
@@ -40,19 +40,27 @@
       left: calc(-1.5 * var(--fish-size));
       width: var(--fish-size);
       height: var(--fish-size);
+      
+      animation: spinBorder 1700ms linear infinite;
+      transform-origin: calc(var(--fish-size) * 1.5) center;
+      transform-style: preserve-3d;
+    }
+    .fish>.inner {
+      width: 100%;
+      height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
+
       color: var(--fish-color);
       background-color: currentColor;
       border-radius: 50%;
       border: 1px solid blue;
 
+      animation: spinKeep 20000ms linear infinite;
       transform-style: preserve-3d;
-      animation: spinBorder 1700ms linear infinite;
-      transform-origin: calc(var(--fish-size) * 1.5) center;
     }
-    .fish::before {
+    .fish>.inner::before {
       position: absolute;
       display: block;
       content: "";
@@ -64,7 +72,7 @@
 
       transform: translateZ(var(--fish-size-half));
     }
-    .fish::after {
+    .fish>.inner::after {
       position: absolute;
       display: block;
       content: "";
@@ -93,13 +101,23 @@
         transform: rotateY(360deg);
       }
     }
+    @keyframes spinKeep {
+      from {
+        transform: rotateY(0deg);
+      }
+      to {
+        transform: rotateY(-360deg);
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="loader">
       <div class="circle">
-        <div class="fish"></div>
+        <div class="fish">
+          <div class="inner"></div>
+        </div>
       </div>
     </div>
   </div>
