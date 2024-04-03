@@ -43,6 +43,7 @@
   <script type="module">
     import { PolygonShapeChangeController } from './js/controllers.js';
     const inputText = document.getElementById('input-text');
+    const handleChangeInputText = n => inputText.value = n;
     const pscc = new PolygonShapeChangeController(document.getElementById('canvas'), {
       edges: +inputText.value,
     });
@@ -53,13 +54,24 @@
       // 改变
       pscc.changeShape(+inputText.value);
     };
+    let auto = true;
     document.getElementById('btn-random').onclick = ev => {
       // 随机
-      pscc.randomChangeShape(true, n => inputText.value = n);
+      auto = !auto;
+      if(auto) {
+        pscc.stopAutoRandomChangeShape();
+      } else {
+        pscc.randomChangeShape(true, handleChangeInputText);
+      }
     };
     inputText.onchange = ev => {
       pscc.changeShape(+inputText.value);
     };
+
+    // 开始随机
+    if(auto) {
+      document.getElementById('btn-random').click();
+    }
   </script>
 </body>
 

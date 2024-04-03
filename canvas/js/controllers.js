@@ -339,7 +339,6 @@ export class PolygonShapeChangeController extends _Base {
     this.instance.createRegular(this.defaults.edges);
     this.instance.startRotating();
     this.instance.startMove({ vx: 0.3, vy: 0.5 });
-    this.randomChangeShape(true);
   }
 
   changeShape(n) {
@@ -360,6 +359,9 @@ export class PolygonShapeChangeController extends _Base {
     };
 
     this.instance.changeTo(randomN(), cb);
+  }
+  stopAutoRandomChangeShape() {
+    this._randomChanging = false;
   }
 }
 
