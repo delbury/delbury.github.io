@@ -1,4 +1,4 @@
-import { Methods } from '../math.js';
+import { Methods } from "../math.js";
 
 export class Particle {
   constructor(
@@ -11,7 +11,8 @@ export class Particle {
         springMoving: false,
         easeMoving: false,
         pauseMove: true,
-        rotating: false
+        rotating: false,
+        moving: false,
       },
       vx = 0,
       vy = 0,
@@ -23,12 +24,12 @@ export class Particle {
       reduction = 1, // 反弹衰减
       mass = 0, // 质量
       friction = 0, // 摩擦力系数
-      moveMode = 'step', // ease, step, spring
-      text = '', // 显示的文字
+      moveMode = "step", // ease, step, spring
+      text = "", // 显示的文字
     } = {},
     {
-      fillStyle = '#000',
-      strokeStyle = '#000',
+      fillStyle = "#000",
+      strokeStyle = "#000",
       textOptions = {},
       // transform = [1, 0, 0, 1] // 矩阵变换, 前四个参数，不包括位移
     } = {}
@@ -38,7 +39,7 @@ export class Particle {
       xp: false, // x 轴正方向，右
       xn: false, // x 轴负方向，左
       yp: false, // y 轴正方向，下
-      yn: false // y 轴负方向，上
+      yn: false, // y 轴负方向，上
     };
     this.ctx = ctx;
     this.vx = vx;
@@ -54,11 +55,11 @@ export class Particle {
     this.strokeStyle = strokeStyle;
     // this.transform = transform;
     this.textOptions = {
-      fontType: '24px SimHei',
-      textColor: '#fff',
+      fontType: "24px SimHei",
+      textColor: "#fff",
       textOffsetX: 0,
       textOffsetY: 0,
-      ...textOptions
+      ...textOptions,
     };
 
     this.moveMode = moveMode;
@@ -71,20 +72,22 @@ export class Particle {
     this._springMoving = !!initStates.springMoving;
     this._easeMoving = !!initStates.easeMoving;
     this.pauseMove = !!initStates.pauseMove;
-    this._rotating = !!initStates.rotating
+    this._rotating = !!initStates.rotating;
+    this._moving = !!initStates.moving;
     this._speedDirection = {}; // 根据上次的位置判断当前的移动方向
 
     if (target) {
       switch (this.moveMode) {
-        case 'step':
+        case "step":
           this.moveTo(target);
           break;
-        case 'ease':
+        case "ease":
           this.startEaseMove(target);
           break;
-        case 'spring':
+        case "spring":
           this.startSpringMove(target);
-        default: break;
+        default:
+          break;
       }
     }
   }
@@ -95,7 +98,7 @@ export class Particle {
     this._springMoving = true;
     this._springMoveState = {
       spring,
-      friction
+      friction,
     };
   }
 
@@ -125,7 +128,7 @@ export class Particle {
     this.target = target;
     this._easeMoving = true;
     this._easeMoveState = {
-      ease
+      ease,
     };
   }
 
@@ -150,7 +153,10 @@ export class Particle {
   // 加速运动帧
   speedUpTick() {
     this.vx = this.vx >= 0 ? this.vx + this.acceleration : this.vx - this.acceleration;
-    this.vy = this.vy >= 0 ? this.vy + Math.abs(this.vy / this.vx * this.acceleration) : this.vy - Math.abs(this.vy / this.vx * this.acceleration)
+    this.vy =
+      this.vy >= 0
+        ? this.vy + Math.abs((this.vy / this.vx) * this.acceleration)
+        : this.vy - Math.abs((this.vy / this.vx) * this.acceleration);
   }
 
   // 开始移动到目标点
@@ -164,8 +170,8 @@ export class Particle {
       this._prevClosingDx = Math.abs(this.x - this.target[0]);
       // this.vx = (this.target[0] - this.x) / duration;
       // this.vy = (this.target[1] - this.y) / duration;
-      this.vx = (this.target[0] - this.x) >= 0 ? step : -step;
-      this.vy = (this.target[1] - this.y) / Math.abs(this.target[0] - this.x) * step;
+      this.vx = this.target[0] - this.x >= 0 ? step : -step;
+      this.vy = ((this.target[1] - this.y) / Math.abs(this.target[0] - this.x)) * step;
     }
   }
 
@@ -176,20 +182,53 @@ export class Particle {
       this.y += this.vy;
       this.speedUpTick();
       // 接近中
-      const dx = Math.abs(this.x - this.target[0])
+      const dx = Math.abs(this.x - this.target[0]);
       if (dx > this._prevClosingDx) {
         this.x = this.target[0];
         this.y = this.target[1];
         this._baseMoving = false;
         // this.target = null;
       } else {
-        this._prevClosingDx = dx
+        this._prevClosingDx = dx;
       }
+    }
+  }
+
+  // 开始移动
+  startMove({ vx, vy }) {
+    this._moving = true;
+    this._baseMoving = false;
+    this._randomMoving = false;
+    this._easeMoving = false;
+    this._springMoving = false;
+    this.vx = vx;
+    this.vy = vy;
+  }
+
+  // 结束移动
+  stopMove() {
+    this._moving = false;
+  }
+
+  // 移动帧
+  moveTick(force = false) {
+    if (this._moving || force) {
+      if (this.x + this.vx > this.ctx.canvas.width || this.x + this.vx < 0) {
+        this.vx = -this.vx;
+      }
+
+      if (this.y + this.vy > this.ctx.canvas.height || this.y + this.vy < 0) {
+        this.vy = -this.vy;
+      }
+
+      this.x += this.vx;
+      this.y += this.vy;
     }
   }
 
   // 开始随机移动
   startRandomMove({ vx, vy }) {
+    this._moving = false;
     this._baseMoving = false;
     this._randomMoving = true;
     this._easeMoving = false;
@@ -203,15 +242,16 @@ export class Particle {
     this._randomMoving = false;
     if (this.target) {
       switch (this.moveMode) {
-        case 'step':
+        case "step":
           this.moveTo(this.target);
           break;
-        case 'ease':
+        case "ease":
           this.startEaseMove(this.target);
           break;
-        case 'spring':
+        case "spring":
           this.startSpringMove(this.target);
-        default: break;
+        default:
+          break;
       }
     }
   }
@@ -219,16 +259,7 @@ export class Particle {
   // 随机移动帧
   randomMoveTick() {
     if (this._randomMoving) {
-      if (this.x + this.vx > this.ctx.canvas.width || this.x + this.vx < 0) {
-        this.vx = -this.vx;
-      }
-
-      if (this.y + this.vy > this.ctx.canvas.height || this.y + this.vy < 0) {
-        this.vy = -this.vy;
-      }
-
-      this.x += this.vx;
-      this.y += this.vy;
+      this.moveTick(true);
 
       this.vx += Methods.randomValue(0, 0.7) * (Math.random() > 0.5 ? 1 : -1);
       this.vy += Methods.randomValue(0, 0.11) * (Math.random() > 0.5 ? 1 : -1);
@@ -244,7 +275,7 @@ export class Particle {
       rebound,
       startPosition: [this.x, this.y],
       lastReboundedV: null,
-      keeping
+      keeping,
     };
     this.vy = vy0;
     this._freeFalling = true;
@@ -266,11 +297,11 @@ export class Particle {
         if (this._freeFallState.rebound) {
           this.vy *= -this.reduction;
 
-          if (this._freeFallState.lastReboundedV !== null && (this.vy - this._freeFallState.lastReboundedV) <= 0.5) {
+          if (this._freeFallState.lastReboundedV !== null && this.vy - this._freeFallState.lastReboundedV <= 0.5) {
             this.vy = 0;
             !this._freeFallState.keeping && (this._freeFalling = false);
           } else {
-            this._freeFallState.lastReboundedV = this.vy
+            this._freeFallState.lastReboundedV = this.vy;
           }
         } else {
           this.vy = 0;
@@ -305,7 +336,7 @@ export class Particle {
   getPosition() {
     return {
       x: this.x,
-      y: this.y
+      y: this.y,
     };
   }
 
@@ -336,12 +367,11 @@ export class Particle {
   }
 
   // 每一帧
-  tick() {
-  }
+  tick() {}
 
   // 当前的质量
   get currentMass() {
-    return this.pauseMove ? Infinity : this.mass || 0
+    return this.pauseMove ? Infinity : this.mass || 0;
   }
 
   // 速度方向
@@ -350,8 +380,8 @@ export class Particle {
       // 移动时
       return {
         vxDir: this.vx === 0 ? 1 : this.vx / Math.abs(this.vx),
-        vyDir: this.vy === 0 ? 1 : this.vy / Math.abs(this.vy)
-      }
+        vyDir: this.vy === 0 ? 1 : this.vy / Math.abs(this.vy),
+      };
     } else {
       // 手动拖动时
       return this._speedDirection;
@@ -380,7 +410,7 @@ export class Particle {
       return;
     }
     if (returnVal !== null && returnVal !== undefined) {
-      return this._x = returnVal;
+      return (this._x = returnVal);
     }
     this._x = val;
 
@@ -410,7 +440,7 @@ export class Particle {
       return;
     }
     if (returnVal !== null && returnVal !== undefined) {
-      return this._y = returnVal;
+      return (this._y = returnVal);
     }
     this._y = val;
 

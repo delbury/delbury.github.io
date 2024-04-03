@@ -1,5 +1,5 @@
-import { CircleParticle } from './CircleParticle.js';
-import { Vector, Projection, Methods } from '../math.js';
+import { CircleParticle } from "./CircleParticle.js";
+import { Vector, Projection, Methods } from "../math.js";
 
 // 外接圆多边形型
 export class CircumcenterPolygonParticle extends CircleParticle {
@@ -10,7 +10,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       degrees: [],
       rotateSpeed: -2,
       rotateDegree: 0, // 旋转的角度
-      transitDuration: 25,
+      transitDuration: 35,
     };
     Methods.setParams(this, params, kv);
 
@@ -27,7 +27,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     if (!this.degrees.length) {
       return super.beforeSetX(val);
     } else {
-      const { min, max } = this.vertexRange.x
+      const { min, max } = this.vertexRange.x;
       if (min + val <= 0) {
         this._frozenStatus.xn = true;
         this.vx = -this.vx;
@@ -68,7 +68,10 @@ export class CircumcenterPolygonParticle extends CircleParticle {
   noncentricCollide(cpp) {
     const thisSpeedVector = new Vector(this.vx, this.vy); // VA的速度向量
     const cppSpeedVector = new Vector(cpp.vx, cpp.vy); // VB的速度向量
-    const centroidVector = new Vector(cpp.centroid[0] - this.centroid[0], cpp.centroid[1] - this.centroid[1]).normalize(); // AB质心连线的向量
+    const centroidVector = new Vector(
+      cpp.centroid[0] - this.centroid[0],
+      cpp.centroid[1] - this.centroid[1]
+    ).normalize(); // AB质心连线的向量
     const centroidVerticalVector = centroidVector.verticalUnitVector(false); // AB质心连线的法向量（逆时针）
 
     const thisSpeedParallel = thisSpeedVector.dotProduct(centroidVector);
@@ -77,17 +80,26 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     const cppSpeedParallel = cppSpeedVector.dotProduct(centroidVector);
     const cppSpeedVertical = cppSpeedVector.dotProduct(centroidVerticalVector);
 
-    const [thisVP, cppVP] = Methods.perfectlyInelasticCollide(thisSpeedParallel, cppSpeedParallel, this.currentMass, cpp.currentMass); // 质心连线向量上的动量守恒
+    const [thisVP, cppVP] = Methods.perfectlyInelasticCollide(
+      thisSpeedParallel,
+      cppSpeedParallel,
+      this.currentMass,
+      cpp.currentMass
+    ); // 质心连线向量上的动量守恒
 
     // 碰撞后的分量速度重新换算成 vx,vy
-    const thisVx = centroidVector.multiply(thisVP).dotProduct(new Vector(1, 0)) +
+    const thisVx =
+      centroidVector.multiply(thisVP).dotProduct(new Vector(1, 0)) +
       centroidVerticalVector.multiply(thisSpeedVertical).dotProduct(new Vector(1, 0));
-    const thisVy = centroidVector.multiply(thisVP).dotProduct(new Vector(0, 1)) +
+    const thisVy =
+      centroidVector.multiply(thisVP).dotProduct(new Vector(0, 1)) +
       centroidVerticalVector.multiply(thisSpeedVertical).dotProduct(new Vector(0, 1));
 
-    const cppVx = centroidVector.multiply(cppVP).dotProduct(new Vector(1, 0)) +
+    const cppVx =
+      centroidVector.multiply(cppVP).dotProduct(new Vector(1, 0)) +
       centroidVerticalVector.multiply(cppSpeedVertical).dotProduct(new Vector(1, 0));
-    const cppVy = centroidVector.multiply(cppVP).dotProduct(new Vector(0, 1)) +
+    const cppVy =
+      centroidVector.multiply(cppVP).dotProduct(new Vector(0, 1)) +
       centroidVerticalVector.multiply(cppSpeedVertical).dotProduct(new Vector(0, 1));
 
     this.vx = thisVx;
@@ -119,10 +131,10 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       // 循环判断各轴
       for (let i = 0, len = axises.length; i < len; i++) {
         // 计算各边在投影轴上的投影
-        const thisProjection = new Projection(thisVectors.map(vector => vector.dotProduct(axises[i])));
-        const anotherProjection = new Projection(anotherVectors.map(vector => vector.dotProduct(axises[i])));
+        const thisProjection = new Projection(thisVectors.map((vector) => vector.dotProduct(axises[i])));
+        const anotherProjection = new Projection(anotherVectors.map((vector) => vector.dotProduct(axises[i])));
 
-        const len = thisProjection.overlapWith(anotherProjection)
+        const len = thisProjection.overlapWith(anotherProjection);
         if (!len) {
           isCollided = false;
           break;
@@ -137,21 +149,19 @@ export class CircumcenterPolygonParticle extends CircleParticle {
           collidedAxises.push({
             axis: reverse ? axises[i].reverse() : axises[i],
             overlapLength: len,
-            centerVector: new Vector(cppCentroid[0] - thisCentroid[0], cppCentroid[1] - thisCentroid[1])
+            centerVector: new Vector(cppCentroid[0] - thisCentroid[0], cppCentroid[1] - thisCentroid[1]),
             // source,
             // reverse
           });
         }
       }
-
-
     } else if (!this.degrees.length && !cpp.degrees.length) {
       // 两个都是圆
-      isCollided = (this.x - cpp.x) ** 2 + (this.y - cpp.y) ** 2 <= (this.radius + cpp.radius) ** 2
+      isCollided = (this.x - cpp.x) ** 2 + (this.y - cpp.y) ** 2 <= (this.radius + cpp.radius) ** 2;
       if (isCollided) {
         collidedAxises.push({
           axis: new Vector(cpp.x - this.x, cpp.y - this.y),
-          overlapLength: (this.radius + cpp.radius) - Math.sqrt((this.x - cpp.x) ** 2 + (this.y - cpp.y) ** 2)
+          overlapLength: this.radius + cpp.radius - Math.sqrt((this.x - cpp.x) ** 2 + (this.y - cpp.y) ** 2),
         });
       }
     } else {
@@ -170,7 +180,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
 
       const polygonVectors = polygon.getVertexVector(); // 多边形的顶点向量
       let circleAxis = null;
-      polygonVectors.map(vector => {
+      polygonVectors.map((vector) => {
         const cv = vector.subtract(new Vector(circle.x, circle.y));
         if (!circleAxis || cv.length < circleAxis.length) {
           circleAxis = cv;
@@ -184,14 +194,14 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       for (let i = 0, len = axises.length; i < len; i++) {
         // 计算圆相对于投影轴的顶点向量
         const circleVector = [
-          (new Vector(circle.x, circle.y)).subtract(axises[i].antiNormalize(circle.radius)),
-          (new Vector(circle.x, circle.y)).add(axises[i].antiNormalize(circle.radius))
+          new Vector(circle.x, circle.y).subtract(axises[i].antiNormalize(circle.radius)),
+          new Vector(circle.x, circle.y).add(axises[i].antiNormalize(circle.radius)),
         ];
 
-        const circleProjection = new Projection(circleVector.map(vector => vector.dotProduct(axises[i])));
-        const polygonProjection = new Projection(polygonVectors.map(vector => vector.dotProduct(axises[i])));
+        const circleProjection = new Projection(circleVector.map((vector) => vector.dotProduct(axises[i])));
+        const polygonProjection = new Projection(polygonVectors.map((vector) => vector.dotProduct(axises[i])));
 
-        const len = circleProjection.overlapWith(polygonProjection)
+        const len = circleProjection.overlapWith(polygonProjection);
         if (!len) {
           isCollided = false;
           break;
@@ -199,11 +209,10 @@ export class CircumcenterPolygonParticle extends CircleParticle {
           collidedAxises.push({
             axis: axises[i],
             overlapLength: len,
-            centerVector: new Vector(cpp.centroid[0] - this.centroid[0], cpp.centroid[1] - this.centroid[1])
+            centerVector: new Vector(cpp.centroid[0] - this.centroid[0], cpp.centroid[1] - this.centroid[1]),
           });
         }
       }
-
     }
 
     // 计算最短碰撞重叠向量
@@ -226,8 +235,8 @@ export class CircumcenterPolygonParticle extends CircleParticle {
         ...minAxis,
         axis: minAxis.axis.normalize(reverse),
         overlapLength: minAxis.overlapLength,
-        reverse
-      }
+        reverse,
+      };
     }
 
     if (this._prevTickCollided && isCollided) {
@@ -241,15 +250,20 @@ export class CircumcenterPolygonParticle extends CircleParticle {
 
   // 获取顶点向量
   getVertexVector() {
-    return this.degrees.map(deg => new Vector(
-      this.x + this.radius * Math.cos(deg / 180 * Math.PI),
-      this.y + this.radius * Math.sin(deg / 180 * Math.PI)
-    ));
+    return this.degrees.map(
+      (deg) =>
+        new Vector(
+          this.x + this.radius * Math.cos((deg / 180) * Math.PI),
+          this.y + this.radius * Math.sin((deg / 180) * Math.PI)
+        )
+    );
   }
 
   // 获取投影轴
   getVertexAxis(vectors, clockwise) {
-    return vectors.map(((vc, index) => vc.edgeVector(vectors[(index + 1) % vectors.length]).verticalUnitVector(clockwise)));
+    return vectors.map((vc, index) =>
+      vc.edgeVector(vectors[(index + 1) % vectors.length]).verticalUnitVector(clockwise)
+    );
   }
 
   // 随机变形
@@ -286,11 +300,11 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       this.pauseMove = false;
     }
 
-    if (!params || typeof params !== 'object') {
+    if (!params || typeof params !== "object") {
       return;
     }
     if (params.fallOptions) {
-      this.startFreeFall(params.fallOptions)
+      this.startFreeFall(params.fallOptions);
     }
   }
 
@@ -322,7 +336,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       const tvx = this.vx > 0 ? this.vx - dvx : this.vx + dvx;
       const tvy = this.vy > 0 ? this.vy - dvy : this.vy + dvy;
 
-      if ((tvx > 0 && this.vx < 0) || tvx < 0 && this.vx > 0) {
+      if ((tvx > 0 && this.vx < 0) || (tvx < 0 && this.vx > 0)) {
         this.vx = 0;
         this.vy = 0;
       } else {
@@ -343,7 +357,6 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     this.transitionTick();
     this.rotateTick();
     this.flickerTick();
-
   }
 
   // 绘制
@@ -356,8 +369,8 @@ export class CircumcenterPolygonParticle extends CircleParticle {
     const dy = 0;
     // this.ctx.setTransform(this.transform[0], this.transform[1], this.transform[2], this.transform[3], dx, dy); // 设置形变
     if (this.degrees.length) {
-      this.degrees.forEach(deg => {
-        const rad = (deg + this.rotateDegree ?? 0) / 180 * Math.PI;
+      this.degrees.forEach((deg) => {
+        const rad = ((deg + this.rotateDegree ?? 0) / 180) * Math.PI;
         this.ctx.arc(this.x - dx, this.y - dy, this.radius, rad, rad, false);
       });
     } else {
@@ -369,10 +382,14 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       // 绘制文本
       this.ctx.fillStyle = this.textOptions.textColor;
       this.ctx.font = this.textOptions.fontType;
-      this.ctx.textBaseline = 'middle';
+      this.ctx.textBaseline = "middle";
       const width = this.ctx.measureText(this.text).width;
       const position = this.centroid;
-      this.ctx.fillText(this.text, position[0] - width / 2 + this.textOptions.textOffsetX - dx, position[1] + this.textOptions.textOffsetY - dy);
+      this.ctx.fillText(
+        this.text,
+        position[0] - width / 2 + this.textOptions.textOffsetX - dx,
+        position[1] + this.textOptions.textOffsetY - dy
+      );
     }
 
     this.ctx.setTransform(1, 0, 0, 1, 0, 0); // 还原形变
@@ -396,8 +413,8 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       const toGap = 360 / to;
       const dn = to - from;
 
-      this.toDegrees = Array.from({ length: to }, (it, index) => +(index * 360 / to).toFixed(2));
-      if(dn < 0) {
+      this.toDegrees = Array.from({ length: to }, (it, index) => +((index * 360) / to).toFixed(2));
+      if (dn < 0) {
         this.toDegrees.push(...Array(-dn).fill(0));
       }
       this._changeState = {
@@ -406,14 +423,15 @@ export class CircumcenterPolygonParticle extends CircleParticle {
         dn,
         fromGap,
         toGap,
-        gapPerTick: Math.abs((fromGap - 360 / to) / (this.transitDuration)),
+        gapPerTick: Math.abs((fromGap - 360 / to) / this.transitDuration),
         gapPerTicks: Array.from({ length: Math.max(to, from) }, (it, index) => {
-          if(dn > 0) {
+          if (dn > 0) {
             return ((index < from ? this.degrees[index] : 360) - this.toDegrees[index]) / this.transitDuration;
-
-          } else if(dn < 0) {
-            return Math.abs(index < to ? (this.degrees[index] - this.toDegrees[index]) : (360 - this.degrees[index])) / this.transitDuration;
-            
+          } else if (dn < 0) {
+            return (
+              Math.abs(index < to ? this.degrees[index] - this.toDegrees[index] : 360 - this.degrees[index]) /
+              this.transitDuration
+            );
           }
         }),
       };
@@ -444,36 +462,33 @@ export class CircumcenterPolygonParticle extends CircleParticle {
       if (this._changeState.dn > 0) {
         // 增加边
         this.degrees = this.degrees.map((deg, index, arr) => {
-          if(deg !== this.toDegrees[index]) {
+          if (deg !== this.toDegrees[index]) {
             deg = deg - this._changeState.gapPerTicks[index];
-
           } else {
-            return +(deg).toFixed(2);
+            return +deg.toFixed(2);
           }
-          
-          if(
-            (this.toDegressGT[index] && (deg + 360 <= this.toDegrees[index])) || 
-            (!this.toDegressGT[index] && (deg <= this.toDegrees[index]))
+
+          if (
+            (this.toDegressGT[index] && deg + 360 <= this.toDegrees[index]) ||
+            (!this.toDegressGT[index] && deg <= this.toDegrees[index])
           ) {
             deg = this.toDegrees[index];
           }
 
           return +((deg + 360) % 360).toFixed(2);
         });
-
       } else if (this._changeState.dn < 0) {
         // 减少边
         this.degrees = this.degrees.map((deg, index, arr) => {
-          if(deg !== this.toDegrees[index]) {
+          if (deg !== this.toDegrees[index]) {
             deg = deg + this._changeState.gapPerTicks[index];
-
           } else {
-            return +(deg).toFixed(2);
+            return +deg.toFixed(2);
           }
-          
-          if(
-            (this.toDegressGT[index] && (deg >= this.toDegrees[index])) || 
-            (!this.toDegressGT[index] && (deg - 360 >= this.toDegrees[index]))
+
+          if (
+            (this.toDegressGT[index] && deg >= this.toDegrees[index]) ||
+            (!this.toDegressGT[index] && deg - 360 >= this.toDegrees[index])
           ) {
             deg = this.toDegrees[index];
           }
@@ -481,7 +496,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
         });
       }
 
-      if(this.degrees[this.degrees.length - 1] === this.toDegrees[this.degrees.length - 1]) stop = true;
+      if (this.degrees[this.degrees.length - 1] === this.toDegrees[this.degrees.length - 1]) stop = true;
 
       if (stop) {
         this.degrees.length = this._changeState.to;
@@ -520,7 +535,7 @@ export class CircumcenterPolygonParticle extends CircleParticle {
         let random;
         do {
           random = Methods.randomValue(minDeg, maxDeg);
-        } while (degrees.some(deg => Math.abs(deg - random) < minGap));
+        } while (degrees.some((deg) => Math.abs(deg - random) < minGap));
         degrees.push(random);
       }
       return degrees.sort((a, b) => a - b);

@@ -1,5 +1,5 @@
-import { Particle } from './Particle.js';
-import { Methods } from '../math.js';
+import { Particle } from "./Particle.js";
+import { Methods } from "../math.js";
 
 // 圆形粒子
 export class CircleParticle extends Particle {
@@ -9,16 +9,16 @@ export class CircleParticle extends Particle {
       radius: 5,
       minRadius: 0,
       maxRadius: 0,
-      growSpeed: 0
+      growSpeed: 0,
     };
     Methods.setParams(this, params, kv);
-
   }
 
   tick() {
     this.springMoveTick();
     this.easeMoveTick();
     this.freeFallTick();
+    this.moveTick();
     this.randomMoveTick();
     this.baseMoveTick();
     this.flickerTick();
@@ -61,7 +61,7 @@ export class CircleParticle extends Particle {
         const tvx = this.vx > 0 ? this.vx - dvx : this.vx + dvx;
         const tvy = this.vy > 0 ? this.vy - dvy : this.vy + dvy;
 
-        if ((tvx > 0 && this.vx < 0) || tvx < 0 && this.vx > 0) {
+        if ((tvx > 0 && this.vx < 0) || (tvx < 0 && this.vx > 0)) {
           this.vx = 0;
           this.vy = 0;
         } else {
@@ -95,8 +95,8 @@ export class CircleParticle extends Particle {
       // return this.ctx.isPointInPath(path, x, y);
     } else {
       const path = new Path2D();
-      this.degrees.forEach(deg => {
-        const rad = deg / 180 * Math.PI;
+      this.degrees.forEach((deg) => {
+        const rad = (deg / 180) * Math.PI;
         path.arc(this.x, this.y, this.radius, rad, rad, false);
       });
       path.closePath();
@@ -147,10 +147,7 @@ export class CircleParticle extends Particle {
 
   // 质心
   get centroid() {
-    return [
-      this._centroid[0] + this.x,
-      this._centroid[1] + this.y
-    ]
+    return [this._centroid[0] + this.x, this._centroid[1] + this.y];
   }
 
   // 顶点坐标的最大最小值
