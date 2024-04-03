@@ -53,6 +53,7 @@ export class AudioAnalyser {
         smoothingTimeConstant: this.options.smoothingTimeConstant
       }, // 分析器参数
       sampleRate: this.options.sampleRate,
+      getNodes: this.options.getNodes,
     })
   }
 

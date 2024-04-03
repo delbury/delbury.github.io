@@ -115,6 +115,7 @@ const DBs = [
 export class AudioPlayer {
   constructor(options = {}) {
     this.options = options
+
     this.init()
   }
 
@@ -126,12 +127,16 @@ export class AudioPlayer {
     this.analyser = this.createAnalyser(this.options.analyser)
     this.filter = this.createFilter()
     this.shaper = this.createShaper()
-    this.gain
-      // .connect(this.shaper)
-      .connect(this.filter)
-      .connect(this.analyser)
-      .connect(this.actx.destination)
-    this.createCustomWaves(DBs)
+
+    // 使用外部节点
+    if(!this.options.getNodes) {
+      this.gain
+        // .connect(this.shaper)
+        .connect(this.filter)
+        .connect(this.analyser)
+        .connect(this.actx.destination)
+      this.createCustomWaves(DBs)
+    }
   }
 
   // 传入音频文件
@@ -318,6 +323,15 @@ export class AudioPlayer {
   // 播放
   start(type, params) {
     this.stop()
+    // 外部节点
+    if(this.options.getNodes && typeof this.options.getNodes === 'function') {
+      const nodes = this.options.getNodes(this.actx)
+      this._outerNodes = nodes
+      nodes.lastNode.connect(this.analyser).connect(this.actx.destination)
+      nodes.play();
+      return
+    }
+
     if(type === 'file' && !this.audioBuffer) {
       return
     }
@@ -379,6 +393,11 @@ export class AudioPlayer {
 
   // 停止
   stop() {
+    if(this._outerNodes) {
+      this._outerNodes.stop()
+      this._outerNodes = null
+    }
+
     if (this.source) {
       this.source.stop()
     }

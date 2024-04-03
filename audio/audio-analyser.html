@@ -50,7 +50,117 @@
     const fileEle = document.getElementById('file') // 选择文件元素
     const audioAnalyser = new AudioAnalyser({
       onendedCallback: () => document.getElementById('file-play').innerHTML = '播放',
-      onendedOscCallback: () => document.getElementById('osc-play').innerHTML = '开始'
+      onendedOscCallback: () => document.getElementById('osc-play').innerHTML = '开始',
+      getNodes: (actx) => {
+        // 每分钟演奏多少拍
+        const beatPerMinute = 60;
+        // 每排持续的时间
+        const secondPerBeat = 60 / beatPerMinute;
+        // 中央A的频率
+        const middleAFreq = 440;
+        // 半音的音程
+        const freqStep = Math.pow(2, 1 / 12);
+        // 计算每个音的频率
+        const freqs = {
+          0: 0,
+          1: middleAFreq / freqStep ** 9,
+          2: middleAFreq / freqStep ** 7,
+          3: middleAFreq / freqStep ** 5,
+          4: middleAFreq / freqStep ** 4,
+          5: middleAFreq / freqStep ** 2,
+          6: middleAFreq,
+          7: middleAFreq * freqStep ** 2,
+        }
+        // 根据定义的规则，把这首歌翻译下来
+        const song = [
+          '1 e', '2 e', '3 e', '1 e',
+          '1 e', '2 e', '3 e', '1 e', 
+          '3 e', '4 e', '5 q',
+          '3 e', '4 e', '5 q',
+          '5 e', '6 e', '5 e', '4 e',
+          '3 q', '1 q',
+          '5 e', '6 e', '5 e', '4 e',
+          '3 q', '1 q',
+          '2 q', '5. q',
+          '1 q', '0 q',
+          '2 q', '5. q',
+          '1 q', '0 q',
+        ]
+
+        // 音符解释器
+        const parseNote = (note) => {
+          const arr = note.split(' ');
+
+          // 如果有个点表示降八度，频率除以 2
+          // 这里是 E 调，与 C 调偏移了 4 个半音，所以频率要升高 4 个半音程 
+          const freq = (arr[0].length === 1 ? freqs[arr[0]] : freqs[arr[0][0]] / 2) * freqStep ** 4;
+          // 换算成多少个拍
+          const beats = (((str) => {
+            switch(str) {
+              case 'e': return 0.5;
+              case 'q': return 1;
+              default: return 1;
+            }
+          })(arr[1]));
+
+          return {
+            freq,
+            beats,
+          }
+        }
+
+        const osc = actx.createOscillator();
+        osc.type = 'square'; // square sawtooth triangle
+
+        const gain = actx.createGain();
+        const filter = actx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.Q.value = 1;
+
+        osc.connect(gain).connect(filter);
+        const lastNode = filter;
+
+        let totalDuration = 0;
+        // 前一个音符的结束时间
+        let prevTime = actx.currentTime;
+        // 添加频率以及增益变化到 schedule
+        song.forEach(str => {
+          const note = parseNote(str);
+          const noteDuration = secondPerBeat * note.beats;
+
+          // 设置每个音符频率的开始时间
+          osc.frequency.setValueAtTime(note.freq, prevTime);
+          filter.frequency.setValueAtTime(note.freq, prevTime);
+
+          // 设置每个音符的增益
+          const maxGain = 1
+          gain.gain.setValueAtTime(0, prevTime);
+          if(note.freq === 0) {
+            gain.gain.setValueAtTime(0, prevTime + noteDuration);
+          } else {
+            gain.gain.linearRampToValueAtTime(maxGain, prevTime + 0);
+            gain.gain.exponentialRampToValueAtTime(0.001, prevTime + noteDuration * 0.9);
+            gain.gain.linearRampToValueAtTime(0, prevTime + noteDuration);
+          }
+          
+          // 更新前一个音符的结束时间
+          prevTime = prevTime + noteDuration;
+          // 更新总播放时间
+          totalDuration += noteDuration
+        })
+
+        return {
+          lastNode: lastNode,
+          play: () => {
+            // 播放以及停止
+            osc.start(actx.currentTime);
+            osc.stop(actx.currentTime + totalDuration);
+          },
+          stop: () => {
+            osc.stop();
+          }
+        }
+      },
     }) // 音频分析器实例
     audioAnalyser.initCharts({
       freqCanvas: document.getElementById('freq-domain'), // 绑定频谱图
