@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="../assets/css/base.css" />
+    <style>
+      .toolbar {
+        height: 50px;
+        margin-bottom: 12px;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+      }
+      .canvas {
+        height: calc(100% - 62px);
+      }
+    </style>
+  </head>
+  <body class="bg-grey">
+    <div class="bg-white toolbar">
+      <input type="file" />
+    </div>
+    <div class="bg-white canvas">
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <script type="module">
+      import './js/canvas.utils.js';
+      const ctx = utils.initCanvas('#canvas', { autoSize: true });
+    </script>
+  </body>
+</html>

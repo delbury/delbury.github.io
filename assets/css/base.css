@@ -1,0 +1,34 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  padding: 20px;
+}
+
+.border {
+  border: 1px solid skyblue;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.full {
+  width: 100%;
+  height: 100%;
+}
+
+.bg-grey {
+  background-color: #eee;
+}
+
+.bg-white {
+  background-color: #fff;
+}
