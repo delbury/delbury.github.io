@@ -72,7 +72,7 @@ const sections = [
       },
       {
         href: './canvas/image-to-chars.html',
-        title: 'Transfer Iamge to Chars',
+        title: 'Image to Chars',
         cover: './assets/cover/image-to-charts.png',
         desc: '图片转字符图片',
       },
