@@ -32,3 +32,11 @@ body {
 .bg-white {
   background-color: #fff;
 }
+
+.none {
+  display: none;
+}
+
+.no-select {
+  user-select: none;
+}

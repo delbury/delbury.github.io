@@ -1,13 +1,5 @@
 // canvas 的公共方法
 
-if (window) {
-  window.utils = {
-    bezierTriangular,
-    rotateByCenter,
-    initCanvas,
-  };
-}
-
 /**
  * @description 提供一组三角型顶点坐标，用二次贝塞尔曲线将其个点平滑连接
  * @param {CanvasRenderingContext2D Object} ctx
@@ -32,6 +24,13 @@ function bezierTriangular(ctx, coords) {
   ctx.restore();
 }
 
+/**
+ * 绕某个点旋转
+ * @param {*} ctx
+ * @param {*} cx
+ * @param {*} cy
+ * @param {*} degree
+ */
 function rotateByCenter(ctx, cx, cy, degree) {
   const { cos, sin } = Math;
   const angle = degree ? (degree / 180) * Math.PI : 0;
@@ -44,24 +43,9 @@ function rotateByCenter(ctx, cx, cy, degree) {
   ctx.translate(dx, dy);
 }
 
-// 根据传入的 DOM query 创建 canvas 2d context，并做一些初始化操作
-function initCanvas(domQuery, { width = 300, height = 150, autoSize = false } = {}) {
-  const canvas = document.querySelector(domQuery);
-  const ctx = canvas.getContext('2d');
-
-  // 自适应父元素宽高
-  if (autoSize) {
-    const parent = canvas.parentElement;
-    const { scrollWidth, scrollHeight } = parent;
-    width = scrollWidth;
-    height = scrollHeight;
-  }
-  const ratio = window.devicePixelRatio;
-  canvas.style.width = width + 'px';
-  canvas.style.height = height + 'px';
-  canvas.width = width * ratio;
-  canvas.height = height * ratio;
-  ctx.scale(ratio, ratio);
-
-  return ctx;
+if (window) {
+  window.utils = {
+    bezierTriangular,
+    rotateByCenter,
+  };
 }

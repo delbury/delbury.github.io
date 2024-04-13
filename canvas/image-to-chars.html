@@ -1,34 +1,422 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-cn">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
     <link rel="stylesheet" href="../assets/css/base.css" />
     <style>
+      :root {
+        --font-family: Menlo, Consolas, Monaco, Liberation Mono, Lucida Console, monospace;
+      }
       .toolbar {
         height: 50px;
         margin-bottom: 12px;
         padding: 12px;
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        font-size: 14px;
       }
-      .canvas {
+
+      .workbench {
         height: calc(100% - 62px);
+      }
+      .movable {
+        cursor: move;
+      }
+      #output {
+        height: 100%;
+        overflow: auto;
+        background-color: #fff;
+      }
+      .output-codes {
+        width: fit-content;
+        font-family: var(--font-family);
+        color: #000;
+        line-height: 6px;
+        font-size: 12px;
+      }
+      #output.reverse {
+        background-color: #1f1f1f;
+      }
+      #output.reverse > .output-codes {
+        color: #fff;
+      }
+      .output-codes > * {
+        display: block;
       }
     </style>
   </head>
   <body class="bg-grey">
     <div class="bg-white toolbar">
-      <input type="file" />
+      <span>
+        <input id="file" type="file" accept="image/*" />
+        <button id="btn-reset">重置图片</button>
+        <button id="btn-output">生成字符画</button>
+
+        <label>
+          像素聚合
+          <input id="input-pixel" type="number" value="10" min="1" max="100" step="1" />
+        </label>
+
+        <label>
+          灰度阈值
+          <input id="input-grey" type="range" value="127" min="0" max="255" step="1" />
+        </label>
+
+        <label>
+          颜色反转
+          <input id="input-reverse" type="checkbox" checked />
+        </label>
+      </span>
+      <span>
+        <span id="btn-tabs">
+          <label>
+            <input type="radio" name="tabs" value="canvas" checked />
+            画布
+          </label>
+          <label>
+            <input type="radio" name="tabs" value="output" />
+            输出
+          </label>
+        </span>
+      </span>
     </div>
-    <div class="bg-white canvas">
+    <div class="bg-white workbench">
       <canvas id="canvas"></canvas>
+      <div id="output" class="none reverse">
+        <pre class="output-codes"></pre>
+      </div>
     </div>
 
     <script type="module">
-      import './js/canvas.utils.js';
-      const ctx = utils.initCanvas('#canvas', { autoSize: true });
+      import { BaseCanvas } from './js/common.js';
+      import { dragableElement, scalableElement, scrollableElement } from './js/abilities.js';
+
+      const bc = new BaseCanvas('#canvas', { autoSize: true });
+      // 便于调试
+      window.bc = bc;
+
+      // doms
+      const output = document.querySelector('#output');
+      const codes = output.querySelector('.output-codes');
+      const inputPixel = document.querySelector('#input-pixel');
+      const inputGrey = document.querySelector('#input-grey');
+      const inputReverse = document.querySelector('#input-reverse');
+      inputGrey.value = 127;
+      inputPixel.value = 6;
+
+      // 第一次导入图片的参数
+      let firstImgArgs = null;
+      // 每次改变图片位置、大小后的当前参数
+      let lastImgArgs = null;
+      // 用于一次拖拽移动的临时参数
+      let currentArgs = null;
+      // 当前的 tab 页面，canvas/output
+      let currentTab = 'canvas';
+      const openTab = (tab) => {
+        currentTab = tab;
+        if (currentTab === 'canvas') {
+          bc.canvas.classList.remove('none');
+          output.classList.add('none');
+        } else if (currentTab === 'output') {
+          output.classList.remove('none');
+          bc.canvas.classList.add('none');
+        }
+        document.getElementsByName('tabs').forEach((elm) => {
+          elm.checked = elm.value === tab;
+        });
+      };
+
+      // 加载图片并绘制到 canvas
+      const loadImage = (imgUrl) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          // 入口
+          firstImgArgs = bc.drawImageAutoFit(img);
+          lastImgArgs = [...firstImgArgs];
+          bc.canvas.classList.add('movable');
+        };
+        img.src = imgUrl;
+      };
+
+      // 选择图片文件
+      document.querySelector('#file').onchange = (ev) => {
+        const file = ev.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          loadImage(reader.result);
+        };
+        reader.readAsDataURL(ev.target.files[0]);
+      };
+
+      // 图片可拖拽
+      dragableElement(bc.canvas, {
+        move: (dx, dy) => {
+          if (!firstImgArgs) return;
+
+          currentArgs = [...lastImgArgs];
+          currentArgs[1] += dx;
+          currentArgs[2] += dy;
+          bc.tick(() => {
+            bc.clearCanvas();
+            bc.ctx.drawImage(...currentArgs);
+          });
+        },
+        up: () => {
+          lastImgArgs = currentArgs;
+        },
+      });
+
+      // 图片可缩放
+      scalableElement(bc.canvas, ({ delta, factor, x, y }) => {
+        if (!firstImgArgs) return;
+
+        bc.tick(() => {
+          const scale = 0.1 * factor + 1;
+
+          const [, cw, ch, w, h] = lastImgArgs;
+          const nw = w * scale;
+          const nh = h * scale;
+
+          const ncw = x - ((x - cw) * nw) / w;
+          const nch = y - ((y - ch) * nh) / h;
+
+          lastImgArgs[1] = ncw;
+          lastImgArgs[2] = nch;
+          lastImgArgs[3] = nw;
+          lastImgArgs[4] = nh;
+          bc.clearCanvas();
+          bc.ctx.drawImage(...lastImgArgs);
+        });
+      });
+
+      // 图片重置位置、大小
+      document.querySelector('#btn-reset').onclick = () => {
+        if (!firstImgArgs) return;
+
+        lastImgArgs = [...firstImgArgs];
+        bc.clearCanvas();
+        bc.ctx.drawImage(...firstImgArgs);
+      };
+
+      // 切换 tab 页
+      document.querySelector('#btn-tabs').onchange = (ev) => openTab(ev.target.value);
+
+      // 快捷键
+      let removeSpaceScrollableHandler = null;
+      let removeSpaceScalableHandler = null;
+      let codeScale = 1;
+      document.onkeydown = (ev) => {
+        if (ev.code === 'Tab') {
+          ev.preventDefault();
+          switch (currentTab) {
+            case 'canvas':
+              openTab('output');
+              break;
+            case 'output':
+              openTab('canvas');
+              break;
+          }
+        } else if (ev.code === 'Space' && currentTab === 'output') {
+          ev.preventDefault();
+          if (!removeSpaceScrollableHandler) {
+            removeSpaceScrollableHandler = scrollableElement(output);
+            document.body.classList.add('no-select');
+          }
+          if (!removeSpaceScalableHandler) {
+            removeSpaceScalableHandler = scalableElement(codes, ({ event, delta, factor, x, y }) => {
+              event.preventDefault();
+              if (codeScale < 0.2 || codeScale > 4) return;
+              bc.tick(() => {
+                codeScale += 0.1 * factor;
+                codes.style.transform = `scale(${codeScale})`;
+              });
+            });
+          }
+        }
+      };
+      document.onkeyup = (ev) => {
+        if (ev.code === 'Space' && currentTab === 'output') {
+          ev.preventDefault();
+          if (removeSpaceScrollableHandler) {
+            document.body.classList.remove('no-select');
+            removeSpaceScrollableHandler();
+            removeSpaceScrollableHandler = null;
+          }
+          if (removeSpaceScalableHandler) {
+            removeSpaceScalableHandler();
+            removeSpaceScalableHandler = null;
+          }
+        }
+      };
+
+      let currentImageData = null;
+      let currentGreyArray = null;
+      // ImageData 转换成灰度数组
+      const transferImageDataToGrey = (imageData, { step } = {}) => {
+        const data = imageData.data;
+        const greyArrays = [];
+        for (let j = 0; j < imageData.height; j += step) {
+          const greyRow = [];
+          for (let i = 0; i < imageData.width; i += step) {
+            let sum = 0;
+            let count = 0;
+            // 取平均灰度值
+            for (let r = 0; r < step; r++) {
+              const x = i + r;
+              if (x >= imageData.width) break;
+
+              for (let c = 0; c < step; c++) {
+                const y = j + c;
+                if (y >= imageData.height) break;
+
+                const imageIndex = bc.calcImageDataIndex(x, y);
+                count++;
+                sum += bc.calcGrey(data[imageIndex], data[imageIndex + 1], data[imageIndex + 2]);
+              }
+            }
+
+            greyRow.push(Math.round(sum / count));
+          }
+          greyArrays.push(greyRow);
+        }
+
+        return greyArrays;
+      };
+
+      // 灰度数组转换成字符串
+      const transferGreyToCharsImage = (greyArrays, { greyThreshold, char = '#', padding = 10 } = {}) => {
+        const charsImageArr = greyArrays.map((arr) => arr.map((grey) => (grey <= greyThreshold ? char : ' ')));
+
+        // 对四周多余空白处进行 trim
+        if (charsImageArr.length > padding * 2) {
+          // 先处理首行
+          let emptyRows = 0;
+          for (let i = 0; i < charsImageArr.length; i++) {
+            if (charsImageArr[i].every((c) => c === ' ')) {
+              emptyRows++;
+            } else {
+              break;
+            }
+          }
+          if (emptyRows > padding) {
+            charsImageArr.splice(0, emptyRows - padding);
+          }
+          // 再处理尾行
+          emptyRows = 0;
+          for (let i = charsImageArr.length - 1; i >= 0; i--) {
+            if (charsImageArr[i].every((c) => c === ' ')) {
+              emptyRows++;
+            } else {
+              break;
+            }
+          }
+          if (emptyRows > padding) {
+            charsImageArr.splice(charsImageArr.length - (emptyRows - padding));
+          }
+        }
+        let cols = charsImageArr[0].length;
+        if (cols > padding * 2) {
+          // 处理首列
+          let emptyCols = 0;
+          for (let j = 0; j < cols; j++) {
+            let isEmpty = true;
+            for (let i = 0; i < charsImageArr.length; i++) {
+              if (charsImageArr[i][j] !== ' ') {
+                isEmpty = false;
+                break;
+              }
+            }
+            if (isEmpty) {
+              emptyCols++;
+            } else {
+              break;
+            }
+          }
+          if (emptyCols > padding) {
+            for (let i = 0; i < charsImageArr.length; i++) {
+              charsImageArr[i].splice(0, emptyCols - padding);
+            }
+          }
+          // 处理尾列
+          emptyCols = 0;
+          cols = charsImageArr[0].length;
+          for (let j = cols - 1; j >= 0; j--) {
+            let isEmpty = true;
+            for (let i = 0; i < charsImageArr.length; i++) {
+              if (charsImageArr[i][j] !== ' ') {
+                isEmpty = false;
+                break;
+              }
+            }
+            if (isEmpty) {
+              emptyCols++;
+            } else {
+              break;
+            }
+          }
+          if (emptyCols > padding) {
+            for (let i = 0; i < charsImageArr.length; i++) {
+              charsImageArr[i].splice(cols - (emptyCols - padding));
+            }
+          }
+        }
+
+        codes.innerHTML = charsImageArr.map((row) => `<code>${row.join('')}</code>`).join('');
+      };
+
+      // 生成字符画
+      document.querySelector('#btn-output').onclick = () => {
+        if (!firstImgArgs) return;
+
+        const imageData = bc.getImageDataFull();
+        currentImageData = imageData;
+        const greyArrays = transferImageDataToGrey(imageData, {
+          step: parseInt(inputPixel.value),
+        });
+        currentGreyArray = greyArrays;
+
+        // 输出并显示
+        transferGreyToCharsImage(greyArrays, {
+          greyThreshold: parseInt(inputGrey.value),
+        });
+
+        openTab('output');
+      };
+
+      // 改变像素聚合
+      inputPixel.onchange = (ev) => {
+        if (!currentImageData) return;
+        const greyArrays = transferImageDataToGrey(currentImageData, {
+          step: parseInt(inputPixel.value),
+        });
+        currentGreyArray = greyArrays;
+        transferGreyToCharsImage(greyArrays, {
+          greyThreshold: parseInt(inputGrey.value),
+        });
+      };
+
+      // 改变灰度阈值
+      inputGrey.onchange = (ev) => {
+        if (!currentGreyArray) return;
+        transferGreyToCharsImage(currentGreyArray, {
+          greyThreshold: parseInt(inputGrey.value),
+        });
+      };
+
+      // 字符图颜色反转
+      inputReverse.onchange = (ev) => {
+        if (ev.target.checked) {
+          output.classList.add('reverse');
+        } else {
+          output.classList.remove('reverse');
+        }
+      };
     </script>
   </body>
 </html>

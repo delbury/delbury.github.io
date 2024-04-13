@@ -70,6 +70,12 @@ const sections = [
         cover: './assets/cover/particle-text.mp4',
         desc: '粒子文本动画',
       },
+      {
+        href: './canvas/image-to-chars.html',
+        title: 'Transfer Iamge to Chars',
+        cover: './assets/cover/image-to-charts.png',
+        desc: '图片转字符图片',
+      },
     ],
   },
   {
@@ -191,13 +197,13 @@ const sections = [
 ];
 
 // 创建导航栏
-(function() {
-  if(!hasNavbar) return;
+(function () {
+  if (!hasNavbar) return;
 
   const navbar = document.getElementById('navbar');
   const frag = document.createDocumentFragment();
   // 滚动到目标元素
-  const handleClick = ev => {
+  const handleClick = (ev) => {
     ev.preventDefault();
     const ele = document.getElementById(ev.target.dataset.toId);
     ele.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -217,24 +223,24 @@ const sections = [
   const bp = document.getElementById('burying-point');
   const pageHeader = document.querySelector('.page-header');
   const observer = new IntersectionObserver((records) => {
-    if(records[0].isIntersecting) {
+    if (records[0].isIntersecting) {
       // 显示
       pageHeader.classList.remove('folded');
     } else {
       // 隐藏
       pageHeader.classList.add('folded');
     }
-  })
+  });
   observer.observe(bp);
-}());
+})();
 
 // 创建内容
-(function() {
-  if(!hasContent) return;
-  
+(function () {
+  if (!hasContent) return;
+
   const container = document.getElementById('container');
   const frag = document.createDocumentFragment();
-  for(const sec of sections) {
+  for (const sec of sections) {
     const section = document.createElement('section');
     section.innerHTML = `<h2 class="section-title">${sec.sectionTitle}</h2>`;
     const bp = document.createElement('div'); // 创建埋点
@@ -242,7 +248,7 @@ const sections = [
     bp.id = sec.id;
     section.prepend(bp);
     const ul = document.createElement('ul');
-    for(const it of sec.items) {
+    for (const it of sec.items) {
       const li = document.createElement('li');
       const liItem = document.createElement('li-item');
       liItem.dataset.href = it.href;
@@ -257,23 +263,26 @@ const sections = [
     frag.append(section);
   }
   container.append(frag);
-}());
+})();
 
 // 创建背景
-(function() {
-  if(!hasBg) return;
+(function () {
+  if (!hasBg) return;
 
   const worker = new Worker('./assets/js/bg.js');
   const canvas = document.getElementById('bg').transferControlToOffscreen();
-  worker.postMessage({
-    type: 'init',
-    width: window.innerWidth,
-    height: window.innerHeight,
-    canvas,
-  }, [canvas]);
+  worker.postMessage(
+    {
+      type: 'init',
+      width: window.innerWidth,
+      height: window.innerHeight,
+      canvas,
+    },
+    [canvas]
+  );
 
   // 监听窗口大小变化
-  const observer = new ResizeObserver(record => {
+  const observer = new ResizeObserver((record) => {
     worker.postMessage({
       type: 'resize',
       width: window.innerWidth,
@@ -283,11 +292,11 @@ const sections = [
   observer.observe(document.documentElement);
 
   // 页面不可见时停止背景动画
-  document.onvisibilitychange = ev => {
-    if(document.hidden) {
+  document.onvisibilitychange = (ev) => {
+    if (document.hidden) {
       worker.postMessage({ type: 'stop' });
     } else {
       worker.postMessage({ type: 'play' });
     }
   };
-}());
+})();
