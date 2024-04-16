@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="../assets/css/base.css" />
     <style>
       :root {
-        --font-family: Menlo, Consolas, Monaco, Liberation Mono, Lucida Console, monospace;
+        --font-family: 'Courier New', Courier, monospace;
+        --char-size: 6px;
       }
       .toolbar {
         height: 50px;
@@ -34,8 +35,9 @@
         width: fit-content;
         font-family: var(--font-family);
         color: #000;
-        line-height: 6px;
-        font-size: 12px;
+        line-height: var(--char-size);
+        font-size: var(--char-size);
+        letter-spacing: calc(var(--char-size) / 2);
       }
       #output.reverse {
         background-color: #1f1f1f;
@@ -230,7 +232,6 @@
           }
           if (!removeSpaceScalableHandler) {
             removeSpaceScalableHandler = scalableElement(codes, ({ event, delta, factor, x, y }) => {
-              event.preventDefault();
               if (codeScale < 0.2 || codeScale > 4) return;
               bc.tick(() => {
                 codeScale += 0.1 * factor;
@@ -392,13 +393,17 @@
       // 改变像素聚合
       inputPixel.onchange = (ev) => {
         if (!currentImageData) return;
+        const stepValue = parseInt(inputPixel.value);
         const greyArrays = transferImageDataToGrey(currentImageData, {
-          step: parseInt(inputPixel.value),
+          step: stepValue,
         });
         currentGreyArray = greyArrays;
         transferGreyToCharsImage(greyArrays, {
           greyThreshold: parseInt(inputGrey.value),
         });
+
+        // 改变 char 输出文本样式
+        document.documentElement.style.setProperty('--char-size', `${stepValue}px`);
       };
 
       // 改变灰度阈值

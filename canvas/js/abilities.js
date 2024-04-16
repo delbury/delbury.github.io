@@ -47,6 +47,7 @@ function dragableElement(dom, { down, move, up } = {}) {
  */
 function scalableElement(dom, cb) {
   const fnWheel = (ev) => {
+    ev.preventDefault();
     const { deltaY, offsetX, offsetY } = ev;
     // 向上 deltaY < 0
     // 向下 deltaY > 0
@@ -58,7 +59,7 @@ function scalableElement(dom, cb) {
       y: offsetY,
     });
   };
-  dom.addEventListener('wheel', fnWheel);
+  dom.addEventListener('wheel', fnWheel, { passive: false });
 
   return () => dom.removeEventListener('wheel', fnWheel);
 }
