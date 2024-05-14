@@ -73,6 +73,11 @@
         </label>
 
         <label>
+          字符大小
+          <input id="input-size" type="number" min="5" max="30" step="1" />
+        </label>
+
+        <label>
           颜色反转
           <input id="input-reverse" type="checkbox" />
         </label>
@@ -170,10 +175,15 @@
             greyThreshold: parseInt(inputGrey.value),
             chars: inputChars.value,
           });
-
-          // 改变 char 输出文本样式
-          document.documentElement.style.setProperty('--char-size', `${stepValue}px`);
         },
+      });
+
+      // 字符大小
+      const inputSize = proxyInputElement('#input-size', {
+        defaultValue: 6,
+      });
+      watchInputValue(inputSize, (val) => {
+        document.documentElement.style.setProperty('--char-size', `${val}px`);
       });
 
       // tab 页
@@ -351,14 +361,16 @@
 
       // 取随机字符
       const getRandomChar = (chars = '') => {
+        let char = '';
         if (chars.length === 1) {
-          return chars;
+          char = chars;
         } else if (chars.length > 1) {
-          return chars.charAt(Math.floor(Math.random() * chars.length));
+          char = chars.charAt(Math.floor(Math.random() * chars.length));
         } else {
           // 随机，ASCII: 33 ~ 126
-          return String.fromCharCode(getRandomInt(33, 126));
+          char = String.fromCharCode(getRandomInt(33, 126));
         }
+        return char.replace(/</g, '&lt;').replace(/>/g, '&gt;');
       };
 
       // 灰度数组转换成字符串

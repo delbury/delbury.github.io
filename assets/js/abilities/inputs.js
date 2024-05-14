@@ -90,18 +90,13 @@ function proxyInputElement(
     { value: initValue, dom },
     {
       set(obj, prop, val) {
-        if (obj[prop] !== val) {
-          switch (prop) {
-            case 'value':
-              setDomValue(dom, val);
-              handleChange(val, dom);
-              autoSave && ast?.save(autoSaveField, val);
-              break;
-            default:
-              break;
-          }
+        Reflect.set(...arguments);
+        if (prop === 'value') {
+          setDomValue(dom, val);
+          handleChange(val, dom);
+          autoSave && ast?.save(autoSaveField, val);
         }
-        return Reflect.set(...arguments);
+        return true;
       },
     }
   );
@@ -151,21 +146,24 @@ function watchInputValue(input, callback, { triggerAtInit = false } = {}) {
  * @param {*} callback
  */
 function watchInputValues(inputs, callback, { triggerAtInit = false } = {}) {
-  // 考虑做一些合并操作
-  inputs.forEach((input, index) => {
-    input.on((val, dom) => {
-      const vals = inputs.map((it) => it.value);
-      const doms = inputs.map((it) => it.dom);
-      vals[index] = val;
-      doms[index] = dom;
-      callback(vals, doms);
+  let count = 0;
+  const cb = () =>
+    callback(
+      inputs.map((it) => it.value),
+      inputs.map((it) => it.dom)
+    );
+  inputs.forEach((input) => {
+    input.on(() => {
+      // 防抖
+      count++;
+      queueMicrotask(() => {
+        if (count) {
+          cb();
+          count = 0;
+        }
+      });
     });
-
-    triggerAtInit &&
-      callback(
-        inputs.map((it) => it.value),
-        inputs.map((it) => it.dom)
-      );
+    triggerAtInit && cb();
   });
   return () => inputs.forEach((input) => input.off(callback));
 }
