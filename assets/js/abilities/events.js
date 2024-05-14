@@ -1,14 +1,18 @@
+import { getDom } from './utils.js';
+
 /**
  * 鼠标的点击按住，移动事件
  * @param {*} dom
  * @param {*} param1
  */
-function dragableElement(dom, { down, move, up } = {}) {
+function draggableElement(dom, { ondown, onmove, onup } = {}) {
+  dom = getDom(dom);
+
   const fnDown = (evDown) => {
     const { screenX: startX, screenY: startY } = evDown;
     let prevX = startX;
     let prevY = startY;
-    down?.(startX, startY);
+    ondown?.(startX, startY);
 
     const fnMove = (evMove) => {
       const { screenX, screenY } = evMove;
@@ -23,13 +27,13 @@ function dragableElement(dom, { down, move, up } = {}) {
       prevX = screenX;
       prevY = screenY;
 
-      move?.(diffX, diffY, prevDiffX, prevDiffY);
+      onmove?.(diffX, diffY, prevDiffX, prevDiffY);
     };
 
     const fnUp = () => {
       dom.removeEventListener('mousemove', fnMove);
       document.removeEventListener('mouseup', fnUp);
-      up?.();
+      onup?.();
     };
 
     dom.addEventListener('mousemove', fnMove);
@@ -46,6 +50,8 @@ function dragableElement(dom, { down, move, up } = {}) {
  * @param {*} cb
  */
 function scalableElement(dom, cb) {
+  dom = getDom(dom);
+
   const fnWheel = (ev) => {
     ev.preventDefault();
     const { deltaY, offsetX, offsetY } = ev;
@@ -64,18 +70,24 @@ function scalableElement(dom, cb) {
   return () => dom.removeEventListener('wheel', fnWheel);
 }
 
+/**
+ * 鼠标拖拽可滚动元素
+ * @param {*} dom
+ */
 function scrollableElement(dom) {
+  dom = getDom(dom);
+
   let startX = null;
   let startY = null;
-  return dragableElement(dom, {
-    down: () => {
+  return draggableElement(dom, {
+    ondown: () => {
       startX = dom.scrollLeft;
       startY = dom.scrollTop;
     },
-    move: (x, y) => {
+    onmove: (x, y) => {
       dom.scrollTo(startX - x, startY - y);
     },
   });
 }
 
-export { dragableElement, scalableElement, scrollableElement };
+export { draggableElement, scalableElement, scrollableElement };

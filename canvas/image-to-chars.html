@@ -24,7 +24,7 @@
         height: calc(100% - 62px);
       }
       .movable {
-        cursor: move;
+        cursor: onmove;
       }
       #output {
         height: 100%;
@@ -59,23 +59,28 @@
 
         <label>
           像素聚合
-          <input id="input-pixel" type="number" value="10" min="1" max="100" step="1" />
+          <input id="input-pixel" type="number" min="1" max="100" step="1" />
         </label>
 
         <label>
           灰度阈值
-          <input id="input-grey" type="range" value="127" min="0" max="255" step="1" />
+          <input id="input-grey" type="number" min="0" max="255" step="1" />
+        </label>
+
+        <label>
+          生成字符
+          <input id="input-chars" placeholder="为空则为随机" />
         </label>
 
         <label>
           颜色反转
-          <input id="input-reverse" type="checkbox" checked />
+          <input id="input-reverse" type="checkbox" />
         </label>
       </span>
       <span>
         <span id="btn-tabs">
           <label>
-            <input type="radio" name="tabs" value="canvas" checked />
+            <input type="radio" name="tabs" value="canvas" />
             画布
           </label>
           <label>
@@ -93,8 +98,16 @@
     </div>
 
     <script type="module">
-      import { BaseCanvas } from './js/common.js';
-      import { dragableElement, scalableElement, scrollableElement } from './js/abilities.js';
+      import { BaseCanvas } from './js/BaseCanvas.js';
+      import {
+        draggableElement,
+        scalableElement,
+        scrollableElement,
+        proxyInputElement,
+        watchInputValue,
+        watchInputValues,
+        getRandomInt,
+      } from '../assets/js/abilities/index.js';
 
       const bc = new BaseCanvas('#canvas', { autoSize: true });
       // 便于调试
@@ -103,11 +116,6 @@
       // doms
       const output = document.querySelector('#output');
       const codes = output.querySelector('.output-codes');
-      const inputPixel = document.querySelector('#input-pixel');
-      const inputGrey = document.querySelector('#input-grey');
-      const inputReverse = document.querySelector('#input-reverse');
-      inputGrey.value = 127;
-      inputPixel.value = 6;
 
       // 第一次导入图片的参数
       let firstImgArgs = null;
@@ -115,21 +123,77 @@
       let lastImgArgs = null;
       // 用于一次拖拽移动的临时参数
       let currentArgs = null;
-      // 当前的 tab 页面，canvas/output
-      let currentTab = 'canvas';
-      const openTab = (tab) => {
-        currentTab = tab;
-        if (currentTab === 'canvas') {
-          bc.canvas.classList.remove('none');
-          output.classList.add('none');
-        } else if (currentTab === 'output') {
-          output.classList.remove('none');
-          bc.canvas.classList.add('none');
-        }
-        document.getElementsByName('tabs').forEach((elm) => {
-          elm.checked = elm.value === tab;
+      let currentImageData = null;
+      let currentGreyArray = null;
+
+      // 颜色反转选项
+      const inputReverse = proxyInputElement('#input-reverse', {
+        defaultValue: true,
+        valueField: 'checked',
+        onchange: (val) => {
+          if (val) {
+            output.classList.add('reverse');
+          } else {
+            output.classList.remove('reverse');
+          }
+        },
+      });
+
+      // 灰度阈值选项
+      const inputGrey = proxyInputElement('#input-grey', {
+        defaultValue: 127,
+      });
+      // 生成字符选项
+      const inputChars = proxyInputElement('#input-chars', {
+        defaultValue: '#',
+        inputValueFormatter: (val) => val?.trim(),
+      });
+      watchInputValues([inputGrey, inputChars], ([grey, chars]) => {
+        if (!currentGreyArray) return;
+        transferGreyToCharsImage(currentGreyArray, {
+          greyThreshold: parseInt(grey),
+          chars,
         });
-      };
+      });
+
+      // 像素聚合选项
+      const inputPixel = proxyInputElement('#input-pixel', {
+        defaultValue: 6,
+        onchange: (val) => {
+          if (!currentImageData) return;
+          const stepValue = parseInt(val);
+          const greyArrays = transferImageDataToGrey(currentImageData, {
+            step: stepValue,
+          });
+          currentGreyArray = greyArrays;
+          transferGreyToCharsImage(greyArrays, {
+            greyThreshold: parseInt(inputGrey.value),
+            chars: inputChars.value,
+          });
+
+          // 改变 char 输出文本样式
+          document.documentElement.style.setProperty('--char-size', `${stepValue}px`);
+        },
+      });
+
+      // tab 页
+      const radioTabs = proxyInputElement('#btn-tabs', {
+        radioName: 'tabs',
+        defaultValue: 'canvas',
+      });
+      watchInputValue(
+        radioTabs,
+        (tab) => {
+          if (tab === 'canvas') {
+            bc.canvas.classList.remove('none');
+            output.classList.add('none');
+          } else if (tab === 'output') {
+            output.classList.remove('none');
+            bc.canvas.classList.add('none');
+          }
+        },
+        { triggerAtInit: true }
+      );
 
       // 加载图片并绘制到 canvas
       const loadImage = (imgUrl) => {
@@ -157,8 +221,8 @@
       };
 
       // 图片可拖拽
-      dragableElement(bc.canvas, {
-        move: (dx, dy) => {
+      draggableElement(bc.canvas, {
+        onmove: (dx, dy) => {
           if (!firstImgArgs) return;
 
           currentArgs = [...lastImgArgs];
@@ -169,7 +233,7 @@
             bc.ctx.drawImage(...currentArgs);
           });
         },
-        up: () => {
+        onup: () => {
           lastImgArgs = currentArgs;
         },
       });
@@ -206,9 +270,6 @@
         bc.ctx.drawImage(...firstImgArgs);
       };
 
-      // 切换 tab 页
-      document.querySelector('#btn-tabs').onchange = (ev) => openTab(ev.target.value);
-
       // 快捷键
       let removeSpaceScrollableHandler = null;
       let removeSpaceScalableHandler = null;
@@ -216,15 +277,15 @@
       document.onkeydown = (ev) => {
         if (ev.code === 'Tab') {
           ev.preventDefault();
-          switch (currentTab) {
+          switch (radioTabs.value) {
             case 'canvas':
-              openTab('output');
+              radioTabs.value = 'output';
               break;
             case 'output':
-              openTab('canvas');
+              radioTabs.value = 'canvas';
               break;
           }
-        } else if (ev.code === 'Space' && currentTab === 'output') {
+        } else if (ev.code === 'Space' && radioTabs.value === 'output') {
           ev.preventDefault();
           if (!removeSpaceScrollableHandler) {
             removeSpaceScrollableHandler = scrollableElement(output);
@@ -242,7 +303,7 @@
         }
       };
       document.onkeyup = (ev) => {
-        if (ev.code === 'Space' && currentTab === 'output') {
+        if (ev.code === 'Space' && radioTabs.value === 'output') {
           ev.preventDefault();
           if (removeSpaceScrollableHandler) {
             document.body.classList.remove('no-select');
@@ -256,8 +317,6 @@
         }
       };
 
-      let currentImageData = null;
-      let currentGreyArray = null;
       // ImageData 转换成灰度数组
       const transferImageDataToGrey = (imageData, { step } = {}) => {
         const data = imageData.data;
@@ -290,9 +349,23 @@
         return greyArrays;
       };
 
+      // 取随机字符
+      const getRandomChar = (chars = '') => {
+        if (chars.length === 1) {
+          return chars;
+        } else if (chars.length > 1) {
+          return chars.charAt(Math.floor(Math.random() * chars.length));
+        } else {
+          // 随机，ASCII: 33 ~ 126
+          return String.fromCharCode(getRandomInt(33, 126));
+        }
+      };
+
       // 灰度数组转换成字符串
-      const transferGreyToCharsImage = (greyArrays, { greyThreshold, char = '#', padding = 10 } = {}) => {
-        const charsImageArr = greyArrays.map((arr) => arr.map((grey) => (grey <= greyThreshold ? char : ' ')));
+      const transferGreyToCharsImage = (greyArrays, { greyThreshold, padding = 10, chars } = {}) => {
+        const charsImageArr = greyArrays.map((arr) =>
+          arr.map((grey) => (grey <= greyThreshold ? getRandomChar(chars) : ' '))
+        );
 
         // 对四周多余空白处进行 trim
         if (charsImageArr.length > padding * 2) {
@@ -385,42 +458,10 @@
         // 输出并显示
         transferGreyToCharsImage(greyArrays, {
           greyThreshold: parseInt(inputGrey.value),
+          chars: inputChars.value,
         });
 
-        openTab('output');
-      };
-
-      // 改变像素聚合
-      inputPixel.onchange = (ev) => {
-        if (!currentImageData) return;
-        const stepValue = parseInt(inputPixel.value);
-        const greyArrays = transferImageDataToGrey(currentImageData, {
-          step: stepValue,
-        });
-        currentGreyArray = greyArrays;
-        transferGreyToCharsImage(greyArrays, {
-          greyThreshold: parseInt(inputGrey.value),
-        });
-
-        // 改变 char 输出文本样式
-        document.documentElement.style.setProperty('--char-size', `${stepValue}px`);
-      };
-
-      // 改变灰度阈值
-      inputGrey.onchange = (ev) => {
-        if (!currentGreyArray) return;
-        transferGreyToCharsImage(currentGreyArray, {
-          greyThreshold: parseInt(inputGrey.value),
-        });
-      };
-
-      // 字符图颜色反转
-      inputReverse.onchange = (ev) => {
-        if (ev.target.checked) {
-          output.classList.add('reverse');
-        } else {
-          output.classList.remove('reverse');
-        }
+        radioTabs.value = 'output';
       };
     </script>
   </body>
