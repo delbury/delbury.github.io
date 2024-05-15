@@ -46,7 +46,10 @@ function proxyInputElement(
   dom,
   {
     defaultValue,
+    // 值改变就会触发的事件
     onchange,
+    // 只有通过UI改变值才触发的事件
+    onrawchange,
     // 表示值的字段 key，一般为 value，复选框可设置为 checked
     valueField = 'value',
     // input radio：dom 需要是 radio 的父元素，监听父元素的 onchange
@@ -90,13 +93,17 @@ function proxyInputElement(
     { value: initValue, dom },
     {
       set(obj, prop, val) {
-        Reflect.set(...arguments);
         if (prop === 'value') {
+          if (obj[prop] === val) return true;
+
+          Reflect.set(...arguments);
           setDomValue(dom, val);
           handleChange(val, dom);
           autoSave && ast?.save(autoSaveField, val);
+          return true;
+        } else {
+          return Reflect.set(...arguments);
         }
-        return true;
       },
     }
   );
@@ -105,6 +112,7 @@ function proxyInputElement(
     if (ev.target.tagName === 'INPUT') {
       data.value = inputValueFormatter ? inputValueFormatter(ev.target[valueField]) : ev.target[valueField];
       setDomValue(dom, data.value);
+      onrawchange?.(data.value, dom, ev);
     }
   };
 

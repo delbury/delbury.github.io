@@ -9,6 +9,7 @@
       :root {
         --font-family: 'Courier New', Courier, monospace;
         --char-size: 6px;
+        --char-max-width: 1;
       }
       .toolbar {
         height: 50px;
@@ -37,7 +38,7 @@
         color: #000;
         line-height: var(--char-size);
         font-size: var(--char-size);
-        letter-spacing: calc(var(--char-size) / 2);
+        letter-spacing: calc(var(--char-size) / 2 * (2 - var(--char-max-width)));
       }
       #output.reverse {
         background-color: #1f1f1f;
@@ -112,368 +113,381 @@
         watchInputValue,
         watchInputValues,
         getRandomInt,
+        getCharsWidthRange,
       } from '../assets/js/abilities/index.js';
 
-      const bc = new BaseCanvas('#canvas', { autoSize: true });
-      // 便于调试
-      window.bc = bc;
+      window.onload = () => {
+        const bc = new BaseCanvas('#canvas', { autoSize: true });
+        // 便于调试
+        window.bc = bc;
 
-      // doms
-      const output = document.querySelector('#output');
-      const codes = output.querySelector('.output-codes');
+        // doms
+        const output = document.querySelector('#output');
+        const codes = output.querySelector('.output-codes');
 
-      // 第一次导入图片的参数
-      let firstImgArgs = null;
-      // 每次改变图片位置、大小后的当前参数
-      let lastImgArgs = null;
-      // 用于一次拖拽移动的临时参数
-      let currentArgs = null;
-      let currentImageData = null;
-      let currentGreyArray = null;
+        // 第一次导入图片的参数
+        let firstImgArgs = null;
+        // 每次改变图片位置、大小后的当前参数
+        let lastImgArgs = null;
+        // 用于一次拖拽移动的临时参数
+        let currentArgs = null;
+        let currentImageData = null;
+        let currentGreyArray = null;
+        // 输出字符的可能最大宽度
+        let charWidthRange = { min: 1, max: 1 };
 
-      // 颜色反转选项
-      const inputReverse = proxyInputElement('#input-reverse', {
-        defaultValue: true,
-        valueField: 'checked',
-        onchange: (val) => {
-          if (val) {
-            output.classList.add('reverse');
-          } else {
-            output.classList.remove('reverse');
-          }
-        },
-      });
-
-      // 灰度阈值选项
-      const inputGrey = proxyInputElement('#input-grey', {
-        defaultValue: 127,
-      });
-      // 生成字符选项
-      const inputChars = proxyInputElement('#input-chars', {
-        defaultValue: '#',
-        inputValueFormatter: (val) => val?.trim(),
-      });
-      watchInputValues([inputGrey, inputChars], ([grey, chars]) => {
-        if (!currentGreyArray) return;
-        transferGreyToCharsImage(currentGreyArray, {
-          greyThreshold: parseInt(grey),
-          chars,
+        // 颜色反转选项
+        const inputReverse = proxyInputElement('#input-reverse', {
+          defaultValue: true,
+          valueField: 'checked',
+          onchange: (val) => {
+            if (val) {
+              output.classList.add('reverse');
+            } else {
+              output.classList.remove('reverse');
+            }
+          },
         });
-      });
 
-      // 像素聚合选项
-      const inputPixel = proxyInputElement('#input-pixel', {
-        defaultValue: 6,
-        onchange: (val) => {
-          if (!currentImageData) return;
-          const stepValue = parseInt(val);
-          const greyArrays = transferImageDataToGrey(currentImageData, {
-            step: stepValue,
+        // 灰度阈值选项
+        const inputGrey = proxyInputElement('#input-grey', {
+          defaultValue: 127,
+        });
+
+        // 生成字符选项
+        const inputChars = proxyInputElement('#input-chars', {
+          defaultValue: '#',
+          inputValueFormatter: (val) => val?.trim(),
+          onchange: (val) => {
+            charWidthRange = getCharsWidthRange(val);
+            document.documentElement.style.setProperty('--char-max-width', charWidthRange.max);
+          },
+          triggerAtInit: true,
+        });
+        watchInputValues([inputGrey, inputChars], ([grey, chars]) => {
+          if (!currentGreyArray) return;
+          transferGreyToCharsImage(currentGreyArray, {
+            greyThreshold: parseInt(grey),
+            chars,
+          });
+        });
+
+        // 像素聚合选项
+        const inputPixel = proxyInputElement('#input-pixel', {
+          defaultValue: 6,
+          onchange: (val) => {
+            if (!currentImageData) return;
+            const stepValue = parseInt(val);
+            const greyArrays = transferImageDataToGrey(currentImageData, {
+              step: stepValue,
+            });
+            currentGreyArray = greyArrays;
+            transferGreyToCharsImage(greyArrays, {
+              greyThreshold: parseInt(inputGrey.value),
+              chars: inputChars.value,
+            });
+          },
+        });
+
+        // 字符大小
+        const inputSize = proxyInputElement('#input-size', {
+          defaultValue: 6,
+          onchange: (val) => {
+            document.documentElement.style.setProperty('--char-size', `${val}px`);
+          },
+          triggerAtInit: true,
+        });
+
+        // tab 页
+        const radioTabs = proxyInputElement('#btn-tabs', {
+          radioName: 'tabs',
+          defaultValue: 'canvas',
+        });
+        watchInputValue(
+          radioTabs,
+          (tab) => {
+            if (tab === 'canvas') {
+              bc.canvas.classList.remove('none');
+              output.classList.add('none');
+            } else if (tab === 'output') {
+              output.classList.remove('none');
+              bc.canvas.classList.add('none');
+            }
+          },
+          { triggerAtInit: true }
+        );
+
+        // 加载图片并绘制到 canvas
+        const loadImage = (imgUrl) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            // 入口
+            firstImgArgs = bc.drawImageAutoFit(img);
+            lastImgArgs = [...firstImgArgs];
+            bc.canvas.classList.add('movable');
+          };
+          img.src = imgUrl;
+        };
+
+        // 选择图片文件
+        document.querySelector('#file').onchange = (ev) => {
+          const file = ev.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = () => {
+            loadImage(reader.result);
+          };
+          reader.readAsDataURL(ev.target.files[0]);
+        };
+
+        // 图片可拖拽
+        draggableElement(bc.canvas, {
+          onmove: (dx, dy) => {
+            if (!firstImgArgs) return;
+
+            currentArgs = [...lastImgArgs];
+            currentArgs[1] += dx;
+            currentArgs[2] += dy;
+            bc.tick(() => {
+              bc.clearCanvas();
+              bc.ctx.drawImage(...currentArgs);
+            });
+          },
+          onup: () => {
+            lastImgArgs = currentArgs;
+          },
+        });
+
+        // 图片可缩放
+        scalableElement(bc.canvas, ({ delta, factor, x, y }) => {
+          if (!firstImgArgs) return;
+
+          bc.tick(() => {
+            const scale = 0.1 * factor + 1;
+
+            const [, cw, ch, w, h] = lastImgArgs;
+            const nw = w * scale;
+            const nh = h * scale;
+
+            const ncw = x - ((x - cw) * nw) / w;
+            const nch = y - ((y - ch) * nh) / h;
+
+            lastImgArgs[1] = ncw;
+            lastImgArgs[2] = nch;
+            lastImgArgs[3] = nw;
+            lastImgArgs[4] = nh;
+            bc.clearCanvas();
+            bc.ctx.drawImage(...lastImgArgs);
+          });
+        });
+
+        // 图片重置位置、大小
+        document.querySelector('#btn-reset').onclick = () => {
+          if (!firstImgArgs) return;
+
+          lastImgArgs = [...firstImgArgs];
+          bc.clearCanvas();
+          bc.ctx.drawImage(...firstImgArgs);
+        };
+
+        // 快捷键
+        let removeSpaceScrollableHandler = null;
+        let removeSpaceScalableHandler = null;
+        let codeScale = 1;
+        document.onkeydown = (ev) => {
+          if (ev.code === 'Tab') {
+            ev.preventDefault();
+            switch (radioTabs.value) {
+              case 'canvas':
+                radioTabs.value = 'output';
+                break;
+              case 'output':
+                radioTabs.value = 'canvas';
+                break;
+            }
+          } else if (ev.code === 'Space' && radioTabs.value === 'output') {
+            ev.preventDefault();
+            if (!removeSpaceScrollableHandler) {
+              removeSpaceScrollableHandler = scrollableElement(output);
+              document.body.classList.add('no-select');
+            }
+            if (!removeSpaceScalableHandler) {
+              removeSpaceScalableHandler = scalableElement(codes, ({ event, delta, factor, x, y }) => {
+                if (codeScale < 0.2 || codeScale > 4) return;
+                bc.tick(() => {
+                  codeScale += 0.1 * factor;
+                  codes.style.transform = `scale(${codeScale})`;
+                });
+              });
+            }
+          }
+        };
+        document.onkeyup = (ev) => {
+          if (ev.code === 'Space' && radioTabs.value === 'output') {
+            ev.preventDefault();
+            if (removeSpaceScrollableHandler) {
+              document.body.classList.remove('no-select');
+              removeSpaceScrollableHandler();
+              removeSpaceScrollableHandler = null;
+            }
+            if (removeSpaceScalableHandler) {
+              removeSpaceScalableHandler();
+              removeSpaceScalableHandler = null;
+            }
+          }
+        };
+
+        // ImageData 转换成灰度数组
+        const transferImageDataToGrey = (imageData, { step } = {}) => {
+          const data = imageData.data;
+          const greyArrays = [];
+          for (let j = 0; j < imageData.height; j += step) {
+            const greyRow = [];
+            for (let i = 0; i < imageData.width; i += step) {
+              let sum = 0;
+              let count = 0;
+              // 取平均灰度值
+              for (let r = 0; r < step; r++) {
+                const x = i + r;
+                if (x >= imageData.width) break;
+
+                for (let c = 0; c < step; c++) {
+                  const y = j + c;
+                  if (y >= imageData.height) break;
+
+                  const imageIndex = bc.calcImageDataIndex(x, y);
+                  count++;
+                  sum += bc.calcGrey(data[imageIndex], data[imageIndex + 1], data[imageIndex + 2]);
+                }
+              }
+
+              greyRow.push(Math.round(sum / count));
+            }
+            greyArrays.push(greyRow);
+          }
+
+          return greyArrays;
+        };
+
+        // 取随机字符
+        const getRandomChar = (chars = '') => {
+          let char = '';
+          if (chars.length === 1) {
+            char = chars;
+          } else if (chars.length > 1) {
+            char = chars.charAt(Math.floor(Math.random() * chars.length));
+          } else {
+            // 随机，ASCII: 33 ~ 126
+            char = String.fromCharCode(getRandomInt(33, 126));
+          }
+          return char.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        };
+
+        // 灰度数组转换成字符串
+        const transferGreyToCharsImage = (greyArrays, { greyThreshold, padding = 5, chars } = {}) => {
+          const space = charWidthRange.max === 2 ? '\u3000' : ' ';
+          const charsImageArr = greyArrays.map((arr) =>
+            arr.map((grey) => (grey <= greyThreshold ? getRandomChar(chars) : space))
+          );
+
+          // 对四周多余空白处进行 trim
+          if (charsImageArr.length > padding * 2) {
+            // 先处理首行
+            let emptyRows = 0;
+            for (let i = 0; i < charsImageArr.length; i++) {
+              if (charsImageArr[i].every((c) => c === space)) {
+                emptyRows++;
+              } else {
+                break;
+              }
+            }
+            if (emptyRows > padding) {
+              charsImageArr.splice(0, emptyRows - padding);
+            }
+            // 再处理尾行
+            emptyRows = 0;
+            for (let i = charsImageArr.length - 1; i >= 0; i--) {
+              if (charsImageArr[i].every((c) => c === space)) {
+                emptyRows++;
+              } else {
+                break;
+              }
+            }
+            if (emptyRows > padding) {
+              charsImageArr.splice(charsImageArr.length - (emptyRows - padding));
+            }
+          }
+          let cols = charsImageArr[0].length;
+          if (cols > padding * 2) {
+            // 处理首列
+            let emptyCols = 0;
+            for (let j = 0; j < cols; j++) {
+              let isEmpty = true;
+              for (let i = 0; i < charsImageArr.length; i++) {
+                if (charsImageArr[i][j] !== space) {
+                  isEmpty = false;
+                  break;
+                }
+              }
+              if (isEmpty) {
+                emptyCols++;
+              } else {
+                break;
+              }
+            }
+            if (emptyCols > padding) {
+              for (let i = 0; i < charsImageArr.length; i++) {
+                charsImageArr[i].splice(0, emptyCols - padding);
+              }
+            }
+            // 处理尾列
+            emptyCols = 0;
+            cols = charsImageArr[0].length;
+            for (let j = cols - 1; j >= 0; j--) {
+              let isEmpty = true;
+              for (let i = 0; i < charsImageArr.length; i++) {
+                if (charsImageArr[i][j] !== space) {
+                  isEmpty = false;
+                  break;
+                }
+              }
+              if (isEmpty) {
+                emptyCols++;
+              } else {
+                break;
+              }
+            }
+            if (emptyCols > padding) {
+              for (let i = 0; i < charsImageArr.length; i++) {
+                charsImageArr[i].splice(cols - (emptyCols - padding));
+              }
+            }
+          }
+
+          codes.innerHTML = charsImageArr.map((row) => `<code>${row.join('')}</code>`).join('');
+        };
+
+        // 生成字符画
+        document.querySelector('#btn-output').onclick = () => {
+          if (!firstImgArgs) return;
+
+          const imageData = bc.getImageDataFull();
+          currentImageData = imageData;
+          const greyArrays = transferImageDataToGrey(imageData, {
+            step: parseInt(inputPixel.value),
           });
           currentGreyArray = greyArrays;
+
+          // 输出并显示
           transferGreyToCharsImage(greyArrays, {
             greyThreshold: parseInt(inputGrey.value),
             chars: inputChars.value,
           });
-        },
-      });
 
-      // 字符大小
-      const inputSize = proxyInputElement('#input-size', {
-        defaultValue: 6,
-      });
-      watchInputValue(inputSize, (val) => {
-        document.documentElement.style.setProperty('--char-size', `${val}px`);
-      });
-
-      // tab 页
-      const radioTabs = proxyInputElement('#btn-tabs', {
-        radioName: 'tabs',
-        defaultValue: 'canvas',
-      });
-      watchInputValue(
-        radioTabs,
-        (tab) => {
-          if (tab === 'canvas') {
-            bc.canvas.classList.remove('none');
-            output.classList.add('none');
-          } else if (tab === 'output') {
-            output.classList.remove('none');
-            bc.canvas.classList.add('none');
-          }
-        },
-        { triggerAtInit: true }
-      );
-
-      // 加载图片并绘制到 canvas
-      const loadImage = (imgUrl) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          // 入口
-          firstImgArgs = bc.drawImageAutoFit(img);
-          lastImgArgs = [...firstImgArgs];
-          bc.canvas.classList.add('movable');
+          radioTabs.value = 'output';
         };
-        img.src = imgUrl;
-      };
-
-      // 选择图片文件
-      document.querySelector('#file').onchange = (ev) => {
-        const file = ev.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = () => {
-          loadImage(reader.result);
-        };
-        reader.readAsDataURL(ev.target.files[0]);
-      };
-
-      // 图片可拖拽
-      draggableElement(bc.canvas, {
-        onmove: (dx, dy) => {
-          if (!firstImgArgs) return;
-
-          currentArgs = [...lastImgArgs];
-          currentArgs[1] += dx;
-          currentArgs[2] += dy;
-          bc.tick(() => {
-            bc.clearCanvas();
-            bc.ctx.drawImage(...currentArgs);
-          });
-        },
-        onup: () => {
-          lastImgArgs = currentArgs;
-        },
-      });
-
-      // 图片可缩放
-      scalableElement(bc.canvas, ({ delta, factor, x, y }) => {
-        if (!firstImgArgs) return;
-
-        bc.tick(() => {
-          const scale = 0.1 * factor + 1;
-
-          const [, cw, ch, w, h] = lastImgArgs;
-          const nw = w * scale;
-          const nh = h * scale;
-
-          const ncw = x - ((x - cw) * nw) / w;
-          const nch = y - ((y - ch) * nh) / h;
-
-          lastImgArgs[1] = ncw;
-          lastImgArgs[2] = nch;
-          lastImgArgs[3] = nw;
-          lastImgArgs[4] = nh;
-          bc.clearCanvas();
-          bc.ctx.drawImage(...lastImgArgs);
-        });
-      });
-
-      // 图片重置位置、大小
-      document.querySelector('#btn-reset').onclick = () => {
-        if (!firstImgArgs) return;
-
-        lastImgArgs = [...firstImgArgs];
-        bc.clearCanvas();
-        bc.ctx.drawImage(...firstImgArgs);
-      };
-
-      // 快捷键
-      let removeSpaceScrollableHandler = null;
-      let removeSpaceScalableHandler = null;
-      let codeScale = 1;
-      document.onkeydown = (ev) => {
-        if (ev.code === 'Tab') {
-          ev.preventDefault();
-          switch (radioTabs.value) {
-            case 'canvas':
-              radioTabs.value = 'output';
-              break;
-            case 'output':
-              radioTabs.value = 'canvas';
-              break;
-          }
-        } else if (ev.code === 'Space' && radioTabs.value === 'output') {
-          ev.preventDefault();
-          if (!removeSpaceScrollableHandler) {
-            removeSpaceScrollableHandler = scrollableElement(output);
-            document.body.classList.add('no-select');
-          }
-          if (!removeSpaceScalableHandler) {
-            removeSpaceScalableHandler = scalableElement(codes, ({ event, delta, factor, x, y }) => {
-              if (codeScale < 0.2 || codeScale > 4) return;
-              bc.tick(() => {
-                codeScale += 0.1 * factor;
-                codes.style.transform = `scale(${codeScale})`;
-              });
-            });
-          }
-        }
-      };
-      document.onkeyup = (ev) => {
-        if (ev.code === 'Space' && radioTabs.value === 'output') {
-          ev.preventDefault();
-          if (removeSpaceScrollableHandler) {
-            document.body.classList.remove('no-select');
-            removeSpaceScrollableHandler();
-            removeSpaceScrollableHandler = null;
-          }
-          if (removeSpaceScalableHandler) {
-            removeSpaceScalableHandler();
-            removeSpaceScalableHandler = null;
-          }
-        }
-      };
-
-      // ImageData 转换成灰度数组
-      const transferImageDataToGrey = (imageData, { step } = {}) => {
-        const data = imageData.data;
-        const greyArrays = [];
-        for (let j = 0; j < imageData.height; j += step) {
-          const greyRow = [];
-          for (let i = 0; i < imageData.width; i += step) {
-            let sum = 0;
-            let count = 0;
-            // 取平均灰度值
-            for (let r = 0; r < step; r++) {
-              const x = i + r;
-              if (x >= imageData.width) break;
-
-              for (let c = 0; c < step; c++) {
-                const y = j + c;
-                if (y >= imageData.height) break;
-
-                const imageIndex = bc.calcImageDataIndex(x, y);
-                count++;
-                sum += bc.calcGrey(data[imageIndex], data[imageIndex + 1], data[imageIndex + 2]);
-              }
-            }
-
-            greyRow.push(Math.round(sum / count));
-          }
-          greyArrays.push(greyRow);
-        }
-
-        return greyArrays;
-      };
-
-      // 取随机字符
-      const getRandomChar = (chars = '') => {
-        let char = '';
-        if (chars.length === 1) {
-          char = chars;
-        } else if (chars.length > 1) {
-          char = chars.charAt(Math.floor(Math.random() * chars.length));
-        } else {
-          // 随机，ASCII: 33 ~ 126
-          char = String.fromCharCode(getRandomInt(33, 126));
-        }
-        return char.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      };
-
-      // 灰度数组转换成字符串
-      const transferGreyToCharsImage = (greyArrays, { greyThreshold, padding = 10, chars } = {}) => {
-        const charsImageArr = greyArrays.map((arr) =>
-          arr.map((grey) => (grey <= greyThreshold ? getRandomChar(chars) : ' '))
-        );
-
-        // 对四周多余空白处进行 trim
-        if (charsImageArr.length > padding * 2) {
-          // 先处理首行
-          let emptyRows = 0;
-          for (let i = 0; i < charsImageArr.length; i++) {
-            if (charsImageArr[i].every((c) => c === ' ')) {
-              emptyRows++;
-            } else {
-              break;
-            }
-          }
-          if (emptyRows > padding) {
-            charsImageArr.splice(0, emptyRows - padding);
-          }
-          // 再处理尾行
-          emptyRows = 0;
-          for (let i = charsImageArr.length - 1; i >= 0; i--) {
-            if (charsImageArr[i].every((c) => c === ' ')) {
-              emptyRows++;
-            } else {
-              break;
-            }
-          }
-          if (emptyRows > padding) {
-            charsImageArr.splice(charsImageArr.length - (emptyRows - padding));
-          }
-        }
-        let cols = charsImageArr[0].length;
-        if (cols > padding * 2) {
-          // 处理首列
-          let emptyCols = 0;
-          for (let j = 0; j < cols; j++) {
-            let isEmpty = true;
-            for (let i = 0; i < charsImageArr.length; i++) {
-              if (charsImageArr[i][j] !== ' ') {
-                isEmpty = false;
-                break;
-              }
-            }
-            if (isEmpty) {
-              emptyCols++;
-            } else {
-              break;
-            }
-          }
-          if (emptyCols > padding) {
-            for (let i = 0; i < charsImageArr.length; i++) {
-              charsImageArr[i].splice(0, emptyCols - padding);
-            }
-          }
-          // 处理尾列
-          emptyCols = 0;
-          cols = charsImageArr[0].length;
-          for (let j = cols - 1; j >= 0; j--) {
-            let isEmpty = true;
-            for (let i = 0; i < charsImageArr.length; i++) {
-              if (charsImageArr[i][j] !== ' ') {
-                isEmpty = false;
-                break;
-              }
-            }
-            if (isEmpty) {
-              emptyCols++;
-            } else {
-              break;
-            }
-          }
-          if (emptyCols > padding) {
-            for (let i = 0; i < charsImageArr.length; i++) {
-              charsImageArr[i].splice(cols - (emptyCols - padding));
-            }
-          }
-        }
-
-        codes.innerHTML = charsImageArr.map((row) => `<code>${row.join('')}</code>`).join('');
-      };
-
-      // 生成字符画
-      document.querySelector('#btn-output').onclick = () => {
-        if (!firstImgArgs) return;
-
-        const imageData = bc.getImageDataFull();
-        currentImageData = imageData;
-        const greyArrays = transferImageDataToGrey(imageData, {
-          step: parseInt(inputPixel.value),
-        });
-        currentGreyArray = greyArrays;
-
-        // 输出并显示
-        transferGreyToCharsImage(greyArrays, {
-          greyThreshold: parseInt(inputGrey.value),
-          chars: inputChars.value,
-        });
-
-        radioTabs.value = 'output';
       };
     </script>
   </body>
