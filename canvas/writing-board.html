@@ -1,679 +1,716 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>画板</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-    }
-    :root {
-      --half-gap: 25px;
-      --body-padding-top: 50px;
-    }
-    body {
-      box-sizing: border-box;
-      padding: var(--body-padding-top, 50px) 20px;
-      height: 100vh;
-      text-align: center;
-      overflow: hidden;
-    }
-    .border {
-      width: 100%;
-      height: 100%;
-      box-sizing: border-box;
-      margin: auto;
-      padding: 5px;
-      border: 2px dashed;
-      color: skyblue;
-      border-radius: 5px;
-      font-size: 0;
-    }
-    .border:hover {
-      color: rgb(0, 68, 255);
-      /* cursor: move; */
-    }
-    #canvas {
-      border: 1px dashed #ccc;
-      border-radius: 5px;
-    }
-    #canvas.pen {
-      cursor: url("./assets/ico/pen.png"), auto;
-    }
-    #canvas.erase-16 {
-      cursor: url("./assets/ico/erase_16x16.png"), auto;
-    }
-    #canvas.erase-32 {
-      cursor: url("./assets/ico/erase_32x32.png"), auto;
-    }
-    #canvas.fill {
-      cursor: url("./assets/ico/fill.png") 2 26, auto;
-    }
-    #canvas.get {
-      cursor: url("./assets/ico/get.png") 5 5, auto;
-    }
-    .tools {
-      margin-bottom: 20px;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      list-style: none;
-    }
-    .tools li {
-      display: flex;
-    }
-    .tools li:not(:last-child) {
-      margin-right: 10px;
-    }
-    .tools input {
-      width: 50px;
-      vertical-align: middle;
-    }
-    .tools input[type="file"] {
-      width: unset;
-    }
-    .tools label {
-      display: flex;
-      align-items: center;
-      margin-right: 10px;
-    }
-    .container {
-      height: 100%;
-      display: grid;
-      grid-template-columns: 1fr 500px;
-      grid-template-rows: 1fr;
-      grid-column-gap: calc(2 * var(--half-gap, 25px));
-    }
-    .left {
-      justify-items: center;
-      overflow: auto;
-    }
-    .right {
-      position: relative;
-    }
-    .right:before {
-      position: absolute;
-      top: calc(-1 * var(--body-padding-top, 50px));
-      left: calc(-1 * var(--half-gap, 25px));
-      display: block;
-      height: 100vh;
-      content: "";
-      border-left: 2px dashed skyblue;
-    }
-    input[type="checkbox"],
-    input[type="radio"] {
-      width: 25px;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>画板</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --half-gap: 25px;
+        --body-padding-top: 50px;
+      }
+      body {
+        box-sizing: border-box;
+        padding: var(--body-padding-top, 50px) 20px;
+        height: 100vh;
+        text-align: center;
+        overflow: hidden;
+      }
+      .border {
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        margin: auto;
+        padding: 5px;
+        border: 2px dashed;
+        color: skyblue;
+        border-radius: 5px;
+        font-size: 0;
+      }
+      .border:hover {
+        color: rgb(0, 68, 255);
+        /* cursor: move; */
+      }
+      #canvas {
+        border: 1px dashed #ccc;
+        border-radius: 5px;
+      }
+      #canvas.pen {
+        cursor: url('./assets/ico/pen.png'), auto;
+      }
+      #canvas.erase-16 {
+        cursor: url('./assets/ico/erase_16x16.png'), auto;
+      }
+      #canvas.erase-32 {
+        cursor: url('./assets/ico/erase_32x32.png'), auto;
+      }
+      #canvas.fill {
+        cursor: url('./assets/ico/fill.png') 2 26, auto;
+      }
+      #canvas.get {
+        cursor: url('./assets/ico/get.png') 5 5, auto;
+      }
+      .force-erase {
+        cursor: url('./assets/ico/erase_32x32.png'), auto !important;
+      }
+      .tools {
+        margin-bottom: 20px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        list-style: none;
+      }
+      .tools li {
+        display: flex;
+      }
+      .tools li:not(:last-child) {
+        margin-right: 10px;
+      }
+      .tools input {
+        width: 50px;
+        vertical-align: middle;
+      }
+      .tools input[type='file'] {
+        width: unset;
+      }
+      .tools label {
+        display: flex;
+        align-items: center;
+        margin-right: 10px;
+      }
+      .container {
+        height: 100%;
+        display: grid;
+        grid-template-columns: 1fr 500px;
+        grid-template-rows: 1fr;
+        grid-column-gap: calc(2 * var(--half-gap, 25px));
+      }
+      .left {
+        justify-items: center;
+        overflow: auto;
+      }
+      .right {
+        position: relative;
+      }
+      .right:before {
+        position: absolute;
+        top: calc(-1 * var(--body-padding-top, 50px));
+        left: calc(-1 * var(--half-gap, 25px));
+        display: block;
+        height: 100vh;
+        content: '';
+        border-left: 2px dashed skyblue;
+      }
+      input[type='checkbox'],
+      input[type='radio'] {
+        width: 25px;
+      }
 
-    .eraseLabel {
-      position: relative;
-    }
-    .eraseLabel-16:hover::before {
-      display: block;
-      content: "";
-      box-sizing: border-box;
-      width: 16px;
-      height: 16px;
-      position: absolute;
-      background: #fff;
-      border: 1px solid;
-      top: -16px;
-      box-shadow: 1px 1px 3px #999;
-    }
-    .eraseLabel-32:hover::before {
-      display: block;
-      content: "";
-      box-sizing: border-box;
-      width: 32px;
-      height: 32px;
-      position: absolute;
-      background: #fff;
-      border: 1px solid;
-      top: -32px;
-      box-shadow: 1px 1px 3px #999;
-    }
-    .tips {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      list-style: none;
-      color: #999;
-      font-size: 14px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="left">
-      <div class="border" id="borderbox">
-        <canvas class="pen" id="canvas" width="800" height="480"></canvas>
+      .eraseLabel {
+        position: relative;
+      }
+      .eraseLabel-16:hover::before {
+        display: block;
+        content: '';
+        box-sizing: border-box;
+        width: 16px;
+        height: 16px;
+        position: absolute;
+        background: #fff;
+        border: 1px solid;
+        top: -16px;
+        box-shadow: 1px 1px 3px #999;
+      }
+      .eraseLabel-32:hover::before {
+        display: block;
+        content: '';
+        box-sizing: border-box;
+        width: 32px;
+        height: 32px;
+        position: absolute;
+        background: #fff;
+        border: 1px solid;
+        top: -32px;
+        box-shadow: 1px 1px 3px #999;
+      }
+      .tips {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        list-style: none;
+        color: #999;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="left">
+        <div class="border" id="borderbox">
+          <canvas class="pen" id="canvas" width="800" height="480"></canvas>
+        </div>
+      </div>
+      <div class="right">
+        <ul class="tools">
+          <li><input id="back" type="button" value="后退" /></li>
+          <li><input id="forward" type="button" value="前进" /></li>
+          <li><span>&nbsp;|&nbsp;</span></li>
+          <li><input id="reset" type="button" value="重置" /></li>
+          <li><input id="clear" type="button" value="清除" /></li>
+          <li>
+            <input id="export" type="button" value="导出" />
+            <select id="exporttype">
+              <option value="image/png" selected>png</option>
+              <option value="image/jpeg">jpeg</option>
+              <option value="image/webp">webp</option>
+            </select>
+          </li>
+        </ul>
+        <ul class="tools">
+          <li><input id="remove" type="button" value="移除" /></li>
+          <li>
+            <form id="importForm">
+              <input id="import" type="file" accept="image/*" value="导入" />
+            </form>
+          </li>
+        </ul>
+        <ul class="tools">
+          <li>
+            <label>宽：<input id="bgw" type="number" min="800" step="1" value="800" disabled /></label>
+          </li>
+          <li>
+            <label>高：<input id="bgh" type="number" min="480" step="1" value="480" disabled /></label>
+          </li>
+          <!-- <li><label>拖动：<input id="manualbg" type="checkbox"></label></li> -->
+          <li><input id="resetbg" type="button" value="默认" /></li>
+        </ul>
+        <ul class="tools">
+          <li>
+            <label>线宽：<input id="width" type="number" min="0.5" max="10" step="0.5" /></label>
+          </li>
+          <li>
+            <label>线色：<input id="color" type="color" /></label>
+          </li>
+          <li>
+            <label>
+              色板：
+              <input id="fillcolor" type="color" />
+            </label>
+            <input id="fillcolortext" type="text" readonly style="width: 60px; font-family: monospace" />
+          </li>
+        </ul>
+        <ul class="tools">
+          <li>
+            <label id="modegroup">
+              模式：
+              <label><input type="radio" name="mode" value="pen" checked />铅笔</label>
+              <label class="eraseLabel eraseLabel-16">
+                <input type="radio" name="mode" value="erase" />
+                <select id="eraseSizes" style="margin-right: 5px">
+                  <option value="16" selected>16x16</option>
+                  <option value="32">32x32</option>
+                </select>
+                橡皮
+              </label>
+              <label><input type="radio" name="mode" value="get" />取色</label>
+              <!-- <label><input type="radio" name="mode" value="fill">填充</label> -->
+            </label>
+          </li>
+        </ul>
+        <ul class="tips">
+          <li>* 右键快捷使用橡皮擦</li>
+          <li>* 支持图片粘贴</li>
+          <li>* 支持图片文件拖拽</li>
+          <li>* 保存10次最近的操作记录，可撤销和恢复</li>
+        </ul>
       </div>
     </div>
-    <div class="right">
-      <ul class="tools">
-        <li><input id="back" type="button" value="后退"></li>
-        <li><input id="forward" type="button" value="前进"></li>
-        <li><span>&nbsp;|&nbsp;</span></li>
-        <li><input id="reset" type="button" value="重置"></li>
-        <li><input id="clear" type="button" value="清除"></li>
-        <li>
-          <input id="export" type="button" value="导出">
-          <select id="exporttype">
-            <option value="image/png" selected>png</option>
-            <option value="image/jpeg">jpeg</option>
-            <option value="image/webp">webp</option>
-          </select>
-        </li>
-      </ul>
-      <ul class="tools">
-        <li><input id="remove" type="button" value="移除"></li>
-        <li>
-          <form id="importForm">
-            <input id="import" type="file" accept="image/*" value="导入">
-          </form>
-        </li>
-      </ul>
-      <ul class="tools">
-          <li><label>宽：<input id="bgw" type="number" min="800" step="1" value="800" disabled></label></li>
-          <li><label>高：<input id="bgh" type="number" min="480" step="1" value="480" disabled></label></li>
-          <!-- <li><label>拖动：<input id="manualbg" type="checkbox"></label></li> -->
-          <li><input id="resetbg" type="button" value="默认"></li>
-      </ul>
-      <ul class="tools">
-        <li><label>线宽：<input id="width" type="number" min="0.5" max="10" step="0.5"></label></li>
-        <li><label>线色：<input id="color" type="color"></label></li>
-        <li>
-          <label>
-            色板：
-            <input id="fillcolor" type="color">
-          </label>
-          <input id="fillcolortext" type="text" readonly style="width: 60px; font-family: monospace;">
-        </li>
-      </ul>
-      <ul class="tools">
-        <li>
-          <label id="modegroup">
-            模式：
-            <label><input type="radio" name="mode" value="pen" checked>铅笔</label>
-            <label class="eraseLabel eraseLabel-16">
-              <input type="radio" name="mode" value="erase">
-              <select id="eraseSizes" style="margin-right: 5px;">
-                <option value="16" selected>16x16</option>
-                <option value="32">32x32</option>
-              </select>
-              橡皮
-            </label>
-            <label><input type="radio" name="mode" value="get">取色</label>
-            <!-- <label><input type="radio" name="mode" value="fill">填充</label> -->
-          </label>
-        </li>
-      </ul>
-      <ul class="tips">
-        <li>* 支持图片粘贴</li>
-        <li>* 支持图片文件拖拽</li>
-        <li>* 保存10次最近的操作记录，可撤销和恢复</li>
-      </ul>
-    </div>
-  </div>
-  
-  <script>
-    class DrawPen {
-      constructor() {
-        this.ratio = window.devicePixelRatio;
-        this.canvas = document.getElementById('canvas');
-        this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
-        const rect = this.canvas.parentElement.getBoundingClientRect();
-        this.defaultOptions = {
-          lineWidth: 4,
-          fillStyle: '#000000',
-          strokeStyle: '#000000',
-          canvasWidth: 800,
-          canvasHeight: 480,
-          eraseSize: 16,
-          lineCap: 'round',
-          lineJoin: 'round'
-        };
-        this.resizeCanvas(rect.width - 15, rect.height - 15);
-        this.ctrls = {
-          lineWidth: document.getElementById('width'),
-          strokeStyle: document.getElementById('color'),
-          fillStyle: document.getElementById('fillcolor')
-        };
-        this.history = {
-          list: [],
-          length: 10,
-          index: 0
-        };
-        this.flags = {
-          resizable: false,
-          mode: 'pen'
-        };
-        this.backgroundImage = null;
-        this.eraseSize = this.defaultOptions.eraseSize;
-      }
 
-      saveHistory() {
-        // 保存历史
-        const data = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-        const { length, index } = this.history;
-        if(this.history.list.length !== index) {
-          this.history.list = this.history.list.splice(0, index);
+    <script>
+      class DrawPen {
+        constructor() {
+          this.ratio = window.devicePixelRatio;
+          this.canvas = document.getElementById('canvas');
+          this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
+          const rect = this.canvas.parentElement.getBoundingClientRect();
+          this.defaultOptions = {
+            lineWidth: 4,
+            fillStyle: '#000000',
+            strokeStyle: '#000000',
+            canvasWidth: 800,
+            canvasHeight: 480,
+            eraseSize: 16,
+            lineCap: 'round',
+            lineJoin: 'round',
+          };
+          this.resizeCanvas(rect.width - 15, rect.height - 15);
+          this.ctrls = {
+            lineWidth: document.getElementById('width'),
+            strokeStyle: document.getElementById('color'),
+            fillStyle: document.getElementById('fillcolor'),
+          };
+          this.history = {
+            list: [],
+            length: 10,
+            index: 0,
+          };
+          this.flags = {
+            resizable: false,
+            mode: 'pen',
+          };
+          this.backgroundImage = null;
+          this.eraseSize = this.defaultOptions.eraseSize;
         }
-        if(this.history.list.length < length) {
-          this.history.list.push({ data, width: this.canvas.width, height: this.canvas.height });
-          this.history.index++;
-        } else {
-          this.history.list.shift();
-          this.history.list.push({ data, width: this.canvas.width, height: this.canvas.height });
-        }
-      }
-      backHistory() {
-        // 撤销
-        const { list, index } = this.history;
-        if(index > 1) {
-          const i = --this.history.index - 1;
-          const data = list[i].data;
-          // this.canvas.width = list[i].width;
-          // this.canvas.height = list[i].height;
-          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-          this.ctx.putImageData(data, 0, 0);
-        }
-      }
-      forwardHistory() {
-        // 前进
-        const { list, index } = this.history;
-        if(index < list.length) {
-          const item = list[this.history.index++];
-          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-          // this.canvas.width = item.width;
-          // this.canvas.height = item.height;
-          this.ctx.putImageData(item.data, 0, 0);
-        }
-      }
 
-      // resize canvas画布大小
-      resizeCanvas(w, h) {
-        if(w) {
-          this.canvas.width = w * this.ratio;
-          this.canvas.style.width = w + 'px';
-          document.getElementById('bgw').value = w;
-          this.defaultOptions.canvasWidth = w * this.ratio;
+        saveHistory() {
+          // 保存历史
+          const data = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+          const { length, index } = this.history;
+          if (this.history.list.length !== index) {
+            this.history.list = this.history.list.splice(0, index);
+          }
+          if (this.history.list.length < length) {
+            this.history.list.push({ data, width: this.canvas.width, height: this.canvas.height });
+            this.history.index++;
+          } else {
+            this.history.list.shift();
+            this.history.list.push({ data, width: this.canvas.width, height: this.canvas.height });
+          }
         }
-        if(h) {
-          this.canvas.height = h * this.ratio;
-          this.canvas.style.height = h + 'px';
-          document.getElementById('bgh').value = h;
-          this.defaultOptions.canvasHeight = h * this.ratio;
+        backHistory() {
+          // 撤销
+          const { list, index } = this.history;
+          if (index > 1) {
+            const i = --this.history.index - 1;
+            const data = list[i].data;
+            // this.canvas.width = list[i].width;
+            // this.canvas.height = list[i].height;
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.putImageData(data, 0, 0);
+          }
         }
-        this.ctx.save(this.ratio, this.ratio);
-        this.setWhiteBackground();
-      }
+        forwardHistory() {
+          // 前进
+          const { list, index } = this.history;
+          if (index < list.length) {
+            const item = list[this.history.index++];
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            // this.canvas.width = item.width;
+            // this.canvas.height = item.height;
+            this.ctx.putImageData(item.data, 0, 0);
+          }
+        }
 
-      // 设置白色背景颜色
-      setWhiteBackground(ox = 0, oy = 0, ex = this.canvas.width, ey = this.canvas.height, clearImage = false) {
-        this.ctx.save();
-        this.ctx.fillStyle = 'rgb(255, 255, 255)';
-        this.ctx.fillRect(ox, oy, ex, ey);
-        if(this.backgroundImage && !clearImage) {
-          this.drawImage(this.backgroundImage);
+        // resize canvas画布大小
+        resizeCanvas(w, h) {
+          if (w) {
+            this.canvas.width = w * this.ratio;
+            this.canvas.style.width = w + 'px';
+            document.getElementById('bgw').value = w;
+            this.defaultOptions.canvasWidth = w * this.ratio;
+          }
+          if (h) {
+            this.canvas.height = h * this.ratio;
+            this.canvas.style.height = h + 'px';
+            document.getElementById('bgh').value = h;
+            this.defaultOptions.canvasHeight = h * this.ratio;
+          }
+          this.ctx.save(this.ratio, this.ratio);
+          this.setWhiteBackground();
         }
-        this.ctx.restore();
-      }
 
-      // 初始化
-      initCanvas() {
-        this.setWhiteBackground();
-        this.canvas.onmousedown = ev => {
-          if(this.flags.mode === 'erase') {
-            const { offsetX, offsetY } = ev;
-            this.setWhiteBackground(offsetX * this.ratio, offsetY * this.ratio, this.eraseSize * this.ratio, this.eraseSize * this.ratio, true);
-            this.canvas.onmousemove = ev => {
+        // 设置白色背景颜色
+        setWhiteBackground(ox = 0, oy = 0, ex = this.canvas.width, ey = this.canvas.height, clearImage = false) {
+          this.ctx.save();
+          this.ctx.fillStyle = 'rgb(255, 255, 255)';
+          this.ctx.fillRect(ox, oy, ex, ey);
+          if (this.backgroundImage && !clearImage) {
+            this.drawImage(this.backgroundImage);
+          }
+          this.ctx.restore();
+        }
+
+        // 初始化
+        initCanvas() {
+          this.setWhiteBackground();
+          this.canvas.oncontextmenu = (ev) => ev.preventDefault();
+          this.canvas.onmousedown = (ev) => {
+            // 只有右键被按下，切换成橡皮擦
+            const rightDown = ev.button === 2 && ev.button === ev.buttons;
+            if (rightDown) this.canvas.classList.add('force-erase');
+            if (this.flags.mode === 'erase' || rightDown) {
+              const eraseSize = rightDown ? 32 : this.eraseSize;
               const { offsetX, offsetY } = ev;
-              this.setWhiteBackground(offsetX * this.ratio, offsetY * this.ratio, this.eraseSize * this.ratio, this.eraseSize * this.ratio, true);
-            };
-            document.onmouseup = ev => {
-              this.canvas.onmousemove = null;
-              document.onmouseup = null;
-              this.saveHistory(); // 保存历史
-            };
-          } else if(this.flags.mode === 'pen') {
-            const { offsetX, offsetY } = ev;
-            let startXY = [offsetX * this.ratio, offsetY * this.ratio];
-            let controlXY = null;
-            drawStart(this.ctx, startXY[0], startXY[1]);
-
-            this.canvas.onmousemove = ev => {
+              this.setWhiteBackground(
+                offsetX * this.ratio,
+                offsetY * this.ratio,
+                eraseSize * this.ratio,
+                eraseSize * this.ratio,
+                true
+              );
+              this.canvas.onmousemove = (ev) => {
+                const { offsetX, offsetY } = ev;
+                this.setWhiteBackground(
+                  offsetX * this.ratio,
+                  offsetY * this.ratio,
+                  eraseSize * this.ratio,
+                  eraseSize * this.ratio,
+                  true
+                );
+              };
+              document.onmouseup = (ev) => {
+                this.canvas.onmousemove = null;
+                document.onmouseup = null;
+                this.saveHistory(); // 保存历史
+                if (rightDown) this.canvas.classList.remove('force-erase');
+              };
+            } else if (this.flags.mode === 'pen') {
               const { offsetX, offsetY } = ev;
-              const currentX = offsetX * this.ratio;
-              const currentY = offsetY * this.ratio;
-              if(controlXY) {
-                const endXY = [(currentX + controlXY[0]) / 2, (currentY + controlXY[1]) / 2];
-                drawLine(this.ctx, ...controlXY, ...endXY);
-                startXY = endXY;
-              }
-              controlXY = [currentX, currentY];
-            };
-            document.onmouseup = ev => {
-              this.canvas.onmousemove = null;
-              document.onmouseup = null;
-              this.saveHistory(); // 保存历史
-              drawEnd(this.ctx);
-            };
-          } else if(this.flags.mode === 'fill') {
-            const { offsetX, offsetY } = ev;
-            const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-            const color = this.ctrls.fillStyle.value.split('#')[1];
+              let startXY = [offsetX * this.ratio, offsetY * this.ratio];
+              let controlXY = null;
+              drawStart(this.ctx, startXY[0], startXY[1]);
+              drawLine(this.ctx, ...startXY, ...startXY);
 
-            // fillStyle 的 rgb 值
-            const r = parseInt(color[0] + color[1], 16);
-            const g = parseInt(color[2] + color[3], 16);
-            const b = parseInt(color[4] + color[5], 16);
-            const getIndex = (x, y) => (this.canvas.width * +y + +x) * 4; // 二维坐标转换为 imageData 的一维坐标
-            const oIndex = getIndex(offsetX * this.ratio, offsetY * this.ratio); // 点击的点的坐标
+              this.canvas.onmousemove = (ev) => {
+                const { offsetX, offsetY } = ev;
+                const currentX = offsetX * this.ratio;
+                const currentY = offsetY * this.ratio;
+                if (controlXY) {
+                  const endXY = [(currentX + controlXY[0]) / 2, (currentY + controlXY[1]) / 2];
+                  drawLine(this.ctx, ...controlXY, ...endXY);
+                  startXY = endXY;
+                }
+                controlXY = [currentX, currentY];
+              };
+              document.onmouseup = (ev) => {
+                this.canvas.onmousemove = null;
+                document.onmouseup = null;
+                this.saveHistory(); // 保存历史
+                drawEnd(this.ctx);
+              };
+            } else if (this.flags.mode === 'fill') {
+              const { offsetX, offsetY } = ev;
+              const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+              const color = this.ctrls.fillStyle.value.split('#')[1];
 
-            // 原始的 rgb 值
-            const sr = imageData.data[oIndex], sg = imageData.data[oIndex + 1], sb = imageData.data[oIndex + 2];
-            const tempArr = [[offsetX * this.ratio, offsetY * this.ratio].join(',')];
-            let count = 1000;
-            do {
-              const [x, y] = tempArr.pop().split(',');
-              const index = getIndex(x, y);
-              if(index < 0 || index > this.canvas.width * this.canvas.height * 4) {
-                break;
-              }
-              imageData.data[index] = r;
-              imageData.data[index + 1] = g;
-              imageData.data[index + 2] = b;
+              // fillStyle 的 rgb 值
+              const r = parseInt(color[0] + color[1], 16);
+              const g = parseInt(color[2] + color[3], 16);
+              const b = parseInt(color[4] + color[5], 16);
+              const getIndex = (x, y) => (this.canvas.width * +y + +x) * 4; // 二维坐标转换为 imageData 的一维坐标
+              const oIndex = getIndex(offsetX * this.ratio, offsetY * this.ratio); // 点击的点的坐标
 
-              const temp = [
-                [+x, +y - 1],
-                [+x + 1, +y],
-                [+x, +y + 1],
-                [+x - 1, +y]
-              ];
-              temp.map(([x, y]) => {
-                if(x >= 0 && x < this.canvas.width && y >= 0 && y < this.canvas.height) {
-                  const ti = getIndex(x, y);
-                  if(imageData.data[ti] === sr && imageData.data[ti + 1] === sg && imageData.data[ti + 2] === sb) {
-                    const xy = [x, y].join(',');
-                    if(!tempArr.includes(xy)) {
-                      tempArr.push(xy);
+              // 原始的 rgb 值
+              const sr = imageData.data[oIndex],
+                sg = imageData.data[oIndex + 1],
+                sb = imageData.data[oIndex + 2];
+              const tempArr = [[offsetX * this.ratio, offsetY * this.ratio].join(',')];
+              let count = 1000;
+              do {
+                const [x, y] = tempArr.pop().split(',');
+                const index = getIndex(x, y);
+                if (index < 0 || index > this.canvas.width * this.canvas.height * 4) {
+                  break;
+                }
+                imageData.data[index] = r;
+                imageData.data[index + 1] = g;
+                imageData.data[index + 2] = b;
+
+                const temp = [
+                  [+x, +y - 1],
+                  [+x + 1, +y],
+                  [+x, +y + 1],
+                  [+x - 1, +y],
+                ];
+                temp.map(([x, y]) => {
+                  if (x >= 0 && x < this.canvas.width && y >= 0 && y < this.canvas.height) {
+                    const ti = getIndex(x, y);
+                    if (imageData.data[ti] === sr && imageData.data[ti + 1] === sg && imageData.data[ti + 2] === sb) {
+                      const xy = [x, y].join(',');
+                      if (!tempArr.includes(xy)) {
+                        tempArr.push(xy);
+                      }
                     }
                   }
-                }
-              });
-            } while(count-- && tempArr.length);
-            this.ctx.putImageData(imageData, 0, 0);
-            this.saveHistory();
-          } else if(this.flags.mode === 'get') {
-            const { offsetX, offsetY } = ev;
-            // const index = this.canvas.width * offsetY + offsetX;
-            const imageData = this.ctx.getImageData(offsetX * this.ratio, offsetY * this.ratio, 1, 1);
-            let hex = '#';
-            imageData.data.filter((it, index) => index < 3).map(item => {
-              hex += item.toString(16).padStart(2, '0');
-            });
-            this.ctrls.fillStyle.value = hex;
-            document.getElementById('fillcolortext').value = hex;
-          }
-        };
-        this.saveHistory();
-        this.initCtrls();
-        this.resetConfig();
-      }
-
-      // 重置
-      resetConfig() {
-        for(let key in this.defaultOptions) {
-          if(key in this.ctx) {
-            this.ctx[key] = this.defaultOptions[key];
-          }
-          if(this.ctrls[key]) {
-            this.ctrls[key].value = this.defaultOptions[key];
-          }
+                });
+              } while (count-- && tempArr.length);
+              this.ctx.putImageData(imageData, 0, 0);
+              this.saveHistory();
+            } else if (this.flags.mode === 'get') {
+              const { offsetX, offsetY } = ev;
+              // const index = this.canvas.width * offsetY + offsetX;
+              const imageData = this.ctx.getImageData(offsetX * this.ratio, offsetY * this.ratio, 1, 1);
+              let hex = '#';
+              imageData.data
+                .filter((it, index) => index < 3)
+                .map((item) => {
+                  hex += item.toString(16).padStart(2, '0');
+                });
+              this.ctrls.fillStyle.value = hex;
+              document.getElementById('fillcolortext').value = hex;
+            }
+          };
+          this.saveHistory();
+          this.initCtrls();
+          this.resetConfig();
         }
-      }
 
-      // 画图
-      drawImage(img) {
-        let imgW = img.width;
-        let imgH = img.height;
-        if(imgW >= this.canvas.width || imgH >= this.canvas.height) {
-          const imgRatio = imgW / imgH;
-          const canvasRatio = this.canvas.width / this.canvas.height;
-          if(imgRatio > canvasRatio) {
-            imgW = this.canvas.width;
-            imgH = imgW / imgRatio;
-          } else {
-            imgH = this.canvas.height;
-            imgW = imgH * imgRatio;
-          }
-        }
-        const cw = (this.canvas.width - imgW) / 2;
-        const ch = (this.canvas.height - imgH) / 2;
-        this.ctx.drawImage(img, cw, ch, imgW, imgH);
-      }
-
-      // 绑定工具事件
-      initCtrls() {
-        // 设置为默认值
-        for(let key in this.ctrls) {
-          if(this.ctrls[key]) {
-            if(this.defaultOptions[key]) {
+        // 重置
+        resetConfig() {
+          for (let key in this.defaultOptions) {
+            if (key in this.ctx) {
+              this.ctx[key] = this.defaultOptions[key];
+            }
+            if (this.ctrls[key]) {
               this.ctrls[key].value = this.defaultOptions[key];
             }
-            this.ctrls[key].onchange = ev => {
-              this.ctx[key] = ev.target.value;
-            };
           }
         }
-        document.getElementById('fillcolortext').value = this.defaultOptions.fillStyle;
-        document.getElementById('reset').onclick = () => {
-          this.resetConfig();
-        };
-        document.getElementById('clear').onclick = () => {
-          this.setWhiteBackground();
-          this.saveHistory();
-        };
-        document.getElementById('back').onclick = () => {
-          this.backHistory();
-        };
-        document.getElementById('forward').onclick = () => {
-          this.forwardHistory();
-        };
-        document.addEventListener('keydown', (ev) => {
-          if('z,y,r,Escape'.indexOf(ev.key) >= 0) {
-            ev.preventDefault();            
-          }
-          if(ev.ctrlKey) {
-            switch(ev.key) {
-              case 'z': 
-                this.backHistory();
-                break;
-              case 'y':
-                this.forwardHistory();
-                break;
-              case 'r':
-                this.resetConfig();
-                break;
-              default: break;
-            }
-          }
-          switch(ev.key) {
-            case 'Escape':
-              if(this.backgroundImage) {
-                this.canvas.width = this.backgroundImage.width;
-                this.canvas.height = this.backgroundImage.height;
-              }
-              this.setWhiteBackground();
-              this.saveHistory();
-              break;
-            default: break;
-          }
-        });
 
-        // 导出文件
-        document.getElementById('export').onclick = () => {
-          const type = document.getElementById('exporttype').value;
-          this.canvas.toBlob(blob => {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.download = `手绘_${Date.now()}.${type.split('/')[1]}`;
-            link.href = url;
-            link.click();
-            URL.revokeObjectURL(url);
-          }, type);
-        };
-
-        // 调整画布大小功能
-        document.getElementById('bgw').onblur = ev => {
-          this.resizeCanvas(ev.target.value, null);
-        };
-        document.getElementById('bgh').onblur = ev => {
-          this.resizeCanvas(null, ev.target.value);
-        };
-        document.getElementById('resetbg').onclick = () => {
-          const { canvasWidth: w, canvasHeight: h } = this.defaultOptions;
-          this.resizeCanvas(w, h);
-          document.getElementById('bgw').value = w;
-          document.getElementById('bgh').value = h;
-        };
-        // document.getElementById('manualbg').onchange = ev => {
-        //   this.flags.resizable = ev.target.checked;
-
-        //   const borderbox = document.getElementById('borderbox');
-        //   if(this.flags.resizable) {
-        //     borderbox.style.resize = 'both';
-        //     borderbox.style.overflow = 'hidden';
-        //     borderbox.onmousedown = ev => {
-        //       if(ev.target !== borderbox) return;
-        //       borderbox.onmousemove = ev => {
-        //         let { clientWidth, clientHeight } = ev.target;
-        //         clientWidth -= 10;
-        //         clientHeight -= 10;
-        //         this.resizeCanvas(clientWidth, clientHeight);
-        //         document.getElementById('bgw').value = clientWidth;
-        //         document.getElementById('bgh').value = clientHeight;
-        //       };
-        //       borderbox.onmouseup = () => {
-        //         borderbox.onmousemove = null;
-        //         borderbox.onmouseup = null;
-        //       };
-        //     };
-        //   } else {
-        //     borderbox.style.resize = 'unset';
-        //     borderbox.style.overflow = 'unset';
-        //     borderbox.onmousedown = null;
-        //   }
-        // }
-
-        // 橡皮大小选择
-        document.getElementById('eraseSizes').onchange = ev => {
-          this.eraseSize = parseInt(ev.target.value);
-          if(this.flags.mode === 'erase') {
-            this.canvas.className = `${this.flags.mode}-${this.eraseSize}`;
-          }
-          const ele = document.querySelector('.eraseLabel');
-          ele.classList.remove('eraseLabel-16', 'eraseLabel-32');
-          ele.classList.add('eraseLabel-' + this.eraseSize);
-        };
-
-        // 模式选择
-        document.getElementById('modegroup').onchange = ev => {
-          if(ev.target.type === 'radio') {
-            this.flags.mode = ev.target.value;
-            if(this.flags.mode === 'erase') {
-              this.canvas.className = `${this.flags.mode}-${this.eraseSize}`;
+        // 画图
+        drawImage(img) {
+          let imgW = img.width;
+          let imgH = img.height;
+          if (imgW >= this.canvas.width || imgH >= this.canvas.height) {
+            const imgRatio = imgW / imgH;
+            const canvasRatio = this.canvas.width / this.canvas.height;
+            if (imgRatio > canvasRatio) {
+              imgW = this.canvas.width;
+              imgH = imgW / imgRatio;
             } else {
-              this.canvas.className = this.flags.mode;
+              imgH = this.canvas.height;
+              imgW = imgH * imgRatio;
             }
           }
-        };
+          const cw = (this.canvas.width - imgW) / 2;
+          const ch = (this.canvas.height - imgH) / 2;
+          this.ctx.drawImage(img, cw, ch, imgW, imgH);
+        }
 
-        // 导入图片
-        const importImage = (file) => {
-          const reg = /^image\//;
-          if(!file.type || !reg.test(file.type)) {
-            alert('error file type !')
-            return;
+        // 绑定工具事件
+        initCtrls() {
+          // 设置为默认值
+          for (let key in this.ctrls) {
+            if (this.ctrls[key]) {
+              if (this.defaultOptions[key]) {
+                this.ctrls[key].value = this.defaultOptions[key];
+              }
+              this.ctrls[key].onchange = (ev) => {
+                this.ctx[key] = ev.target.value;
+              };
+            }
           }
-          const reader = new FileReader();
-          reader.onload = ev => {
-            const res = reader.result;
-            const img = new Image();
-            img.onload = ev => {
-              this.backgroundImage = img;
-              this.drawImage(img);
-              this.saveHistory();
-            };
-            img.src = res;
+          document.getElementById('fillcolortext').value = this.defaultOptions.fillStyle;
+          document.getElementById('reset').onclick = () => {
+            this.resetConfig();
           };
-          reader.readAsDataURL(file);
-        };
-        document.getElementById('import').onchange = ev => {
-          const file = ev.target.files[0];
-          importImage(file);
-        };
-
-        // 移除图片
-        document.getElementById('remove').onclick = ev => {
-          document.getElementById('importForm').reset();
-          this.backgroundImage = null;
-          this.canvas.width = this.defaultOptions.canvasWidth;
-          this.canvas.height = this.defaultOptions.canvasHeight;
-          this.setWhiteBackground();
-        };
-
-        // 粘贴事件
-        document.addEventListener('paste', (ev) => {
-          const data = [];
-          const items = ev.clipboardData.items;
-          for(let i = 0; i < items.length; i++) {
-            if(/^image\//i.test(items[i].type)) {
-              data.push(items[i].getAsFile());
+          document.getElementById('clear').onclick = () => {
+            this.setWhiteBackground();
+            this.saveHistory();
+          };
+          document.getElementById('back').onclick = () => {
+            this.backHistory();
+          };
+          document.getElementById('forward').onclick = () => {
+            this.forwardHistory();
+          };
+          document.addEventListener('keydown', (ev) => {
+            if ('z,y,r,Escape'.indexOf(ev.key) >= 0) {
+              ev.preventDefault();
             }
-          }
-          if(data.length) {
-            const file = data[0]; // 取第一张图片
+            if (ev.ctrlKey) {
+              switch (ev.key) {
+                case 'z':
+                  this.backHistory();
+                  break;
+                case 'y':
+                  this.forwardHistory();
+                  break;
+                case 'r':
+                  this.resetConfig();
+                  break;
+                default:
+                  break;
+              }
+            }
+            switch (ev.key) {
+              case 'Escape':
+                if (this.backgroundImage) {
+                  this.canvas.width = this.backgroundImage.width;
+                  this.canvas.height = this.backgroundImage.height;
+                }
+                this.setWhiteBackground();
+                this.saveHistory();
+                break;
+              default:
+                break;
+            }
+          });
+
+          // 导出文件
+          document.getElementById('export').onclick = () => {
+            const type = document.getElementById('exporttype').value;
+            this.canvas.toBlob((blob) => {
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.download = `手绘_${Date.now()}.${type.split('/')[1]}`;
+              link.href = url;
+              link.click();
+              URL.revokeObjectURL(url);
+            }, type);
+          };
+
+          // 调整画布大小功能
+          document.getElementById('bgw').onblur = (ev) => {
+            this.resizeCanvas(ev.target.value, null);
+          };
+          document.getElementById('bgh').onblur = (ev) => {
+            this.resizeCanvas(null, ev.target.value);
+          };
+          document.getElementById('resetbg').onclick = () => {
+            const { canvasWidth: w, canvasHeight: h } = this.defaultOptions;
+            this.resizeCanvas(w, h);
+            document.getElementById('bgw').value = w;
+            document.getElementById('bgh').value = h;
+          };
+          // document.getElementById('manualbg').onchange = ev => {
+          //   this.flags.resizable = ev.target.checked;
+
+          //   const borderbox = document.getElementById('borderbox');
+          //   if(this.flags.resizable) {
+          //     borderbox.style.resize = 'both';
+          //     borderbox.style.overflow = 'hidden';
+          //     borderbox.onmousedown = ev => {
+          //       if(ev.target !== borderbox) return;
+          //       borderbox.onmousemove = ev => {
+          //         let { clientWidth, clientHeight } = ev.target;
+          //         clientWidth -= 10;
+          //         clientHeight -= 10;
+          //         this.resizeCanvas(clientWidth, clientHeight);
+          //         document.getElementById('bgw').value = clientWidth;
+          //         document.getElementById('bgh').value = clientHeight;
+          //       };
+          //       borderbox.onmouseup = () => {
+          //         borderbox.onmousemove = null;
+          //         borderbox.onmouseup = null;
+          //       };
+          //     };
+          //   } else {
+          //     borderbox.style.resize = 'unset';
+          //     borderbox.style.overflow = 'unset';
+          //     borderbox.onmousedown = null;
+          //   }
+          // }
+
+          // 橡皮大小选择
+          document.getElementById('eraseSizes').onchange = (ev) => {
+            this.eraseSize = parseInt(ev.target.value);
+            if (this.flags.mode === 'erase') {
+              this.canvas.className = `${this.flags.mode}-${this.eraseSize}`;
+            }
+            const ele = document.querySelector('.eraseLabel');
+            ele.classList.remove('eraseLabel-16', 'eraseLabel-32');
+            ele.classList.add('eraseLabel-' + this.eraseSize);
+          };
+
+          // 模式选择
+          document.getElementById('modegroup').onchange = (ev) => {
+            if (ev.target.type === 'radio') {
+              this.flags.mode = ev.target.value;
+              if (this.flags.mode === 'erase') {
+                this.canvas.className = `${this.flags.mode}-${this.eraseSize}`;
+              } else {
+                this.canvas.className = this.flags.mode;
+              }
+            }
+          };
+
+          // 导入图片
+          const importImage = (file) => {
+            const reg = /^image\//;
+            if (!file.type || !reg.test(file.type)) {
+              alert('error file type !');
+              return;
+            }
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              const res = reader.result;
+              const img = new Image();
+              img.onload = (ev) => {
+                this.backgroundImage = img;
+                this.drawImage(img);
+                this.saveHistory();
+              };
+              img.src = res;
+            };
+            reader.readAsDataURL(file);
+          };
+          document.getElementById('import').onchange = (ev) => {
+            const file = ev.target.files[0];
             importImage(file);
-          }
-        });
+          };
 
-        // 拖拽事件
-        canvas.addEventListener('dragover', (ev) => ev.preventDefault());
-        document.addEventListener('drop', (ev) => {
-          ev.preventDefault();
+          // 移除图片
+          document.getElementById('remove').onclick = (ev) => {
+            document.getElementById('importForm').reset();
+            this.backgroundImage = null;
+            this.canvas.width = this.defaultOptions.canvasWidth;
+            this.canvas.height = this.defaultOptions.canvasHeight;
+            this.setWhiteBackground();
+          };
 
-          const files = ev.dataTransfer.files;
-          for(let i = 0; i < files.length; i++) {
-            if(/^image\//i.test(files[i].type)) {
-              importImage(files[i]);
-              break;
+          // 粘贴事件
+          document.addEventListener('paste', (ev) => {
+            const data = [];
+            const items = ev.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+              if (/^image\//i.test(items[i].type)) {
+                data.push(items[i].getAsFile());
+              }
             }
-          }
-        });
-      }
-    };
-    const dp = new DrawPen();
-    dp.initCanvas();
+            if (data.length) {
+              const file = data[0]; // 取第一张图片
+              importImage(file);
+            }
+          });
 
-    function drawStart(ctx, x, y) {
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-    }
-    function drawLine(ctx, cx, cy, x, y) {
-      ctx.quadraticCurveTo(cx, cy, x, y);
-      ctx.stroke();
-    }
-    function drawEnd(ctx) {
-      ctx.restore();
-    }
-  </script>
-</body>
+          // 拖拽事件
+          canvas.addEventListener('dragover', (ev) => ev.preventDefault());
+          document.addEventListener('drop', (ev) => {
+            ev.preventDefault();
+
+            const files = ev.dataTransfer.files;
+            for (let i = 0; i < files.length; i++) {
+              if (/^image\//i.test(files[i].type)) {
+                importImage(files[i]);
+                break;
+              }
+            }
+          });
+        }
+      }
+      const dp = new DrawPen();
+      dp.initCanvas();
+
+      function drawStart(ctx, x, y) {
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+      }
+      function drawLine(ctx, cx, cy, x, y) {
+        ctx.quadraticCurveTo(cx, cy, x, y);
+        ctx.stroke();
+      }
+      function drawEnd(ctx) {
+        ctx.restore();
+      }
+    </script>
+  </body>
 </html>

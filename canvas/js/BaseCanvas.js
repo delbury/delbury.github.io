@@ -1,3 +1,5 @@
+// 新版 Canvas 通用基类
+
 class BaseCanvas {
   ctx = null;
   canvas = null;
