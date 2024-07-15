@@ -6,20 +6,7 @@ export class BaseCanvas {
       throw new TypeError('first param must be a canvas element');
     }
     this.canvas = canvas;
-    const ctx = this.canvas.getContext('2d');
-    this.ctx = ctx;
-    this.ctx = new Proxy(ctx, {
-      get: (target, prop, rec) => {
-        if (typeof target[prop] === 'function') {
-          return target[prop].bind(target);
-        }
-        return target[prop];
-      },
-      set: (target, prop, value, rec) => {
-        target[prop] = value;
-        return true;
-      },
-    });
+    this.ctx = this.canvas.getContext('2d');
 
     this.ratio = window.devicePixelRatio;
     this.baseWidth = width || canvas.parentNode.offsetWidth;
