@@ -1,23 +1,26 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Piano</title>
+    <link rel="stylesheet" href="./style/piano.css" />
+    <style>
+      * {
+        user-select: none;
+      }
+    </style>
+  </head>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Piano</title>
-  <link rel="stylesheet" href="./style/piano.css">
-</head>
+  <body>
+    <div id="piano-keyboard" class="piano-keyboard"></div>
 
-<body>
-  <div id="piano-keyboard" class="piano-keyboard"></div>
-
-  <script type="module">
-    // 52 白色，36 黑色
-    import { Piano } from './js/piano.js'
-    // import { NotePlay, Sequence } from './js/music.js'
-    window.piano = new Piano()
-  </script>
-</body>
-
+    <script type="module">
+      // 52 白色，36 黑色
+      import { Piano } from './js/piano.js';
+      // import { NotePlay, Sequence } from './js/music.js'
+      window.piano = new Piano();
+    </script>
+  </body>
 </html>

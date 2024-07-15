@@ -3,7 +3,7 @@
  * 音名：C / #C,bD / D / #D,bE / E / F / #F,bG / G / #G,bA / A / #A,bB / B
  * 简谱：1 /       / 2 /       / 3 / 4 /       / 5 /       / 6 /       / 7
  */
-import { NotePlay } from './music/NotePlay.js'
+import { NotePlay } from './music/NotePlay.js';
 
 // 按键音符名map
 const keyToName = [
@@ -70,159 +70,163 @@ const keyToName = [
   ['5+c', 'G6'],
   ['6+c', 'A6'],
   ['7+c', 'B6'],
-]
+];
 
 export class BaseKey {
   constructor(actx, name, leve) {
     // this.level = leve || 4
-    this.actx = actx
-    this.keyName = name
-    this.innerClass = 'key-inner'
+    this.actx = actx;
+    this.keyName = name;
+    this.innerClass = 'key-inner';
 
-    this.note = new NotePlay(actx, `${name} q`)
+    this.note = new NotePlay(actx, `${name} q`);
 
-    this.keyBoxElement = document.createElement('div') // 外层
-    this.keyElement = document.createElement('div') // 按键
-    this.keyElement.className = this.innerClass
-    this.keyBoxElement.appendChild(this.keyElement)
+    this.keyBoxElement = document.createElement('div'); // 外层
+    this.keyElement = document.createElement('div'); // 按键
+    this.keyElement.className = this.innerClass;
+    this.keyBoxElement.appendChild(this.keyElement);
+
+    this.keyElement.addEventListener('mousedown', (ev) => {
+      this.play();
+    });
   }
 
   keydown() {
-    this.keyElement.classList.add('is-keydown')
-    this.play()
+    this.keyElement.classList.add('is-keydown');
+    this.play();
   }
 
   keyup() {
-    this.keyElement.classList.remove('is-keydown')
+    this.keyElement.classList.remove('is-keydown');
   }
 
   play() {
-    this.note.play()
+    this.note.play();
   }
 }
 
 export class BlackKey extends BaseKey {
   constructor(...props) {
-    super(...props)
-    this.keyBoxElement.className = 'key-black'
+    super(...props);
+    this.keyBoxElement.className = 'key-black';
   }
 }
 
 export class WhiteKey extends BaseKey {
   constructor(actx, { keyName, subkeyName, hasSubkey, level } = {}) {
-    super(actx, keyName, level)
-    this.keyBoxElement.className = 'key-white'
+    super(actx, keyName, level);
+    this.keyBoxElement.className = 'key-white';
 
     if (hasSubkey) {
-      this.subkey = new BlackKey(actx, subkeyName, level)
-      this.keyBoxElement.appendChild(this.subkey.keyBoxElement)
+      this.subkey = new BlackKey(actx, subkeyName, level);
+      this.keyBoxElement.appendChild(this.subkey.keyBoxElement);
     }
   }
 }
 
 export class Keyboard {
   constructor(actx, target = '#piano-keyboard', keyArr) {
-    this.actx = actx
-    this.target = target
-    this.keyArr = keyArr
-    this.keyNameMap = new Map(keyToName) // 按键和音名对应
-    this.keyInstanceMap = new Map()
+    this.actx = actx;
+    this.target = target;
+    this.keyArr = keyArr;
+    this.keyNameMap = new Map(keyToName); // 按键和音名对应
+    this.keyInstanceMap = new Map();
 
-    this.reg = new RegExp(`^[${(Array.from(this.keyNameMap.keys())).join('')}]{1}$`, 'i') // 按键筛选正则
+    this.reg = new RegExp(`^[${Array.from(this.keyNameMap.keys()).join('')}]{1}$`, 'i'); // 按键筛选正则
 
-    this.keyboardElement = this.createKeyboardElement(target) // 获取或创建根元素
-    this.createKeys() // 创建按键
+    this.keyboardElement = this.createKeyboardElement(target); // 获取或创建根元素
+    this.createKeys(); // 创建按键
   }
 
   // 创建按键
   createKeys() {
-    this.keyArr.forEach(item => {
-      const wk = new WhiteKey(this.actx, item)
-      this.keyboardElement.appendChild(wk.keyBoxElement)
+    this.keyArr.forEach((item) => {
+      const wk = new WhiteKey(this.actx, item);
+      this.keyboardElement.appendChild(wk.keyBoxElement);
 
       if (item.hasSubkey) {
-        this.keyInstanceMap.set(item.subkeyName, wk.subkey)
+        this.keyInstanceMap.set(item.subkeyName, wk.subkey);
       }
-      this.keyInstanceMap.set(item.keyName, wk)
-    })
+      this.keyInstanceMap.set(item.keyName, wk);
+    });
   }
 
   // 创建键盘根元素
   createKeyboardElement(target) {
     if (typeof target !== 'string') {
-      throw new TypeError('必须传入选择器字符串！')
+      throw new TypeError('必须传入选择器字符串！');
     }
-    let ele = document.querySelector(target)
+    let ele = document.querySelector(target);
     if (!ele) {
-      ele = document.createElement('div')
-      ele.className = 'piano-keyboard'
+      ele = document.createElement('div');
+      ele.className = 'piano-keyboard';
     }
-    return ele
+    return ele;
   }
 
   // 键盘按下事件
   keydownEvent(ev) {
-    const key = ev.key
-    if(key === 'Alt' || key === 'Control') {
-      ev.preventDefault()
+    const key = ev.key;
+    if (key === 'Alt' || key === 'Control') {
+      ev.preventDefault();
     }
     if (this.reg.test(key)) {
-      ev.preventDefault()
+      ev.preventDefault();
 
-      let name = ''
-      if(ev.ctrlKey) {
-        name = this.keyNameMap.get(key.toLowerCase() + '+c')
-      } else if(ev.altKey) {
-        name = this.keyNameMap.get(key.toLowerCase() + '+s')
+      let name = '';
+      if (ev.ctrlKey) {
+        name = this.keyNameMap.get(key.toLowerCase() + '+c');
+      } else if (ev.altKey) {
+        name = this.keyNameMap.get(key.toLowerCase() + '+s');
       } else {
-        name = this.keyNameMap.get(key.toLowerCase())
+        name = this.keyNameMap.get(key.toLowerCase());
       }
       if (name) {
-        const instance = this.keyInstanceMap.get(name)
-        instance ? instance.keydown() : ''
+        const instance = this.keyInstanceMap.get(name);
+        instance ? instance.keydown() : '';
       }
     }
   }
 
   // 键盘松开事件
   keyupEvent(ev) {
-    const key = ev.key
-    if(key === 'Alt' || key === 'Control') {
-      ev.preventDefault()
+    const key = ev.key;
+    if (key === 'Alt' || key === 'Control') {
+      ev.preventDefault();
     }
     if (this.reg.test(key)) {
-      ev.preventDefault()
+      ev.preventDefault();
       const names = [
         this.keyNameMap.get(key.toLowerCase() + '+c'),
         this.keyNameMap.get(key.toLowerCase() + '+s'),
-        this.keyNameMap.get(key.toLowerCase())
-      ]
-      names.map(name => {
-        const instance = this.keyInstanceMap.get(name)
-        instance ? instance.keyup() : ''
-      })
+        this.keyNameMap.get(key.toLowerCase()),
+      ];
+      names.map((name) => {
+        const instance = this.keyInstanceMap.get(name);
+        instance ? instance.keyup() : '';
+      });
     }
   }
 
   // 绑定控制器
   bindControl() {
-    document.addEventListener('keydown', this.keydownEvent.bind(this))
-    document.addEventListener('keyup', this.keyupEvent.bind(this))
+    document.addEventListener('keydown', this.keydownEvent.bind(this));
+    document.addEventListener('keyup', this.keyupEvent.bind(this));
   }
 
   // 移出控制器事件
   removeControl() {
-    document.removeEventListener('keydown', this.keydownEvent.bind(this))
-    document.removeEventListener('keyup', this.keyupEvent.bind(this))
+    document.removeEventListener('keydown', this.keydownEvent.bind(this));
+    document.removeEventListener('keyup', this.keyupEvent.bind(this));
   }
 }
 
 export class Piano {
   constructor({ target, keyArr } = {}) {
-    this.keybord = null
-    this.actx = new AudioContext()
+    this.keybord = null;
+    this.actx = new AudioContext();
 
-    this.init()
+    this.init();
   }
 
   init(target, keyArr) {
@@ -251,9 +255,9 @@ export class Piano {
       { hasSubkey: true, keyName: 'G6', subkeyName: '#G6', level: n },
       { hasSubkey: true, keyName: 'A6', subkeyName: '#A6', level: n },
       { hasSubkey: false, keyName: 'B6', level: n },
-    ]
-    keyArr = keyArr || fn()
-    this.keybord = new Keyboard(this.actx, target, keyArr)
-    this.keybord.bindControl()
+    ];
+    keyArr = keyArr || fn();
+    this.keybord = new Keyboard(this.actx, target, keyArr);
+    this.keybord.bindControl();
   }
 }
