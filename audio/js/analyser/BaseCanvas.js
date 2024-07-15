@@ -8,26 +8,27 @@ export class BaseCanvas {
     this.canvas = canvas;
     const ctx = this.canvas.getContext('2d');
     this.ctx = ctx;
-    // this.ctx = new Proxy(ctx, {
-    //   // get(target, prop, rec) {
-    //   //   // if (typeof t[p] === 'function') {
-    //   //   //   return t[p].bind(t);
-    //   //   // }
-    //   //   return Reflect.get(target, prop, rec);
-    //   // },
-    //   // apply(target, thisArg, args) {
-    //   //   return Reflect.apply(target, ctx, args);
-    //   // },
-    // });
-    console.log(this.ctx);
+    this.ctx = new Proxy(ctx, {
+      get: (target, prop, rec) => {
+        if (typeof target[prop] === 'function') {
+          return target[prop].bind(target);
+        }
+        return target[prop];
+      },
+      set: (target, prop, value, rec) => {
+        target[prop] = value;
+        return true;
+      },
+    });
 
     this.ratio = window.devicePixelRatio;
-    const w = width || canvas.parentNode.offsetWidth;
-    const h = height;
-    this.canvas.style.width = w + 'px';
-    this.canvas.style.height = h + 'px';
-    this.canvas.width = w;
-    this.canvas.height = h;
+    this.baseWidth = width || canvas.parentNode.offsetWidth;
+    this.baseHeight = height;
+    this.canvas.style.width = this.baseWidth + 'px';
+    this.canvas.style.height = this.baseHeight + 'px';
+    this.canvas.width = this.baseWidth * this.ratio;
+    this.canvas.height = this.baseHeight * this.ratio;
+    this.ctx.scale(this.ratio, this.ratio);
 
     this.canvasOption = {
       lineWidth: 1,
@@ -48,13 +49,6 @@ export class BaseCanvas {
     };
 
     this.bindEvents();
-  }
-
-  get realWidth() {
-    return this.canvas.width * this.ratio;
-  }
-  get realHeight() {
-    return this.canvas.height * this.ratio;
   }
 
   // 开始绘制
@@ -123,8 +117,8 @@ export class BaseCanvas {
         value: data[i],
         db: dy * data[i] + this.yParams.min,
         freq: (i / data.length) * this.xParams.max,
-        x: (i / data.length) * (this.canvas.width - this.xParams.offset) * this.state.scaleX + this.xParams.offset,
-        y: (this.canvas.height - this.yParams.offset) * (1 - data[i] / 255),
+        x: (i / data.length) * (this.baseWidth - this.xParams.offset) * this.state.scaleX + this.xParams.offset,
+        y: (this.baseHeight - this.yParams.offset) * (1 - data[i] / 255),
       };
     };
     for (let i = 0, len = data.length; i < len - 1; i++) {
@@ -352,7 +346,7 @@ export class BaseCanvas {
       this.ctx.lineWidth = this.canvasOption.lineWidth;
       this.ctx.strokeStyle = this.canvasOption.strokeStyle;
       this.ctx.beginPath();
-      this.ctx.moveTo(this._offsetRecord, (this.canvas.height - this.yParams.offset) / 2);
+      this.ctx.moveTo(this._offsetRecord, (this.baseHeight - this.yParams.offset) / 2);
       this._timeScales = [];
     }
   }
@@ -370,7 +364,7 @@ export class BaseCanvas {
     this.ctx.lineWidth = 1;
     this.ctx.strokeStyle = '#333';
     this.ctx.setLineDash([]);
-    this.ctx.strokeText(text, x, y);
+    this.ctx.strokeText(String(text), x, y);
     this.ctx.restore();
   }
 
@@ -382,11 +376,11 @@ export class BaseCanvas {
     const byteMax = 128;
     const div = 150;
     const di = 1;
-    const dx = (this.canvas.width - this.xParams.offset) / length / div; // x轴间隔
+    const dx = (this.baseWidth - this.xParams.offset) / length / div; // x轴间隔
     const max = this.yParams.max - this.state.scaleY;
     const min = this.yParams.min - this.state.scaleY;
     for (let i = 0; i < length; i += di) {
-      const sy = ((max - (data[i] / byteMax - 1)) / (max - min)) * (this.canvas.height - yoffset);
+      const sy = ((max - (data[i] / byteMax - 1)) / (max - min)) * (this.baseHeight - yoffset);
       if (i === 0) {
         this.ctx.lineTo(this._offsetRecord + dx * di, sy);
       } else {
@@ -401,7 +395,7 @@ export class BaseCanvas {
         this.drawText(
           (time - this._startTime).toFixed(2),
           this.state.xScales[index] + textOffset,
-          this.canvas.height - this.yParams.offset + 10
+          this.baseHeight - this.yParams.offset + 10
         );
       }
     }
@@ -423,11 +417,11 @@ export class BaseCanvas {
     const yoffset = this.yParams.offset || 0;
     const length = data.length;
     const byteMax = 128;
-    const dx = (this.canvas.width - xoffset) / length; // x轴间隔
+    const dx = (this.baseWidth - xoffset) / length; // x轴间隔
     const max = this.yParams.max - this.state.scaleY;
     const min = this.yParams.min + this.state.scaleY;
     for (let i = 0; i < length; i++) {
-      const sy = ((max - (data[i] / byteMax - 1)) / (max - min)) * (this.canvas.height - yoffset);
+      const sy = ((max - (data[i] / byteMax - 1)) / (max - min)) * (this.baseHeight - yoffset);
       if (i === 0) {
         this.ctx.moveTo(xoffset + i * dx, sy);
       } else {
@@ -452,14 +446,14 @@ export class BaseCanvas {
     const yoffset = this.yParams.offset || 0;
     const xoffset = this.xParams.offset || 0;
     const length = data.length;
-    const dx = ((this.canvas.width - xoffset) / length) * this.state.scaleX; // x轴间隔
-    const dy = (this.canvas.height - yoffset) / 255; // y轴间隔
+    const dx = ((this.baseWidth - xoffset) / length) * this.state.scaleX; // x轴间隔
+    const dy = (this.baseHeight - yoffset) / 255; // y轴间隔
 
     for (let i = 0; i < length; i++) {
       if (i === 0) {
-        this.ctx.moveTo(xoffset + i * dx, this.canvas.height - yoffset - data[i] * dy);
+        this.ctx.moveTo(xoffset + i * dx, this.baseHeight - yoffset - data[i] * dy);
       } else {
-        this.ctx.lineTo(xoffset + i * dx, this.canvas.height - yoffset - data[i] * dy);
+        this.ctx.lineTo(xoffset + i * dx, this.baseHeight - yoffset - data[i] * dy);
       }
     }
     this.ctx.stroke();
@@ -477,7 +471,7 @@ export class BaseCanvas {
 
   // 绘制坐标系
   drawCoordinateSystem() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.clearRect(0, 0, this.baseWidth, this.baseHeight);
     let { min: ymin, max: ymax, offset: yoffset = 0, div: ydiv = 10, showText: yText = false } = this.yParams || {};
     let { min: xmin, max: xmax, offset: xoffset = 0, div: xdiv = 10, showText: xText = false } = this.xParams || {};
     const yTextOffsetX = 1;
@@ -485,14 +479,10 @@ export class BaseCanvas {
     const xTextOffsetX = -10;
     const xTextOffsetY = 3;
 
-    // 坐标轴偏移，以右下角为原点
-    this.yoffset = yoffset; // 原点上移
-    this.xoffset = xoffset; // 原点右移
-
     this.ctx.save();
     // 绘制 y 轴
     if (this.yParams) {
-      const dy = (this.canvas.height - yoffset) / ydiv;
+      const dy = (this.baseHeight - yoffset) / ydiv;
       if (this.state.waveType === 'time' || this.state.waveType === 'over-time') {
         ymax -= this.state.scaleY;
         ymin += this.state.scaleY;
@@ -508,9 +498,9 @@ export class BaseCanvas {
           this.ctx.strokeStyle = '#333';
           this.ctx.setLineDash([]);
           if (i === 0) {
-            this.ctx.strokeText(Math.round((ymax - dVal * i) * 100) / 100, yTextOffsetX, i * dy + 10);
+            this.ctx.strokeText(String(Math.round((ymax - dVal * i) * 100) / 100), yTextOffsetX, i * dy + 10);
           } else {
-            this.ctx.strokeText(Math.round((ymax - dVal * i) * 100) / 100, yTextOffsetX, i * dy - yTextOffsetY);
+            this.ctx.strokeText(String(Math.round((ymax - dVal * i) * 100) / 100), yTextOffsetX, i * dy - yTextOffsetY);
           }
         }
 
@@ -520,12 +510,12 @@ export class BaseCanvas {
           this.ctx.strokeStyle = '#333';
           this.ctx.lineWidth = 2;
           this.ctx.setLineDash([]);
-          this.ctx.lineTo(this.canvas.width, i * dy);
+          this.ctx.lineTo(this.baseWidth, i * dy);
         } else {
           this.ctx.strokeStyle = '#999';
           this.ctx.lineWidth = 1;
           this.ctx.setLineDash([3, 3, 6]);
-          this.ctx.lineTo(this.canvas.width, i * dy);
+          this.ctx.lineTo(this.baseWidth, i * dy);
         }
         this.ctx.stroke();
       }
@@ -533,7 +523,7 @@ export class BaseCanvas {
 
     // 绘制 x 轴
     if (this.xParams) {
-      const dx = (this.canvas.width - xoffset) / xdiv;
+      const dx = (this.baseWidth - xoffset) / xdiv;
       const dVal = (xmax / this.state.scaleX - xmin) / xdiv;
 
       for (let i = 0; i <= xdiv; i++) {
@@ -547,12 +537,12 @@ export class BaseCanvas {
           if (i === xdiv) {
             const text = Math.round((xmin + dVal * i) * 10) / 10;
             const offsetLast = this.ctx.measureText(text).width;
-            this.ctx.strokeText(text, xoffset + i * dx - offsetLast - 5, this.canvas.height - xTextOffsetY);
+            this.ctx.strokeText(String(text), xoffset + i * dx - offsetLast - 5, this.baseHeight - xTextOffsetY);
           } else {
             this.ctx.strokeText(
-              Math.round((xmin + dVal * i) * 10) / 10,
+              String(Math.round((xmin + dVal * i) * 10) / 10),
               xoffset + i * dx + xTextOffsetX + (i === 0 ? 10 : 0),
-              this.canvas.height - xTextOffsetY
+              this.baseHeight - xTextOffsetY
             );
           }
         }
@@ -563,13 +553,13 @@ export class BaseCanvas {
           this.ctx.strokeStyle = '#333';
           this.ctx.lineWidth = 2;
           this.ctx.setLineDash([]);
-          this.ctx.lineTo(xoffset + i * dx, this.canvas.height - this.yParams.offset);
+          this.ctx.lineTo(xoffset + i * dx, this.baseHeight - this.yParams.offset);
           this.state.xScales = [xoffset + i * dx];
         } else {
           this.ctx.strokeStyle = '#999';
           this.ctx.lineWidth = 1;
           this.ctx.setLineDash([3, 3, 6]);
-          this.ctx.lineTo(xoffset + i * dx, this.canvas.height - this.yParams.offset);
+          this.ctx.lineTo(xoffset + i * dx, this.baseHeight - this.yParams.offset);
           this.state.xScales.push(xoffset + i * dx);
         }
         this.ctx.stroke();
