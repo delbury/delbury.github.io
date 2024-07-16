@@ -16,13 +16,18 @@
           <button id="file-play">播放</button>
           <!-- <button id="file-pause">暂停</button> -->
           <button class="none" id="file-stop">停止</button>
-          <button id="file-reset">重置</button>
           <button onclick="file.click()">选择音频文件</button>
           <span id="fileName" class="file-name none">
             <span class="text"></span>
             <span class="close">X</span>
           </span>
         </div>
+
+        <div class="control-box" data-title="图表">
+          <button id="file-reset">重置</button>
+          <button id="log-peaks">泛音列</button>
+        </div>
+
         <div class="control-box" data-title="振荡器">
           <button id="osc-play">开始</button>
         </div>
@@ -48,6 +53,7 @@
       const fileNameEle = document.getElementById('fileName'); // 展示文件名元素
       const fileEle = document.getElementById('file'); // 选择文件元素
       const audioAnalyser = new AudioAnalyser({
+        drawOverTimeChart: false,
         onendedCallback: () => (document.getElementById('file-play').innerHTML = '播放'),
         onendedOscCallback: () => (document.getElementById('osc-play').innerHTML = '开始'),
         _getNodes: (actx) => {
@@ -245,6 +251,11 @@
       document.getElementById('file-reset').onclick = () => {
         audioAnalyser.freqChart.resetScale();
         audioAnalyser.timeChart.resetScale();
+      };
+
+      // log 频率峰值
+      document.getElementById('log-peaks').onclick = () => {
+        audioAnalyser.freqChart.drawFreqPeaks();
       };
 
       // 开启振荡器

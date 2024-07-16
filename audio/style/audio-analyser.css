@@ -96,7 +96,6 @@ html {
   transition: all 0.1s;
 }
 
-
 button {
   height: 28px;
   border: none;
@@ -117,7 +116,7 @@ button:active {
   background-color: #096dd9;
 }
 
-button+button {
+button + button {
   margin-left: 10px;
 }
 
@@ -184,4 +183,13 @@ button+button {
 .control-bar {
   display: flex;
   justify-content: space-between;
+}
+.control-bar > * {
+  flex: 1 1 0%;
+}
+.control-bar > *:not(:last-child):not(:first-child) {
+  justify-content: center;
+}
+.control-bar > *:last-child {
+  justify-content: flex-end;
 }

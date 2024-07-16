@@ -1,7 +1,19 @@
-// 音频分析用 canvas 基类
+import { getAutoSaveTools } from '../../../assets/js/abilities/index.js';
 
+// 音频分析用 canvas 基类
 export class BaseCanvas {
-  constructor(canvas, { width, height = 280, scalable = false, waveType = '' } = {}, state = {}) {
+  constructor(
+    canvas,
+    {
+      width,
+      height = 280,
+      scalable = false,
+      waveType = '',
+      // 用来指定参数自动保存的key
+      autoSaveKey,
+    } = {},
+    state = {}
+  ) {
     if (!canvas || canvas.tagName !== 'CANVAS') {
       throw new TypeError('first param must be a canvas element');
     }
@@ -21,7 +33,8 @@ export class BaseCanvas {
       lineWidth: 1,
       strokeStyle: '#333',
     };
-    this.state = {
+
+    const initData = {
       x: 0,
       y: 0,
       scalable,
@@ -34,7 +47,19 @@ export class BaseCanvas {
       running: false,
       ...state,
     };
-
+    const saveTools = autoSaveKey ? getAutoSaveTools({ customKey: autoSaveKey, initData, pickKeys: ['scaleX'] }) : null;
+    this.state = saveTools
+      ? new Proxy(
+          { ...saveTools.data },
+          {
+            set: (target, prop, val) => {
+              saveTools?.update(prop, val);
+              target[prop] = val;
+              return true;
+            },
+          }
+        )
+      : initData;
     this.bindEvents();
   }
 
@@ -95,10 +120,10 @@ export class BaseCanvas {
   }
 
   // 计算峰值
-  calcPeakValue(data) {
+  calcPeakValue(data, includeBottom = false) {
     const arr = [];
     const dy = (this.yParams.max - this.yParams.min) / 255;
-    const fn = (i) => {
+    const fn = (i, type) => {
       return {
         index: i,
         value: data[i],
@@ -106,21 +131,23 @@ export class BaseCanvas {
         freq: (i / data.length) * this.xParams.max,
         x: (i / data.length) * (this.baseWidth - this.xParams.offset) * this.state.scaleX + this.xParams.offset,
         y: (this.baseHeight - this.yParams.offset) * (1 - data[i] / 255),
+        type,
       };
     };
-    for (let i = 0, len = data.length; i < len - 1; i++) {
-      if (i === 0) {
-        arr.push(fn(i));
-      } else if (
-        (data[i - 1] <= data[i] && data[i] > data[i + 1]) ||
-        (data[i - 1] < data[i] && data[i] >= data[i + 1])
-        // (data[i - 1] >= data[i] && data[i] < data[i + 1]) ||
-        // (data[i - 1] > data[i] && data[i] <= data[i + 1])
-      ) {
-        arr.push(fn(i));
+    for (let i = 0, len = data.length; i < len; i++) {
+      const diffLeft = data[i] - (data[i - 1] ?? -Infinity);
+      const diffRight = data[i] - (data[i + 1] ?? -Infinity);
+
+      if ((diffLeft >= 0 && diffRight > 0) || (diffLeft > 0 && diffRight >= 0)) {
+        // 山峰
+        arr.push(fn(i, 'top'));
+      } else if ((includeBottom && diffLeft <= 0 && diffRight < 0) || (diffLeft < 0 && diffRight <= 0)) {
+        // 山谷
+        arr.push(fn(i, 'bottom'));
       }
     }
     this.state.peakValley = arr;
+    return arr;
   }
 
   // 绑定事件
@@ -307,17 +334,27 @@ export class BaseCanvas {
     this._onkeyup && document.removeEventListener('keyup', this._onkeyup);
   }
 
-  // 重置缩放
-  resetScale() {
+  // 缩放
+  scaleTo(toValue) {
     if (this.state.waveType === 'time' || this.state.waveType === 'over-time') {
-      this.state.scaleY = 0;
+      this.state.scaleY = toValue;
       this.drawCoordinateSystem();
       this.state.currentData && this.drawTimeWave(this.state.currentData);
     } else if (this.state.waveType === 'freq') {
-      this.state.scaleX = 1;
+      this.state.scaleX = toValue;
       this.drawCoordinateSystem();
       this.state.currentData && this.drawFreqWave(this.state.currentData);
     }
+  }
+  scaleBy(diff) {
+    const toValue = this.state.waveType === 'freq' ? this.state.scaleX * diff : this.state.scaleY + diff;
+    this.scaleTo(toValue);
+  }
+
+  // 重置缩放
+  resetScale() {
+    const toValue = this.state.waveType === 'freq' ? 1 : 0;
+    this.scaleTo(toValue);
   }
 
   setStartTime(time) {
@@ -358,12 +395,13 @@ export class BaseCanvas {
   // 绘制波形累计图
   drawTimeWaveOverTime(data, time) {
     // 偏移
+    const xoffset = this.xParams.offset || 0;
     const yoffset = this.yParams.offset || 0;
     const length = data.length;
     const byteMax = 128;
     const div = 150;
     const di = 1;
-    const dx = (this.baseWidth - this.xParams.offset) / length / div; // x轴间隔
+    const dx = (this.baseWidth - xoffset) / length / div; // x轴间隔
     const max = this.yParams.max - this.state.scaleY;
     const min = this.yParams.min - this.state.scaleY;
     for (let i = 0; i < length; i += di) {
@@ -382,7 +420,7 @@ export class BaseCanvas {
         this.drawText(
           (time - this._startTime).toFixed(2),
           this.state.xScales[index] + textOffset,
-          this.baseHeight - this.yParams.offset + 10
+          this.baseHeight - yoffset + 10
         );
       }
     }
@@ -492,7 +530,7 @@ export class BaseCanvas {
         }
 
         // 绘制刻度线
-        this.ctx.moveTo(this.xParams.offset, i * dy);
+        this.ctx.moveTo(xoffset, i * dy);
         if (i === ydiv) {
           this.ctx.strokeStyle = '#333';
           this.ctx.lineWidth = 2;
@@ -540,13 +578,13 @@ export class BaseCanvas {
           this.ctx.strokeStyle = '#333';
           this.ctx.lineWidth = 2;
           this.ctx.setLineDash([]);
-          this.ctx.lineTo(xoffset + i * dx, this.baseHeight - this.yParams.offset);
+          this.ctx.lineTo(xoffset + i * dx, this.baseHeight - yoffset);
           this.state.xScales = [xoffset + i * dx];
         } else {
           this.ctx.strokeStyle = '#999';
           this.ctx.lineWidth = 1;
           this.ctx.setLineDash([3, 3, 6]);
-          this.ctx.lineTo(xoffset + i * dx, this.baseHeight - this.yParams.offset);
+          this.ctx.lineTo(xoffset + i * dx, this.baseHeight - yoffset);
           this.state.xScales.push(xoffset + i * dx);
         }
         this.ctx.stroke();
@@ -555,5 +593,65 @@ export class BaseCanvas {
     this.ctx.restore();
   }
 
-  // 绘制图形
+  // 在频谱图上绘制的主要频率分量
+  drawFreqPeaks() {
+    const xoffset = this.xParams.offset || 0;
+    const yoffset = this.yParams.offset || 0;
+    const scaledMin = this.xParams.min / this.state.scaleX;
+    const scaledMax = this.xParams.max / this.state.scaleX;
+    const scaledRange = scaledMax - scaledMin;
+    const theWidth = this.baseWidth - xoffset;
+
+    const data = this.state.currentData ?? [];
+    const peaks = this.calcPeakValue(data, true);
+    // 过滤比左右峰值都大的峰值，因为值都 < 0
+    const threshold = (this.yParams.max - this.yParams.min) * 0.15;
+    const newPeaks = [];
+
+    for (let i = 0; i < peaks.length; i++) {
+      if (peaks[i].type !== 'top') continue;
+      if (newPeaks.length && Math.abs((peaks[i].freq - newPeaks.at(-1).freq) / scaledRange) < 0.001) continue;
+
+      let t = i - 1;
+      let leftBottom = peaks[t];
+      while (leftBottom?.type === 'top') leftBottom = peaks[--t];
+      t = i + 1;
+      let rightBottom = peaks[t];
+      while (rightBottom?.type === 'top') rightBottom = peaks[++t];
+
+      const diffLeft = peaks[i].db - (leftBottom?.db ?? -Infinity);
+      const diffRight = peaks[i].db - (rightBottom?.db ?? -Infinity);
+
+      if (diffLeft > threshold && diffRight > threshold) {
+        newPeaks.push(peaks[i]);
+      }
+    }
+
+    this.ctx.save();
+    this.ctx.strokeStyle = '#f5222d';
+    let baseFreq = null;
+    for (const peak of newPeaks) {
+      const percent = (peak.freq - scaledMin) / scaledRange;
+      const offset = theWidth * percent + xoffset;
+
+      this.ctx.save();
+      this.ctx.beginPath();
+      this.ctx.moveTo(offset, 0);
+      this.ctx.lineTo(offset, this.baseHeight - yoffset);
+      this.ctx.setLineDash([2, 2]);
+      this.ctx.stroke();
+      this.ctx.restore();
+
+      let text = '';
+      if (!baseFreq) {
+        baseFreq = peak.freq;
+        text = baseFreq.toFixed(1);
+      } else {
+        text = (peak.freq / baseFreq).toFixed(1);
+      }
+      this.ctx.font = '8px sans-serif';
+      this.ctx.strokeText(text, offset, 10);
+    }
+    this.ctx.restore();
+  }
 }

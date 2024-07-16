@@ -34,3 +34,9 @@ export const getCharsWidthRange = (chars) => {
   }
   return { min, max };
 };
+
+export const pickBy = (obj, keys) => {
+  if (!keys?.length || typeof obj !== 'object') return obj;
+  const set = new Set(keys);
+  return Object.fromEntries(Object.entries(obj).filter(([k]) => set.has(k)));
+};

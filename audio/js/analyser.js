@@ -19,7 +19,7 @@ export class AudioAnalyser {
       smoothingTimeConstant: 0.8,
       sampleRate: 48000,
       drawOverTimeChart: false,
-      scaleX: 20,
+      scaleX: 1,
       ...options,
     };
   }
@@ -28,7 +28,11 @@ export class AudioAnalyser {
   initCharts({ freqCanvas, timeCanvas, overtimeCanvas } = {}) {
     timeCanvas ? this.createTimeChart(timeCanvas, { scalable: true, waveType: 'time' }) : null;
     freqCanvas
-      ? this.createFreqChart(freqCanvas, { scalable: true, waveType: 'freq' }, { scaleX: this.options.scaleX })
+      ? this.createFreqChart(
+          freqCanvas,
+          { scalable: true, waveType: 'freq', autoSaveKey: 'freq' },
+          { scaleX: this.options.scaleX }
+        )
       : null;
     overtimeCanvas ? this.createOvertimeChart(overtimeCanvas, { waveType: 'over-time' }) : null;
 
@@ -65,7 +69,7 @@ export class AudioAnalyser {
     this.overtimeChart = new BaseCanvas(canvasEle, params, state);
     this.overtimeChart.saveCoordinateParams(
       { min: -thek, max: thek, showText: true, offset: 28 },
-      { min: 0, max: 100, offset: 30 }
+      { min: 0, max: 100, offset: 28 }
     );
   }
 
@@ -142,9 +146,10 @@ export class AudioAnalyser {
       if (this.running) {
         return this.tick();
       } else {
-        this.timeChart && this.timeChart.stop();
-        this.freqChart && this.freqChart.stop();
-        this.overtimeChart && this.overtimeChart.stop(), this.overtimeChart.afterDrawTimeWaveOverTime();
+        this.timeChart?.stop();
+        this.freqChart?.stop();
+        this.overtimeChart?.stop();
+        this.overtimeChart?.afterDrawTimeWaveOverTime();
       }
     });
   }

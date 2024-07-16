@@ -1,16 +1,23 @@
-import { getDom } from './utils.js';
+import { getDom, pickBy } from './utils.js';
 
 /**
  * 用于自动保存数据到本地
  * @param {*} dataKey
  */
-function getAutoSaveTools() {
+function getAutoSaveTools({
+  customKey,
+  initData = {},
+  // 只保存其中的 key
+  pickKeys,
+} = {}) {
   // 挂载到 window 下
   if (window.autoSaveTools) {
     return window.autoSaveTools;
   }
 
-  const localKey = '__auto_save';
+  const autoSaveTools = {};
+
+  const localKey = '__auto_save' + (customKey ? `.${customKey}` : '');
   const localData = (() => {
     let res = {};
     try {
@@ -18,11 +25,22 @@ function getAutoSaveTools() {
     } catch {
       localStorage.removeItem(localKey);
     }
-    return res;
+    return {
+      ...initData,
+      ...res,
+    };
   })();
-  const save = (key, val) => {
-    localData[key] = val;
-    localStorage.setItem(localKey, JSON.stringify(localData));
+
+  autoSaveTools.data = localData;
+
+  const update = (key, val) => {
+    autoSaveTools.data[key] = val;
+    localStorage.setItem(localKey, JSON.stringify(pickBy(autoSaveTools.data, pickKeys)));
+  };
+
+  const save = (val) => {
+    autoSaveTools.data = val;
+    localStorage.setItem(localKey, JSON.stringify(pickBy(val, pickKeys)));
   };
 
   const clear = () => {
@@ -30,12 +48,13 @@ function getAutoSaveTools() {
     location.reload();
   };
 
-  window.autoSaveTools = {
-    data: localData,
-    save,
-    clear,
-  };
-  return window.autoSaveTools;
+  autoSaveTools.save = save;
+  autoSaveTools.update = update;
+  autoSaveTools.clear = clear;
+
+  window.autoSaveTools = autoSaveTools;
+
+  return autoSaveTools;
 }
 
 /**
@@ -99,7 +118,7 @@ function proxyInputElement(
           Reflect.set(...arguments);
           setDomValue(dom, val);
           handleChange(val, dom);
-          autoSave && ast?.save(autoSaveField, val);
+          autoSave && ast?.update(autoSaveField, val);
           return true;
         } else {
           return Reflect.set(...arguments);
@@ -176,4 +195,4 @@ function watchInputValues(inputs, callback, { triggerAtInit = false } = {}) {
   return () => inputs.forEach((input) => input.off(callback));
 }
 
-export { proxyInputElement, watchInputValue, watchInputValues };
+export { proxyInputElement, watchInputValue, watchInputValues, getAutoSaveTools };
