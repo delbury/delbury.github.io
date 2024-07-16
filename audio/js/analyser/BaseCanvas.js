@@ -606,6 +606,7 @@ export class BaseCanvas {
     const peaks = this.calcPeakValue(data, true);
     // 过滤比左右峰值都大的峰值，因为值都 < 0
     const threshold = (this.yParams.max - this.yParams.min) * 0.15;
+    // const newPeaks = [];
     const newPeaks = [];
 
     for (let i = 0; i < peaks.length; i++) {
@@ -629,8 +630,11 @@ export class BaseCanvas {
 
     this.ctx.save();
     this.ctx.strokeStyle = '#f5222d';
+    this.ctx.fillStyle = '#f5222d';
+    this.ctx.font = '8px sans-serif';
     let baseFreq = null;
-    for (const peak of newPeaks) {
+    for (let i = 0; i < newPeaks.length; i++) {
+      const peak = newPeaks[i];
       const percent = (peak.freq - scaledMin) / scaledRange;
       const offset = theWidth * percent + xoffset;
 
@@ -641,16 +645,26 @@ export class BaseCanvas {
       this.ctx.setLineDash([2, 2]);
       this.ctx.stroke();
       this.ctx.restore();
+    }
+    for (let i = 0; i < newPeaks.length; i++) {
+      const peak = newPeaks[i];
+      const percent = (peak.freq - scaledMin) / scaledRange;
+      const offset = theWidth * percent + xoffset;
 
       let text = '';
-      if (!baseFreq) {
+      if (i == 0) {
         baseFreq = peak.freq;
         text = baseFreq.toFixed(1);
       } else {
         text = (peak.freq / baseFreq).toFixed(1);
       }
-      this.ctx.font = '8px sans-serif';
-      this.ctx.strokeText(text, offset, 10);
+      const { width: tw } = this.ctx.measureText(text);
+      const htw = tw / 2;
+      this.ctx.save();
+      const tyo = (i % 2) * 12;
+      this.ctx.clearRect(offset - htw, 10 + tyo, tw, 8);
+      this.ctx.fillText(text, offset - htw, 18 + tyo);
+      this.ctx.restore();
     }
     this.ctx.restore();
   }
