@@ -385,10 +385,10 @@ export class BaseCanvas {
 
   drawText(text, x, y) {
     this.ctx.save();
-    this.ctx.lineWidth = 1;
-    this.ctx.strokeStyle = '#333';
+    this.ctx.font = 'bold 10px sans-serif';
+    this.ctx.fillStyle = '#333';
     this.ctx.setLineDash([]);
-    this.ctx.strokeText(String(text), x, y);
+    this.ctx.fillText(String(text), x, y);
     this.ctx.restore();
   }
 
@@ -519,13 +519,10 @@ export class BaseCanvas {
 
         // 绘制刻度值
         if (yText) {
-          this.ctx.lineWidth = 1;
-          this.ctx.strokeStyle = '#333';
-          this.ctx.setLineDash([]);
           if (i === 0) {
-            this.ctx.strokeText(String(Math.round((ymax - dVal * i) * 100) / 100), yTextOffsetX, i * dy + 10);
+            this.drawText(String(Math.round((ymax - dVal * i) * 100) / 100), yTextOffsetX, i * dy + 10);
           } else {
-            this.ctx.strokeText(String(Math.round((ymax - dVal * i) * 100) / 100), yTextOffsetX, i * dy - yTextOffsetY);
+            this.drawText(String(Math.round((ymax - dVal * i) * 100) / 100), yTextOffsetX, i * dy - yTextOffsetY);
           }
         }
 
@@ -556,15 +553,12 @@ export class BaseCanvas {
 
         // 绘制刻度值
         if (xText) {
-          this.ctx.lineWidth = 1;
-          this.ctx.strokeStyle = '#333';
-          this.ctx.setLineDash([]);
           if (i === xdiv) {
             const text = Math.round((xmin + dVal * i) * 10) / 10;
             const offsetLast = this.ctx.measureText(text).width;
-            this.ctx.strokeText(String(text), xoffset + i * dx - offsetLast - 5, this.baseHeight - xTextOffsetY);
+            this.drawText(String(text), xoffset + i * dx - offsetLast - 5, this.baseHeight - xTextOffsetY);
           } else {
-            this.ctx.strokeText(
+            this.drawText(
               String(Math.round((xmin + dVal * i) * 10) / 10),
               xoffset + i * dx + xTextOffsetX + (i === 0 ? 10 : 0),
               this.baseHeight - xTextOffsetY
