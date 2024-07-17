@@ -623,10 +623,14 @@ export class BaseCanvas {
     }
 
     this.ctx.save();
-    this.ctx.strokeStyle = '#f5222d';
-    this.ctx.fillStyle = '#f5222d';
+    const setColorByIndex = (index) => {
+      const color = index % 2 ? '#f5222d' : '#1677ff';
+      this.ctx.strokeStyle = color;
+      this.ctx.fillStyle = color;
+    };
     this.ctx.font = '8px sans-serif';
     let baseFreq = null;
+    // 绘制定位线
     for (let i = 0; i < newPeaks.length; i++) {
       const peak = newPeaks[i];
       const percent = (peak.freq - scaledMin) / scaledRange;
@@ -637,9 +641,15 @@ export class BaseCanvas {
       this.ctx.moveTo(offset, 0);
       this.ctx.lineTo(offset, this.baseHeight - yoffset);
       this.ctx.setLineDash([2, 2]);
+      setColorByIndex(i);
       this.ctx.stroke();
       this.ctx.restore();
     }
+
+    // 每一根定位线上的文本为了不重叠，可能错开成多行显示
+    // 用来记录每一行的文本的最后 x 轴坐标
+    const textLineLastPositions = [0];
+    // 绘制文本
     for (let i = 0; i < newPeaks.length; i++) {
       const peak = newPeaks[i];
       const percent = (peak.freq - scaledMin) / scaledRange;
@@ -657,6 +667,7 @@ export class BaseCanvas {
       this.ctx.save();
       const tyo = (i % 2) * 12;
       this.ctx.clearRect(offset - htw, 10 + tyo, tw, 8);
+      setColorByIndex(i);
       this.ctx.fillText(text, offset - htw, 18 + tyo);
       this.ctx.restore();
     }
