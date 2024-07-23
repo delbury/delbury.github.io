@@ -1,3 +1,4 @@
+// prettier-ignore
 // 天空之城，天空の城
 const city_of_sky = {
   tempo: 90,
@@ -41,6 +42,7 @@ const city_of_sky = {
   ]
 }
 
+// prettier-ignore
 // 奏之曲，つないだ手にキスを
 const the_white_arks_return = {
   tempo: 60,
@@ -237,6 +239,7 @@ const the_white_arks_return = {
   ] // 伴奏
 }
 
+// prettier-ignore
 // 穿越时空的思念，時空を越えた想い
 const missing_through_time_and_space = {
   tempo: 60,
@@ -281,6 +284,7 @@ const missing_through_time_and_space = {
   ]
 }
 
+// prettier-ignore
 const test = {
   tempo: 90,
   tone: 'C',
@@ -354,10 +358,11 @@ const seqs = {
     // '7- e', '7- e',
     // '7 e', '7 e',
     // '7+ e', '7+ e', '7+ e', '7+ e', '7+ e', '7+ e',
-    '7 e', '7 e', '7 e', '7 e', '7 e',
-  ]
-}
-
+    // '7 e', '7 e', '7 e', '7 e', '7 e',
+    '1 e',
+  ],
+};
+// prettier-ignore-end
 
 export default {
   default: city_of_sky,
@@ -365,5 +370,5 @@ export default {
   the_white_arks_return,
   missing_through_time_and_space,
   test,
-  seqs
-}
+  seqs,
+};

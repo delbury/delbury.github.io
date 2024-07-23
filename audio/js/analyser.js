@@ -95,11 +95,6 @@ export class AudioAnalyser {
   // 播放
   start(type, params) {
     if ((this.fileRunnable && type === 'file') || type === 'osc') {
-      // if (type === 'file') {
-      //   this.options.drawOverTimeChart = false;
-      // } else {
-      //   this.options.drawOverTimeChart = true;
-      // }
       this.running = true;
       this.player.start(type, params);
       this.timeChart && this.timeChart.start();
@@ -108,10 +103,14 @@ export class AudioAnalyser {
       this.tick();
     }
   }
+  setOverTimeEnable(flag) {
+    this.options.drawOverTimeChart = flag;
+  }
 
   // 停止
   stop() {
     this.running = false;
+    this.setOverTimeEnable(false);
     this.player && this.player.stop();
   }
 

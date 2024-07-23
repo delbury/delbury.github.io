@@ -597,28 +597,45 @@ export class BaseCanvas {
     const theWidth = this.baseWidth - xoffset;
 
     const data = this.state.currentData ?? [];
-    const peaks = this.calcPeakValue(data, true);
+    let rawPeaks = this.calcPeakValue(data, true);
+    // 如果连续两个都是 top 或者 bottom 的话，表示这两个值一定相等，则丢弃这个点
+    rawPeaks = rawPeaks.filter((p, i, arr) => i === arr.length - 1 || p.type !== arr[i + 1].type);
+
+    // 滤掉一些抖动的山峰和山谷
+    const filteredPeaks = [];
+    const filteredThreshold = (this.yParams.max - this.yParams.min) * 0.1;
+    for (let i = 0; i < rawPeaks.length; i++) {
+      const curr = rawPeaks[i];
+      if (i < rawPeaks.length - 1 && curr.type === 'top') {
+        const n1 = rawPeaks[i + 1];
+        const n2 = rawPeaks[i + 2];
+        // 当前节点为山峰，下一个节点为山谷，再下个节点为山峰
+        // 如果当前的山峰、下一个山峰、中间的山谷的高度在一定范围内，则过滤掉当前的山峰和下一个山谷
+        const topDiff = Math.abs(curr.db - n2.db);
+        const bottomDiff = Math.max(curr.db - n1.db, n2.db - n1.db);
+        if (topDiff < filteredThreshold && bottomDiff < filteredThreshold * 2) {
+          i++;
+          continue;
+        }
+      }
+      filteredPeaks.push(rawPeaks[i]);
+    }
+
     // 过滤比左右峰值都大的峰值，因为值都 < 0
-    const threshold = (this.yParams.max - this.yParams.min) * 0.15;
-    // const newPeaks = [];
-    const newPeaks = [];
+    const realThreshold = (this.yParams.max - this.yParams.min) * 0.15;
+    const realPeaks = [];
+    for (let i = 0; i < filteredPeaks.length; i++) {
+      if (filteredPeaks[i].type !== 'top') continue;
+      if (realPeaks.length && Math.abs((filteredPeaks[i].freq - realPeaks.at(-1).freq) / scaledRange) < 0.001) continue;
 
-    for (let i = 0; i < peaks.length; i++) {
-      if (peaks[i].type !== 'top') continue;
-      if (newPeaks.length && Math.abs((peaks[i].freq - newPeaks.at(-1).freq) / scaledRange) < 0.001) continue;
+      const leftBottom = filteredPeaks[i - 1];
+      const rightBottom = filteredPeaks[i + 1];
 
-      let t = i - 1;
-      let leftBottom = peaks[t];
-      while (leftBottom?.type === 'top') leftBottom = peaks[--t];
-      t = i + 1;
-      let rightBottom = peaks[t];
-      while (rightBottom?.type === 'top') rightBottom = peaks[++t];
+      const diffLeft = filteredPeaks[i].db - (leftBottom?.db ?? -Infinity);
+      const diffRight = filteredPeaks[i].db - (rightBottom?.db ?? -Infinity);
 
-      const diffLeft = peaks[i].db - (leftBottom?.db ?? -Infinity);
-      const diffRight = peaks[i].db - (rightBottom?.db ?? -Infinity);
-
-      if (diffLeft > threshold && diffRight > threshold) {
-        newPeaks.push(peaks[i]);
+      if (diffLeft > realThreshold && diffRight > realThreshold) {
+        realPeaks.push(filteredPeaks[i]);
       }
     }
 
@@ -631,8 +648,8 @@ export class BaseCanvas {
     this.ctx.font = '8px sans-serif';
     let baseFreq = null;
     // 绘制定位线
-    for (let i = 0; i < newPeaks.length; i++) {
-      const peak = newPeaks[i];
+    for (let i = 0; i < realPeaks.length; i++) {
+      const peak = realPeaks[i];
       const percent = (peak.freq - scaledMin) / scaledRange;
       const offset = theWidth * percent + xoffset;
 
@@ -648,27 +665,44 @@ export class BaseCanvas {
 
     // 每一根定位线上的文本为了不重叠，可能错开成多行显示
     // 用来记录每一行的文本的最后 x 轴坐标
+    this.ctx.save();
     const textLineLastPositions = [0];
+    const gap = 5;
     // 绘制文本
-    for (let i = 0; i < newPeaks.length; i++) {
-      const peak = newPeaks[i];
+    for (let i = 0; i < realPeaks.length; i++) {
+      const peak = realPeaks[i];
       const percent = (peak.freq - scaledMin) / scaledRange;
       const offset = theWidth * percent + xoffset;
 
       let text = '';
       if (i == 0) {
         baseFreq = peak.freq;
-        text = baseFreq.toFixed(1);
+        text = baseFreq.toFixed(1) + 'Hz';
       } else {
         text = (peak.freq / baseFreq).toFixed(1);
       }
       const { width: tw } = this.ctx.measureText(text);
       const htw = tw / 2;
       this.ctx.save();
-      const tyo = (i % 2) * 12;
-      this.ctx.clearRect(offset - htw, 10 + tyo, tw, 8);
+      let x = offset - htw;
+      let y = 10;
+      let yoff = 0;
+      const end = x + tw;
+      const rowIndex = textLineLastPositions.findIndex((p) => !p || p + gap < x);
+      if (rowIndex > -1) {
+        yoff = 10 * rowIndex;
+        textLineLastPositions[rowIndex] = end;
+      } else {
+        yoff = 10 * textLineLastPositions.length;
+        textLineLastPositions.push(end);
+      }
+
+      y += yoff;
+      this.ctx.clearRect(x, y, tw, 10);
       setColorByIndex(i);
-      this.ctx.fillText(text, offset - htw, 18 + tyo);
+      this.ctx.textBaseline = 'top';
+      this.ctx.fillText(text, x, y + 1);
+
       this.ctx.restore();
     }
     this.ctx.restore();

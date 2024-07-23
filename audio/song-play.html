@@ -1,67 +1,65 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Piano</title>
+    <link rel="stylesheet" href="./style/song-play.css" />
+    <!-- <link rel="stylesheet" href="./style/audio-analyser.css"> -->
+  </head>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Piano</title>
-  <link rel="stylesheet" href="./style/song-play.css">
-  <!-- <link rel="stylesheet" href="./style/audio-analyser.css"> -->
-</head>
+  <body>
+    <div class="control-box" id="waveType">
+      <button data-type="sine">sine</button>
+      <button data-type="square">square</button>
+      <button data-type="sawtooth">sawtooth</button>
+      <button data-type="triangle">triangle</button>
+      <button data-type="custom">custom</button>
+      <!-- <button id="play-custom">custom</button> -->
+      <button data-type="stop">stop</button>
+    </div>
+    <div class="control-box" id="songs">
+      <button data-type="city_of_sky">天空の城</button>
+      <button data-type="the_white_arks_return">つないだ手にキスを</button>
+      <button data-type="missing_through_time_and_space">時空を越えた想い</button>
+      <button data-type="test">test</button>
+      <button data-type="seqs">seqs</button>
+      <button data-type="stop">stop</button>
+    </div>
 
-<body>
-  <div class="control-box" id="waveType">
-    <button data-type="sine">sine</button>
-    <button data-type="square">square</button>
-    <button data-type="sawtooth">sawtooth</button>
-    <button data-type="triangle">triangle</button>
-    <button data-type="custom">custom</button>
-    <!-- <button id="play-custom">custom</button> -->
-    <button data-type="stop">stop</button>
-  </div>
-  <div class="control-box" id="songs">
-    <button data-type="city_of_sky">天空の城</button>
-    <button data-type="the_white_arks_return">つないだ手にキスを</button>
-    <button data-type="missing_through_time_and_space">時空を越えた想い</button>
-    <button data-type="test">test</button>
-    <button data-type="seqs">seqs</button>
-    <button data-type="stop">stop</button>
-  </div>
-  
-  <script type="module">
-    import { Song } from './js/music.js'
-    import songs from './js/songs.js'
-    const song = new Song(songs.default)
-    window.song = song
+    <script type="module">
+      import { Song } from './js/music.js';
+      import songs from './js/songs.js';
+      const song = new Song(songs.default);
+      window.song = song;
 
-    // 音色控制
-    document.getElementById('waveType').onclick = ev => {
-      if(ev.target.tagName === 'BUTTON') {
-        const type = ev.target.dataset.type
-        if(type === 'stop') {
-          song.stop()
-        } else {
-          song.setWaveType(ev.target.dataset.type)
-          song.play()
+      // 音色控制
+      document.getElementById('waveType').onclick = (ev) => {
+        if (ev.target.tagName === 'BUTTON') {
+          const type = ev.target.dataset.type;
+          if (type === 'stop') {
+            song.stop();
+          } else {
+            song.setWaveType(ev.target.dataset.type);
+            song.play();
+          }
         }
-      }
-    }
+      };
 
-    // 歌曲控制
-    document.getElementById('songs').onclick = ev => {
-      if(ev.target.tagName === 'BUTTON') {
-        const type = ev.target.dataset.type
-        if(type === 'stop') {
-          song.stop()
-        } else {
-          // song.stop()
-          song.changeNotes(songs[ev.target.dataset.type])
-          song.play()
+      // 歌曲控制
+      document.getElementById('songs').onclick = (ev) => {
+        if (ev.target.tagName === 'BUTTON') {
+          const type = ev.target.dataset.type;
+          if (type === 'stop') {
+            song.stop();
+          } else {
+            // song.stop()
+            song.changeNotes(songs[ev.target.dataset.type]);
+            song.play();
+          }
         }
-      }
-    }
-  </script>
-</body>
-
+      };
+    </script>
+  </body>
 </html>

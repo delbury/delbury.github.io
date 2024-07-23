@@ -234,6 +234,7 @@
             this.innerHTML = '播放';
           } else {
             audioAnalyser.player.setGain(8);
+            // audioAnalyser.setOverTimeEnable(true);
             audioAnalyser.start('file');
             this.innerHTML = '停止';
           }
