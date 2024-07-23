@@ -603,7 +603,7 @@ export class BaseCanvas {
 
     // 滤掉一些抖动的山峰和山谷
     const filteredPeaks = [];
-    const filteredThreshold = (this.yParams.max - this.yParams.min) * 0.05;
+    const filteredThreshold = (this.yParams.max - this.yParams.min) * 0.02;
     for (let i = 0; i < rawPeaks.length; i++) {
       const curr = rawPeaks[i];
       if (i < rawPeaks.length - 1) {
@@ -636,6 +636,9 @@ export class BaseCanvas {
       }
     }
 
+    console.log(realPeaks);
+
+    // 绘制
     this.ctx.save();
     const setColorByIndex = (index) => {
       const color = index % 2 ? '#f5222d' : '#1677ff';

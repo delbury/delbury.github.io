@@ -160,7 +160,7 @@ export class Sequence {
     ];
     oscNode.forEach((osc, index) => {
       if (this.waveType === 'custom') {
-        osc.setPeriodicWave(this.customWaves[1].wave);
+        osc.setPeriodicWave(this.customWaves[0].wave);
       } else {
         osc.type = this.waveType;
       }
