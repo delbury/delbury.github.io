@@ -603,17 +603,14 @@ export class BaseCanvas {
 
     // 滤掉一些抖动的山峰和山谷
     const filteredPeaks = [];
-    const filteredThreshold = (this.yParams.max - this.yParams.min) * 0.1;
+    const filteredThreshold = (this.yParams.max - this.yParams.min) * 0.05;
     for (let i = 0; i < rawPeaks.length; i++) {
       const curr = rawPeaks[i];
-      if (i < rawPeaks.length - 1 && curr.type === 'top') {
-        const n1 = rawPeaks[i + 1];
-        const n2 = rawPeaks[i + 2];
-        // 当前节点为山峰，下一个节点为山谷，再下个节点为山峰
-        // 如果当前的山峰、下一个山峰、中间的山谷的高度在一定范围内，则过滤掉当前的山峰和下一个山谷
-        const topDiff = Math.abs(curr.db - n2.db);
-        const bottomDiff = Math.max(curr.db - n1.db, n2.db - n1.db);
-        if (topDiff < filteredThreshold && bottomDiff < filteredThreshold * 2) {
+      if (i < rawPeaks.length - 1) {
+        const next = rawPeaks[i + 1];
+        // 当前点与下一个点的值差值在一定范围内，直接过滤掉当前点和下一个点
+        const diff = Math.abs(curr.db - next.db);
+        if (diff < filteredThreshold) {
           i++;
           continue;
         }

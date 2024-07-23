@@ -201,11 +201,10 @@
       window.audioAnalyser = audioAnalyser;
 
       // 选择文件
-      fileEle.onchange = async (ev) => {
-        const file = ev.target.files[0];
+      const selectFile = async (file, fileName) => {
         if (file) {
           fileNameEle.classList.remove('none');
-          fileNameEle.querySelector('.text').innerHTML = file.name;
+          fileNameEle.querySelector('.text').innerHTML = fileName ?? file.name ?? '-';
 
           if (audioAnalyser.player) {
             audioAnalyser.stop();
@@ -218,6 +217,20 @@
           btn.classList.remove('disabled');
         }
       };
+      fileEle.onchange = (ev) => {
+        const file = ev.target.files[0];
+        selectFile(file);
+      };
+
+      const fetchFile = async () => {
+        fetch('/audio/files/25.A.mp3', {
+          method: 'get',
+        })
+          .then((res) => res.blob())
+          .then((blob) => selectFile(blob, 'test.mp3'));
+      };
+      // debug
+      // fetchFile();
 
       // 取消文件
       fileNameEle.querySelector('.close').onclick = (ev) => {
