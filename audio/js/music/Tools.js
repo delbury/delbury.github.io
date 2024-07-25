@@ -48,6 +48,11 @@ export const CP = {
 
 // 工具类
 export class Tools {
+  // 分贝相加
+  static addDb(db1, db2) {
+    return 10 * Math.log10(10 ^ (db1 / 10 + 10) ^ (db2 / 10));
+  }
+
   // 创建自定义钢琴音色波形
   static createPianoWave(actx, dbs) {
     const amps = [];

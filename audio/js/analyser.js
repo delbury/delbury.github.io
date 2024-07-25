@@ -1,5 +1,7 @@
 import { BaseCanvas } from './analyser/BaseCanvas.js';
 import { AudioPlayer } from './analyser/AudioPlayer.js';
+import * as dsp from '../../assets/sdk/dsp.js';
+import FFT from '../../assets/sdk/fft.js';
 
 export class AudioAnalyser {
   constructor(options = {}) {
@@ -90,6 +92,63 @@ export class AudioAnalyser {
       { min: -thek, max: thek, showText: true, offset: 10 },
       { min: 0, max: 100, offset: 28 }
     );
+  }
+
+  // 计算有效峰值
+  calcPeaks(arr, itemFormatter) {
+    const peaks = [];
+    for (let i = 0; i < arr.length; i++) {
+      const diffLeft = arr[i] - (arr[i - 1] ?? -Infinity);
+      const diffRight = arr[i] - (arr[i + 1] ?? -Infinity);
+
+      let type = '';
+      if (diffLeft >= 0 && diffRight > 0) {
+        // 山峰
+        type = 'top';
+      } else if ((diffLeft <= 0 && diffRight < 0) || (diffLeft < 0 && diffRight <= 0)) {
+        // 山谷
+        type = 'bottom';
+      } else {
+        continue;
+      }
+      peaks.push(itemFormatter(type, i));
+    }
+    // 计算频谱分布
+    const freqs = [];
+    for (let i = 0; i < peaks.length; i++) {}
+    return peaks;
+  }
+
+  // 计算 fft
+  calcFFT() {
+    if (!this.timeChart.state.currentData) return;
+
+    const inputData = this.timeChart.state.currentData;
+    const fftSize = this.options.fftSize;
+    const bufferSize = fftSize / 2;
+
+    const rate = this.options.sampleRate;
+    const fft = new dsp.FFT(bufferSize, rate);
+    fft.forward(inputData);
+
+    // 计算峰值
+    const amps = [];
+    for (let i = 0; i < bufferSize; i++) {
+      amps.push(Math.sqrt(fft.real[i] ** 2 + fft.imag[i] ** 2));
+    }
+    const peaks = this.calcPeaks(amps, (type, index) => ({
+      type,
+      index,
+      freq: index * fft.bandwidth,
+      amp: amps[index],
+    }));
+
+    console.log(peaks);
+    console.log('another');
+    console.log(fft);
+    console.log('real', fft.real);
+    console.log('imag', fft.imag);
+    console.log('peak', peaks);
   }
 
   // 播放

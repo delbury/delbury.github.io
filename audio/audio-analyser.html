@@ -25,7 +25,8 @@
 
         <div class="control-box" data-title="图表">
           <button id="file-reset">重置</button>
-          <button id="log-peaks">泛音列</button>
+          <button id="draw-peaks">泛音列</button>
+          <button id="calc-fft">FFT</button>
         </div>
 
         <div class="control-box" data-title="振荡器">
@@ -267,9 +268,14 @@
         audioAnalyser.timeChart.resetScale();
       };
 
-      // log 频率峰值
-      document.getElementById('log-peaks').onclick = () => {
+      // 频率峰值
+      document.getElementById('draw-peaks').onclick = () => {
         audioAnalyser.freqChart.drawFreqPeaks();
+      };
+
+      // 计算fft
+      document.getElementById('calc-fft').onclick = () => {
+        audioAnalyser.calcFFT();
       };
 
       // 开启振荡器

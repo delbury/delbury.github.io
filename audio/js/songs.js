@@ -343,7 +343,7 @@ const test = {
 }
 
 const seqs = {
-  tempo: 90,
+  tempo: 60,
   tone: 'C',
   isNumber: true,
   // notes: [
