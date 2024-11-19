@@ -128,7 +128,7 @@ export class BaseCanvas {
         index: i,
         value: data[i],
         db: dy * data[i] + this.yParams.min,
-        freq: (i / (data.length - 1)) * this.xParams.max,
+        freq: (i / data.length) * this.xParams.max,
         x: (i / data.length) * (this.baseWidth - this.xParams.offset) * this.state.scaleX + this.xParams.offset,
         y: (this.baseHeight - this.yParams.offset) * (1 - data[i] / 255),
         type,

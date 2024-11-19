@@ -1,7 +1,7 @@
 import { BaseCanvas } from './analyser/BaseCanvas.js';
 import { AudioPlayer } from './analyser/AudioPlayer.js';
 import * as dsp from '../../assets/sdk/dsp.js';
-import FFT from '../../assets/sdk/fft.js';
+// import FFT from '../../assets/sdk/fft.js';
 
 export class AudioAnalyser {
   constructor(options = {}) {
@@ -15,6 +15,7 @@ export class AudioAnalyser {
       drawTimeType: 'byte',
       isDrawFreq: true,
       drawFreqType: 'byte',
+      // 2048 * 16
       fftSize: 2048 * 16,
       maxDecibels: 0,
       minDecibels: -100,
@@ -95,7 +96,7 @@ export class AudioAnalyser {
   }
 
   // 计算有效峰值
-  calcPeaks(arr, itemFormatter) {
+  calcPeaks(arr, itemFormatter, valueKey) {
     const peaks = [];
     for (let i = 0; i < arr.length; i++) {
       const diffLeft = arr[i] - (arr[i - 1] ?? -Infinity);
@@ -113,17 +114,48 @@ export class AudioAnalyser {
       }
       peaks.push(itemFormatter(type, i));
     }
+    // 滤掉一些抖动的山峰和山谷
+    const filteredPeaks = [];
+    const filteredThreshold = 5;
+    for (let i = 1; i < peaks.length; i++) {
+      const curr = peaks[i];
+      if (i < peaks.length - 1) {
+        const next = peaks[i + 1];
+        // 当前点与下一个点的值差值在一定范围内，直接过滤掉当前点和下一个点
+        const diff = Math.abs(curr.db - next.db);
+        if (diff < filteredThreshold) {
+          i++;
+          continue;
+        }
+      }
+      filteredPeaks.push(peaks[i]);
+    }
     // 计算频谱分布
     const freqs = [];
-    for (let i = 0; i < peaks.length; i++) {}
-    return peaks;
+    const threshold = 40;
+    for (let i = 1; i < filteredPeaks.length; i++) {
+      const peak = filteredPeaks[i];
+      if (peak.type === 'top') {
+        const diffLeft = peak[valueKey] - (filteredPeaks[i - 1]?.[valueKey] ?? -Infinity);
+        const diffRight = peak[valueKey] - (filteredPeaks[i + 1]?.[valueKey] ?? -Infinity);
+        if (diffLeft > threshold && diffRight > threshold) {
+          freqs.push(peak);
+        }
+      }
+    }
+    console.log(peaks);
+    console.log(filteredPeaks);
+    console.log(freqs);
+
+    // this.freqChart.drawFreqWave(peaks.map((p) => p.db));
+    return freqs;
   }
 
   // 计算 fft
   calcFFT() {
     if (!this.timeChart.state.currentData) return;
 
-    const inputData = this.timeChart.state.currentData;
+    const inputData = [...this.timeChart.state.currentData].map((it) => it / 128 - 1);
     const fftSize = this.options.fftSize;
     const bufferSize = fftSize / 2;
 
@@ -132,23 +164,60 @@ export class AudioAnalyser {
     fft.forward(inputData);
 
     // 计算峰值
-    const amps = [];
-    for (let i = 0; i < bufferSize; i++) {
-      amps.push(Math.sqrt(fft.real[i] ** 2 + fft.imag[i] ** 2));
-    }
-    const peaks = this.calcPeaks(amps, (type, index) => ({
-      type,
-      index,
-      freq: index * fft.bandwidth,
-      amp: amps[index],
-    }));
+    const amps = fft.spectrum;
+    console.log(amps);
+    const dbs = dsp.DSP.mag2db(amps, this.options.minDecibels);
+    const peaks = this.calcPeaks(
+      dbs,
+      (type, index) => ({
+        type,
+        index,
+        freq: fft.getBandFrequency(index),
+        amp: amps[index],
+        db: dbs[index],
+      }),
+      'db'
+    );
 
-    console.log(peaks);
-    console.log('another');
     console.log(fft);
-    console.log('real', fft.real);
-    console.log('imag', fft.imag);
-    console.log('peak', peaks);
+    console.log(this.timeChart.state.currentData);
+    console.log(inputData);
+  }
+
+  /**
+   * 自己计算频域的值，即模拟 getByteFrequencyData
+   * b[k]=⌊255 / (dBmax − dBmin) * (Y[k] − dBmin)⌋
+   * 需要自己算 Y[k]
+   * https://www.w3.org/TR/webaudio/#current-frequency-data
+   * 步骤：
+   *  1. 计算时域数据
+   *  2. 加窗
+   *  3. FT
+   *  4. 时间平滑
+   *  5. 转换成 dB
+   *
+   * tips:
+   *  N: AnalyserNode.fftSize
+   */
+  calcFreqDomainData() {
+    if (!this.timeChart.state.currentData) return;
+    /**
+     * 1.
+     * getByteTimeDomainData
+     * b[k] = ⌊128(1 + x[k])⌋
+     */
+    const xn = [...this.timeChart.state.currentData];
+    const N = this.options.fftSize;
+    const { sin, cos, PI } = Math;
+
+    // 2.
+    const a = 0.16;
+    const a0 = (1 - a) / 2;
+    const a1 = 0.5;
+    const a2 = a / 2;
+    const func = (n) => a0 - a1 * cos((2 * PI * n) / N) + a2 * cos((4 * PI * n) / N);
+    const wn = xn.map((_, n) => func(n));
+    const xwn = wn.map((w, i) => w * xn[i]);
   }
 
   // 播放

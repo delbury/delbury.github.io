@@ -194,6 +194,17 @@ const sections = [
       },
     ],
   },
+  {
+    sectionTitle: 'Unity Demos',
+    items: [
+      {
+        href: './unity/text-nodes/index.html',
+        title: 'Text Nodes',
+        cover: './assets/cover/text-nodes.png',
+        desc: '文本小游戏',
+      },
+    ],
+  },
 ];
 
 // 创建导航栏

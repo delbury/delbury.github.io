@@ -275,7 +275,8 @@
 
       // 计算fft
       document.getElementById('calc-fft').onclick = () => {
-        audioAnalyser.calcFFT();
+        // audioAnalyser.calcFFT();
+        audioAnalyser.calcFreqDomainData();
       };
 
       // 开启振荡器

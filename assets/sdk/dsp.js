@@ -278,6 +278,8 @@ function FourierTransform(bufferSize, sampleRate) {
       rval = real[i];
       ival = imag[i];
       mag = bSi * sqrt(rval * rval + ival * ival);
+      // changed
+      // if (i === 0) mag /= 2;
 
       if (mag > this.peak) {
         this.peakBand = i;
@@ -1810,14 +1812,13 @@ function Biquad(type, sampleRate) {
  *  @returns the array in decibels
  *
  */
-DSP.mag2db = function (buffer) {
-  var minDb = -120;
+DSP.mag2db = function (buffer, minDb = -120) {
   var minMag = Math.pow(10.0, minDb / 20.0);
 
   var log = Math.log;
   var max = Math.max;
 
-  var result = Float64Array(buffer.length);
+  var result = new Float64Array(buffer.length);
   for (var i = 0; i < buffer.length; i++) {
     result[i] = 20.0 * log(max(buffer[i], minMag));
   }
