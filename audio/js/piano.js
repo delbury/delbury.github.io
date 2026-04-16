@@ -167,7 +167,7 @@ export class Keyboard {
   // 键盘按下事件
   keydownEvent(ev) {
     const key = ev.key;
-    if (key === 'Alt' || key === 'Control') {
+    if (key === 'Shift' || key === 'Control') {
       ev.preventDefault();
     }
     if (this.reg.test(key)) {
@@ -176,7 +176,7 @@ export class Keyboard {
       let name = '';
       if (ev.ctrlKey) {
         name = this.keyNameMap.get(key.toLowerCase() + '+c');
-      } else if (ev.altKey) {
+      } else if (ev.shiftKey) {
         name = this.keyNameMap.get(key.toLowerCase() + '+s');
       } else {
         name = this.keyNameMap.get(key.toLowerCase());
@@ -191,7 +191,7 @@ export class Keyboard {
   // 键盘松开事件
   keyupEvent(ev) {
     const key = ev.key;
-    if (key === 'Alt' || key === 'Control') {
+    if (key === 'Shift' || key === 'Control') {
       ev.preventDefault();
     }
     if (this.reg.test(key)) {
