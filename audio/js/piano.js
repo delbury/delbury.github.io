@@ -73,13 +73,13 @@ const keyToName = [
 ];
 
 export class BaseKey {
-  constructor(actx, name, leve) {
+  constructor(actx, name, level) {
     // this.level = leve || 4
     this.actx = actx;
     this.keyName = name;
     this.innerClass = 'key-inner';
 
-    this.note = new NotePlay(actx, `${name} q`);
+    this.note = new NotePlay(actx, `${name} h`);
 
     this.keyBoxElement = document.createElement('div'); // 外层
     this.keyElement = document.createElement('div'); // 按键
@@ -166,6 +166,7 @@ export class Keyboard {
 
   // 键盘按下事件
   keydownEvent(ev) {
+    if (ev.repeat) return; // 避免长按重复触发
     const key = ev.key;
     if (key === 'Shift' || key === 'Control') {
       ev.preventDefault();
