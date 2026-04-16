@@ -84,6 +84,28 @@ export class BaseKey {
     this.keyBoxElement = document.createElement('div'); // 外层
     this.keyElement = document.createElement('div'); // 按键
     this.keyElement.className = this.innerClass;
+
+    // 查找该按键绑定的快捷键符号 (取字母按键)
+    let shortcut = '';
+    let found = keyToName.find((item) => item[1] === name && !/\d/.test(item[0])); // 优先排除纯数字小键盘
+    if (!found) found = keyToName.find((item) => item[1] === name);
+    if (found) {
+      let st = found[0];
+      if (st.includes('+s')) {
+        shortcut = 'Shift+' + st.replace('+s', '').toUpperCase();
+      } else if (st.includes('+c')) {
+        shortcut = 'Ctrl+' + st.replace('+c', '').toUpperCase();
+      } else {
+        shortcut = st.toUpperCase();
+      }
+    }
+    
+    // 添加标签元素
+    const labelWrapper = document.createElement('div');
+    labelWrapper.className = 'key-label-wrapper';
+    labelWrapper.innerHTML = `<div>${name}</div><div>${shortcut}</div>`;
+    this.keyElement.appendChild(labelWrapper);
+
     this.keyBoxElement.appendChild(this.keyElement);
 
     this.keyElement.addEventListener('mousedown', (ev) => {

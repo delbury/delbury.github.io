@@ -14,6 +14,13 @@
   </head>
 
   <body>
+    <div class="switch-container">
+      <label class="switch-label">
+        <input type="checkbox" id="label-toggle" />
+        <span>显示键盘提示</span>
+      </label>
+    </div>
+
     <div id="piano-keyboard" class="piano-keyboard"></div>
 
     <script type="module">
@@ -21,6 +28,15 @@
       import { Piano } from './js/piano.js';
       // import { NotePlay, Sequence } from './js/music.js'
       window.piano = new Piano();
+
+      const toggle = document.getElementById('label-toggle');
+      toggle.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          document.body.classList.add('show-labels');
+        } else {
+          document.body.classList.remove('show-labels');
+        }
+      });
     </script>
   </body>
 </html>

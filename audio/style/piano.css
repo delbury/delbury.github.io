@@ -15,7 +15,7 @@ html {
   display: flex;
   justify-content: center;
   align-items: center;
-  // visibility: hidden;
+  /* visibility: hidden; */
 }
 
 /* 白键 */
@@ -69,4 +69,53 @@ html {
 .key-black>.key-inner:active,
 .key-black>.key-inner.is-keydown {
   background-color: #555;
+}
+
+/* 提示文字开关 */
+.switch-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+  font-family: sans-serif;
+  color: #333;
+}
+
+.switch-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 5px 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.switch-label input {
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+/* 按键上的提示文字包裹层 */
+.key-label-wrapper {
+  display: none;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+  padding-bottom: 10px;
+  font-size: 12px;
+  pointer-events: none;
+  color: #666;
+}
+
+.key-black .key-label-wrapper {
+  color: #ccc;
+  padding-bottom: 5px;
+  font-size: 10px;
+}
+
+/* 当显示开关被选中时展示提示文字 */
+body.show-labels .key-label-wrapper {
+  display: flex;
 }
